@@ -1,0 +1,4 @@
+# 源码、测试和日志按原始字节保存，避免 Windows 换行转换使验证哈希失效。
+* -text
+*.png binary
+*.zip binary

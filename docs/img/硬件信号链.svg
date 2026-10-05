@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="470" viewBox="0 0 1080 470">
+<defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6" fill="#72dfc5"/></marker></defs>
+<rect width="1080" height="470" rx="20" fill="#101b2e"/>
+<g font-family="Microsoft YaHei, sans-serif" fill="#eef4ff">
+<text x="36" y="48" font-size="24" font-weight="700">硬件信号链 · 自带驱动的无刷电机</text>
+<text x="36" y="78" font-size="14" fill="#a9bbd6">拓扑示意；电压、器件型号和波形仍需装机核验</text>
+<g fill="#1c2c45" stroke="#3b5375"><rect x="36" y="142" width="230" height="205" rx="14"/><rect x="356" y="110" width="296" height="78" rx="12"/><rect x="356" y="216" width="296" height="70" rx="12"/><rect x="356" y="315" width="296" height="79" rx="12"/><rect x="742" y="110" width="300" height="178" rx="14"/><rect x="742" y="315" width="300" height="79" rx="12"/></g>
+<g font-size="18" font-weight="700" fill="#72dfc5"><text x="59" y="178">ESP32-S3 · 3.3V</text><text x="374" y="141">DIR / PWM 升至 5V</text><text x="374" y="244">FG 降至 3.3V</text><text x="374" y="346">3.3V I²C / ADC1</text><text x="762" y="145">四路 JGB37-3625</text><text x="762" y="346">惯性 / 数字 / 模拟传感器</text></g>
+<g font-size="14"><text x="59" y="219">LEDC · 20kHz / 10位</text><text x="59" y="251">PCNT · FG上升沿</text><text x="59" y="283">舵机 · 50Hz / 14位</text><text x="374" y="170">PWM可经RC平滑，核验波形</text><text x="374" y="269">可靠分压或电平转换</text><text x="374" y="374">模拟信号不使用数字电平板</text><text x="762" y="179">白线 DIR · 蓝线 0～5V 调速</text><text x="762" y="211">黄线 5V FG · 红黑 24V 动力</text><text x="762" y="245">自带驱动，不接 H 桥</text><text x="762" y="375">MPU / ADXL / MCP / 4067</text></g>
+<g stroke="#72dfc5" stroke-width="2" fill="none" marker-end="url(#arrow)"><path d="M266 161 H356"/><path d="M652 149 H742"/><path d="M742 251 H652"/><path d="M356 251 H266"/><path d="M742 356 H652"/><path d="M356 330 H266"/></g>
+<text x="36" y="440" font-size="15" fill="#f5cb81">动力、舵机、逻辑分开供电并共地；PWM硬件下拉保护复位窗口。PWM=0表示撤驱动。</text>
+</g></svg>

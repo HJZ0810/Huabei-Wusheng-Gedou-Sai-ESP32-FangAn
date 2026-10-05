@@ -6,3 +6,25 @@
 Thumbs.db
 *.log
 _preview/
+
+# 本机运行时、构建产物与私有配置；发布ZIP仅作为GitHub Release附件。
+.tools/
+.cache/
+__pycache__/
+*.pyc
+*.exe
+*.elf
+*.bin
+*.map
+*.zip
+.env
+.env.*
+*.pem
+*.key
+*.p12
+!Arduino依赖库/*.zip
+
+# 只提交与源码哈希绑定的验证凭据和文本日志，不提交编译缓存/CLI本机配置。
+combatbot/test-artifacts/*
+!combatbot/test-artifacts/release-evidence.json
+!combatbot/test-artifacts/*.log

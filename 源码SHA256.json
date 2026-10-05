@@ -1,0 +1,22 @@
+{
+  "CombatBotArduino/CombatBotArduino.ino": "034bc8082082d87ba86dc40adcc89738b90d545358124546cc5f07ab13cc7741",
+  "CombatBotArduino/config.cpp": "90cda1edae524f6286a9ad68008eb25b2f265b8744f6ac49f8e5b81a79153d39",
+  "CombatBotArduino/config.h": "65892a60f3fbee257b993531b6e80f18e9bb8aba531e1860e98e199b1371b8e5",
+  "CombatBotArduino/controller.cpp": "e239e82880e82222758d2b2d2d4e2fdf3e40b0cda85539e758878f579e8acdb4",
+  "CombatBotArduino/controller.h": "0bb95c37761cbe7a97f9c31793840f8e610bfa3c9b3396055650ea0571862583",
+  "CombatBotArduino/hardware.h": "77d04c2921dc8b16d94e22d1230261515b1263da7ad846c9a9d57854482f3149",
+  "CombatBotArduino/hardware_internal.h": "0a2c9f6cbe31494d22298e46ca086aa15492fba290c47d61321a3e943d88a9a5",
+  "CombatBotArduino/imu.cpp": "3c38b2adf23468d78f5de9cc8e1e0d85af1069f1eb91abe2267ebb1209f04934",
+  "CombatBotArduino/kinematics.h": "a4083172598b2cfe38802d0173c31bc7c220c6ff24a478971a54cee1939603fa",
+  "CombatBotArduino/motor.cpp": "e933910c1cd4ae05457d705e72b61f1d84ce6f79a7389592a86774251da23f19",
+  "CombatBotArduino/pid.h": "34655e59bc42b6b210742d1f9e2c23542fa647c00a4f95bffd870823c9437dba",
+  "CombatBotArduino/safety.h": "306e430af0b482e4df81f7e5b813733910644e72721d15631803dcfa5a82b9e4",
+  "CombatBotArduino/sensors.cpp": "0ec334553dc31cbc8fbc245d053fb249acf5ed35c2da69d5e1998103c1ed5927",
+  "CombatBotArduino/session_registry.h": "ae3c2b9604a0adda7c1929d53a3a61a5610d0d395ca5d59f097fbe190d5666e3",
+  "CombatBotArduino/types.h": "0d5d25c2c4bfd7b7cd631fd1f8b93b74ed42b956c1e00d0197e1de126dce97c0",
+  "CombatBotArduino/web.cpp": "c258db676cfec5496bf76fbe9e0f87f2d7a5fa58b28c90bde1b6b6ac8714412c",
+  "CombatBotArduino/web.h": "5c016d11269d90949cebc275d87cdea9e004b260dfce9703831a7e88df0b0777",
+  "CombatBotArduino/web_asset.h": "76f899389627528aa013ae3cc5cae7966a21417be6f373d13e5391040868202f",
+  "CombatBotArduino/wifi_mgr.cpp": "77509fd60b95ecc62370a4077fedeebc1317f08b5c149664f811823885404889",
+  "CombatBotArduino/wifi_mgr.h": "7081840a4538bff58bc52f17ac9cd072ea73ef61ed9d94b800c7d0627c518f2a"
+}
