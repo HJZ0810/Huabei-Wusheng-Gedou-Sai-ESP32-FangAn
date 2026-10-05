@@ -1,4 +1,29 @@
-# CombatBot V3.0 · ESP32-S3 四驱格斗车控制系统
+# CombatBot V4.0 · ESP32-S3 云端控制与自主格斗系统
+
+**STA 联网远程访问、分层场地地图、估计定位、点选导航与自主格斗，继续使用分文件 Arduino 工程。** AP 本地操作保留；自主在车端运行，云断网后按任务预算继续，重连可查看与接管。
+
+V4 全量软件门控及Arduino-ESP32 2.0.17/3.3.12实际双编译已通过，公网独立服务、协议替身及专属链接浏览器检查也已完成；当前进行完整包与GitHub发布准备。证据见 [V4 发布说明](docs/releases/V4.0.md)。安装见 [传感器安装与校准](docs/hardware/V4传感器安装与校准.md)，操作见 [联网与比赛](docs/setup/V4联网与比赛操作.md)，服务部署见 [公网入口记录](docs/setup/V4服务器部署.md)。V1/V2/V3 历史内容全部保留，新版本持续向下方记录顶部追加。
+
+## V4.0 带来什么
+
+| 能力 | 实现与使用边界 |
+|---|---|
+| STA 跨网络操作 | 小车主动出站连接云中继；单车使用专属控制链接，无需登录选车，AP操作保留 |
+| 估计地图与人工起点 | 显示世界位置、层面、目标和质量；误差会增长，碰撞/滑移后可停车修正 |
+| 分层导航 | 低层绕中央障碍，高台目标限制在内缩区域；低层到高台先走登台入口 |
+| 自主格斗 | 搜索、目标候选、对准、接近、有限推撞与定向脱边；危险与传感器失效优先 |
+| 自动登台与任务继续 | 入场事件链满足后标为估计高台，继续原导航/格斗；独立登台完成后停稳 |
+| 断网继续与接管 | 自主车端执行，网络不是避边判断前置条件；手动驾驶失联仍受心跳约束 |
+| 简洁单车网页 | 白蓝配色，地图和驾驶状态优先；通过专属控制链接建立会话，不设账户系统 |
+| 安装准入 | `arenaEnabled`、`arenaCalibrated`、`arenaClimbEnabled` 默认关闭，完成本地校准后启用 |
+
+现有 FG、惯性与数字探头不能保证精确绝对定位；软件编译也不证明能爬 6 cm 台阶或主动制动。26 × 24 cm 默认车身是待实测初值。E18 向下安装后 `true` 表示见地，不能照搬旧版触发语义。完整变化和取舍见下方 V4 展开记录。
+
+![V4 公网单车控制台](docs/img/v4-ui-public.png)
+
+2026-10-06 实际公网页面：专属链接已建立会话，车辆尚未联网；未接管或发送运动，图中没有模拟车辆数据。
+
+## 沿用的 V3 控制基础与发布资料
 
 **连续驾驶、距离与转角控制、在线标定、传感器遥测和离线网页，整合为可直接打开的分文件 Arduino 工程。**
 
@@ -23,13 +48,31 @@ V3.0 重点修正 V2.0 的运动方向、闭环输出、配置保存及多客户
 
 ## 完整版本更新记录
 
-项目按 **V1.0 完整功能基础 → V2.0 安全与并发加固 → V3.0 控制正确性与可复核交付** 演进。以下各版本全部展开；历史源码、原说明和扩写说明一并保留，方便查看功能来源与升级取舍。
+项目按 **V1.0 完整功能基础 → V2.0 安全与并发加固 → V3.0 控制正确性与可复核交付 → V4.0 云端访问与车端自主** 演进。以下各版本全部展开；历史源码、原说明和扩写说明一并保留，方便查看功能来源与升级取舍。
 
 | 版本 | 对应源码 | 原版说明 | 扩写版本说明 | 发布与下载 |
 |---|---|---|---|---|
-| V3.0 | [Arduino 工程](CombatBotArduino/) / [维护工程](combatbot/) | [V3.0 发布时 README](https://github.com/HJZ0810/Huabei-Wusheng-Gedou-Sai-ESP32-FangAn/blob/3fa1f7e/README.md) | [V3.0 发布与迁移](docs/releases/V3.0.md) | [V3.0 Release](https://github.com/HJZ0810/Huabei-Wusheng-Gedou-Sai-ESP32-FangAn/releases/tag/v3.0) |
+| V4.0 | [当前 Arduino 工程](CombatBotArduino/) / [维护工程](combatbot/) | [当前 README](README.md) | [V4.0 发布记录](docs/releases/V4.0.md) | [已发布：完整 Arduino 工程包](https://github.com/HJZ0810/Huabei-Wusheng-Gedou-Sai-ESP32-FangAn/releases/tag/v4.0) |
+| V3.0 | [固定 Arduino 源码](https://github.com/HJZ0810/Huabei-Wusheng-Gedou-Sai-ESP32-FangAn/tree/v3.0/CombatBotArduino) / [固定维护工程](https://github.com/HJZ0810/Huabei-Wusheng-Gedou-Sai-ESP32-FangAn/tree/v3.0/combatbot) | [V3.0 发布时 README](https://github.com/HJZ0810/Huabei-Wusheng-Gedou-Sai-ESP32-FangAn/blob/3fa1f7e/README.md) | [V3.0 发布与迁移](docs/releases/V3.0.md) | [V3.0 Release](https://github.com/HJZ0810/Huabei-Wusheng-Gedou-Sai-ESP32-FangAn/releases/tag/v3.0) |
 | V2.0 | [CombatBot_Fusion](versions/v2.0/CombatBot_Fusion/) | [V2.0 原 README](versions/v2.0/CombatBot_Fusion/README.md) | [V2.0 详细说明](docs/releases/V2.0.md) | [V2.0 历史 Release](https://github.com/HJZ0810/Huabei-Wusheng-Gedou-Sai-ESP32-FangAn/releases/tag/v2.0) |
 | V1.0 | [CombatBot_ESP32S3](versions/v1.0/CombatBot_ESP32S3/) | [V1.0 原 README](versions/v1.0/CombatBot_ESP32S3/README.md) | [V1.0 详细说明](docs/releases/V1.0.md) | [V1.0 历史 Release](https://github.com/HJZ0810/Huabei-Wusheng-Gedou-Sai-ESP32-FangAn/releases/tag/v1.0) |
+
+### V4.0 · 云端访问、估计地图与车端自主 · 2026-10-06（发布准备）
+
+**本版定位：** 从 V3 手动控制基础继续扩展，STA 联网后使用服务器托管网页远程访问，车端独立执行带预算的导航、登台和格斗任务。AP 本地方式保留，旧版资料和发布入口不被新版本覆盖。
+
+- **云控制链路。** 小车经 STA 主动建立云连接，设备凭据与 WiFi 密码分开，远程请求继续进入统一控制仲裁。单车网页位于 `https://combatbot.luo-jin-ai.com/`，通过专属控制链接直接进入；无需账号或选车。服务器部署与证书验收见最终发布记录。
+- **地图有估计语义。** 使用 380 × 380 cm 外场、240 × 240 cm 高台默认模型，人工设置起点、航向与层面，FG/惯性增量更新位置。网页展示估计位置、误差质量与目标，不能把渲染坐标宣传为已验证的绝对定位。
+- **分层点选导航。** 低层绕膨胀后的中央台面，高台目标受车身、安全余量与误差约束。低层点选高台目标时自动走入口并登台，成功估计后再次检查目标，继续原导航。
+- **自主格斗。** 连续有效测距形成候选，经对准、接近和有限推撞后退出本次进攻。原始缺地、必要输入失效、双侧危险与任务到期优先停止，脱边后重新形成目标证据，不恢复旧推撞。
+- **登台是有界任务。** 入口对正、有效倾角上升、轮行程进展、越顶与稳定支撑形成事件链；满足后标为 `upper_estimated` 并增加误差，继续原格斗/导航。只有时间或FG不算成功，证据不足保留未知过渡层等待校正；独立登台完成后停稳。
+- **当前验证有独立凭据。** 19条门控检查记录全部成功，覆盖控制/配置/采集/自主默认参数/网页/云中继/迁移及实际双编译；V1/V2/V3共191个历史文件已按原始Git blob核对。core3使用Huge APP，Flash 1,381,944 / 3,145,728 B，静态RAM 64,688 / 327,680 B；未上板。
+- **安装与防掉语义一致。** 灰度向下四角、E18向下前左/前右/后中、IR水平周向安装。E18归一化 `true` 见地、`false` 缺地；灰度亮值结合高台层面与边缘预测，不把中央图案或启动区统一认作危险。
+- **自主网络寿命独立。** 自主启动后云断网继续本机安全判断与有限任务，重连可查看和人工接管。手动云驾驶仍有失联期限；急停、取消和接管不能让旧任务恢复。
+
+**相对 V3 的进步与优势：** 将本地控制扩展到跨网络操作，把持续的比赛决策放在车端；位置、层面、质量和任务状态形成可解释的地图反馈。单车专属链接省去账户与选车，白蓝网页把地图、控制和关键状态放在前面；本地及云端共用一份可编辑页面。V3已有PID、PCNT、换向、停止代次及配置保存继续复用，不重复宣称为新增。
+
+**取舍与边界：** 三个自主启用/校准开关首启均关闭，安装实测后本地启用。默认车身26 × 24 cm、速度与入口是起点，不是已验收参数。现有传感器存在近场盲区、颜色/光照差异、漂移、打滑和碰撞误差，登台估计不等于绝对确认。直接冲上6 cm台阶仍取决于机械能力，软件不能制造主动制动。**V4最终软件门控、双编译、公网检查和完整包核验均已完成，V4.0 已发布**；软件验证不替代实车验收，详见 [V4记录](docs/releases/V4.0.md)。
 
 ### V3.0 · 修正控制边界，补齐交付证据 · 2026-10-05
 
@@ -88,23 +131,25 @@ V3.0 重点修正 V2.0 的运动方向、闭环输出、配置保存及多客户
 
 1. 解压完整包，打开 [CombatBotArduino/CombatBotArduino.ino](CombatBotArduino/CombatBotArduino.ino)。保留全部同级 `.cpp/.h`，草图目录名应为 `CombatBotArduino`。
 2. Arduino IDE 2.x 安装 **esp32 by Espressif Systems 3.3.12**，选择 **ESP32S3 Dev Module**。
-3. 通过“添加 .ZIP 库”安装 [Arduino依赖库](Arduino依赖库/) 中的 **ArduinoJson 7.3.1、ESP32Async/AsyncTCP 3.3.2、ESP32Async/ESPAsyncWebServer 3.6.0**。
-4. N16R8 推荐：Flash **16MB**、PSRAM **OPI PSRAM**、Flash Mode **QIO**、Partition **16M Flash (3MB APP/9.9MB FATFS)**、USB CDC **Enabled**、CPU **240MHz**。其他型号按实际硬件选择。
+3. 通过“添加 .ZIP 库”安装 [Arduino依赖库](Arduino依赖库/) 中的四个固定 ZIP：**ArduinoJson 7.3.1、ESP32Async/AsyncTCP 3.3.2、ESP32Async/ESPAsyncWebServer 3.6.0、WebSockets 2.7.2（随包审计补丁）**。请使用随包 WebSockets ZIP，补丁限制帧大小、校验 CA，并适配 core2/core3 的超时单位；保留原版权、LGPL 2.1 文本与逐文件修改者/日期/变更声明。
+4. **V4 需要至少 3MB APP 分区。** 4MB Flash 选择 **Huge APP (3MB No OTA/1MB SPIFFS)**；N16R8 可用 Flash **16MB**、PSRAM **OPI PSRAM**、Flash Mode **QIO**、Partition **16M Flash (3MB APP/9.9MB FATFS)**、USB CDC **Enabled**、CPU **240MHz**。容量及 PSRAM 按真实模组设置。V4 首轮草稿曾在默认 1.25MB APP 上得到 1,381,440 / 1,310,720 B 的超容失败（非最终源码容量），不能沿用 V3 默认分区结论。
 5. 点击“验证”。首次编译不需要 Python 或网页构建工具；菜单及排错见 [安装与接线](新手安装与接线.md)。
 
 PlatformIO 维护工程位于 `combatbot/`，[platformio.ini](combatbot/platformio.ini) 固定平台及依赖版本。编译与上传分开，不使用旧 V2 根目录草图或安装指南。
 
 ## 首次使用
 
+以下保留手动控制基础用法；V4新增地图与自主入口见上方资料，自动任务不使用手动客户端心跳续命。向下E18安装及自主准入以 [V4校准说明](docs/hardware/V4传感器安装与校准.md) 为准。
+
 启动不自动运动。连接热点 **CombatBot-AP**（开发默认密码 **12345678**），打开 `http://192.168.4.1`；支持 mDNS 的终端可使用 `http://combatbot.local`。实际使用前修改默认密码。AP 常驻，STA 失败每 15 秒重试，网络配置保存后重启生效。
 
-四页为连续、精准、传感器和设置。WASD/方向键只在连续页且未编辑文本时生效；空格急停。距离正值前进、负值后退，转角正值左转。动作均有控制者心跳保护；停止/急停绕普通队列，旧命令不能在停止后继续启动，急停后须显式解锁。
+五页为连续、精准、竞技、传感器和设置。WASD/方向键只在连续页且未编辑文本时生效；空格急停。距离正值前进、负值后退，转角正值左转。人工运动有控制者心跳保护；已明确启动的自主任务使用车端总期限，离页和云断线不取消；停止/急停绕普通队列，旧命令不能在停止后继续启动，急停后须显式解锁。
 
 **先架起车体确认方向、反馈和接线，再做 IMU、行程、转向标定。** 默认轮径 72mm、轴距 154mm、轮距 170mm、FG 为 90 个上升沿/输出轴圈，这些是待实测的初值。
 
 ### 保护与硬件边界
 
-- **保护总开关 `safetyEnabled` 默认关闭**，用于首次接线调试。边缘/IR/倾倒独立开关默认开启，但总开关启用后才生效；确认电平及方向再开启。心跳与堵转保护不依赖总开关。
+- **保护总开关 `safetyEnabled` 默认关闭**，用于首次接线调试。传统边缘/IR/倾倒分项默认开启，总开关启用后参与对应仲裁；确认电平及方向再开启。V4 启用 `arenaEnabled` 后，向下支撑时效检查独立生效，人工缺地立即撤输出；自主缺地进入有界脱边/停止判断。心跳与堵转不依赖总开关。
 - IR 默认 60cm 开始渐进限速、25cm 撤驱动。严格无效策略默认开启：相关方向未采样、过期、超量程或异常时拒绝运动；GP2Y0A02 的有效量程为 20～150cm，超量程不等于无障碍。
 - 有效低压读数仍触发 50% 限速。V2 的严重低压 `batCrit` 停机阈值不迁移，不能根据“24V”猜测电池化学体系。
 - 停车为 **PWM=0 撤驱动**，不保证主动制动或立即静止。冲击只提示，不自动停车。
@@ -133,17 +178,18 @@ python scripts/convert_workbuddy_config.py "V2参数.json" "V3候选.json"
 | [combatbot/web/index.html](combatbot/web/index.html) | 可读可改的完整离线网页 |
 | [combatbot/scripts/](combatbot/scripts/) | 导出、验证、迁移、打包工具 |
 | [docs/README.md](docs/README.md) | 当前资料与各版本历史说明索引 |
-| [versions/](versions/) | V1.0 / V2.0 完整历史工程及原版文档，只读保留 |
+| [server/](server/) | 单车公网中继、固定依赖、部署与协议测试 |
+| [versions/](versions/) | V1.0 / V2.0 / V3.0 完整历史工程及原版文档，只读保留 |
 
 修改维护源或网页后，在 `combatbot/` 执行以下命令同步导出并重新验证；不要只改导出副本后继续打包。
 
 ```powershell
 python scripts/export_arduino.py
-python scripts/verify_release.py --pio "已有platformio.exe路径" --compiler "已有g++.exe路径" --node "已有node.exe路径"
+python scripts/verify_release.py --pio "已有platformio.exe路径" --compiler "已有g++.exe路径" --node "已有Node22路径" --native-fqbn "esp32:esp32:esp32s3:PartitionScheme=huge_app" --native-build-name ide-core3-huge-app
 python ../tools/package_history.py
 python scripts/verify_delivery.py
 ```
 
-需已有工具链、开发板包及指定依赖，不执行上传。凭据绑定源码、测试和完整日志的 SHA256，改变后须重新验证。最终编译与回归数据见 [验收与验证](验收与验证.md)；主机替身不能替代真实手机、多核时延、掉电恢复及机械验收。
+需已有工具链、开发板包及指定依赖；服务端目录先执行 `npm ci --ignore-scripts`，Node 使用22 LTS。验证不执行上传。凭据绑定源码、测试和完整日志的 SHA256，改变后须重新验证。最终编译与回归数据见 [验收与验证](验收与验证.md)；主机替身不能替代真实手机、多核时延、掉电恢复及机械验收。
 
 更新记录：[CHANGELOG.md](CHANGELOG.md) · 接口：[docs/接口协议.md](docs/接口协议.md) · 注释：[注释风格规范.md](注释风格规范.md)

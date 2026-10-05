@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 566" width="900" height="566" font-family="Segoe UI, Microsoft YaHei, PingFang SC, sans-serif">
+  <rect width="900" height="566" fill="#0B0F14" rx="10"/>
+
+  <rect x="0" y="0" width="900" height="44" fill="#131A22" rx="10"/>
+  <rect x="0" y="34" width="900" height="10" fill="#131A22"/>
+  <text x="20" y="28" fill="#8B98A5" font-size="13">Arduino IDE 2.x — 工具菜单 + 开发板参数（示意图）</text>
+
+  <!-- 菜单 -->
+  <rect x="20" y="66" width="330" height="360" rx="10" fill="#131A22" stroke="#22D3EE" stroke-width="2"/>
+  <text x="40" y="96" fill="#22D3EE" font-size="15" font-weight="700">工具</text>
+  <g font-size="14" fill="#CFD9E3">
+    <text x="40" y="126">自动格式化</text>
+    <text x="40" y="156">开发板：</text>
+    <text x="140" y="156" fill="#22D3EE" font-weight="700">ESP32S3 Dev Module</text>
+    <text x="40" y="186">端口：</text>
+    <text x="100" y="186" fill="#22D3EE" font-weight="700">COM5</text>
+    <text x="40" y="216">获取开发板信息</text>
+    <text x="40" y="246">编程器</text>
+    <text x="40" y="276">烧录引导程序</text>
+    <text x="40" y="306">管理库…</text>
+    <text x="40" y="336">串口监视器</text>
+    <text x="40" y="366">串口绘图器</text>
+  </g>
+  <text x="40" y="402" fill="#8B98A5" font-size="12.5">① 先选对开发板，否则引脚编号全错</text>
+  <text x="40" y="420" fill="#8B98A5" font-size="12.5">② 再选端口：插上板子才会出现 COMx</text>
+
+  <!-- 右侧参数表 -->
+  <rect x="380" y="66" width="500" height="360" rx="10" fill="#131A22" stroke="#1E2A36"/>
+  <text x="400" y="96" fill="#E6EDF3" font-size="15" font-weight="700">ESP32S3 Dev Module 参数（本项目推荐值）</text>
+
+  <g font-size="13">
+    <rect x="400" y="112" width="460" height="26" rx="6" fill="#0E141B"/>
+    <text x="412" y="130" fill="#E6EDF3">USB CDC On Boot</text>
+    <text x="700" y="130" fill="#34D399" font-weight="700">Enabled</text>
+    <text x="412" y="152" fill="#5C6B7A" font-size="11.5">不开这个，串口监视器看不到任何输出</text>
+
+    <rect x="400" y="164" width="460" height="26" rx="6" fill="#0E141B"/>
+    <text x="412" y="182" fill="#E6EDF3">Flash Size</text>
+    <text x="700" y="182" fill="#34D399" font-weight="700">16MB (N16R8)</text>
+    <text x="412" y="204" fill="#5C6B7A" font-size="11.5">板子是 N8R8 就选 8MB，按实际买到的型号填</text>
+
+    <rect x="400" y="216" width="460" height="26" rx="6" fill="#0E141B"/>
+    <text x="412" y="234" fill="#E6EDF3">Partition Scheme</text>
+    <text x="640" y="234" fill="#FF8A3D" font-weight="700">Huge APP (3MB No OTA)</text>
+    <text x="412" y="256" fill="#5C6B7A" font-size="11.5">默认分区也能编过但只剩 15% 余量，换大分区留余地</text>
+
+    <rect x="400" y="268" width="460" height="26" rx="6" fill="#0E141B"/>
+    <text x="412" y="286" fill="#E6EDF3">PSRAM</text>
+    <text x="700" y="286" fill="#34D399" font-weight="700">OPI PSRAM</text>
+
+    <rect x="400" y="300" width="460" height="26" rx="6" fill="#0E141B"/>
+    <text x="412" y="318" fill="#E6EDF3">Flash Mode</text>
+    <text x="700" y="318" fill="#E6EDF3">QIO 80MHz</text>
+
+    <rect x="400" y="332" width="460" height="26" rx="6" fill="#0E141B"/>
+    <text x="412" y="350" fill="#E6EDF3">Upload Speed</text>
+    <text x="700" y="350" fill="#E6EDF3">921600</text>
+
+    <rect x="400" y="364" width="460" height="26" rx="6" fill="#0E141B"/>
+    <text x="412" y="382" fill="#E6EDF3">CPU Frequency</text>
+    <text x="700" y="382" fill="#E6EDF3">240MHz</text>
+  </g>
+  <text x="400" y="416" fill="#5C6B7A" font-size="11.5">改完任意一项都要重新点一次「验证 / 上传」，设置才会生效</text>
+
+  <!-- 底部流程 -->
+  <rect x="20" y="446" width="860" height="104" rx="10" fill="#0E1A14" stroke="#34D399" stroke-width="1.5"/>
+  <text x="40" y="474" fill="#34D399" font-size="14" font-weight="700">正确的操作顺序</text>
+  <text x="40" y="500" fill="#CFE8DC" font-size="13">① 首选项里加网址 → ② 开发板管理器装 esp32 → ③ 工具里选 ESP32S3 Dev Module</text>
+  <text x="40" y="522" fill="#CFE8DC" font-size="13">④ 库管理器装 7 个库 → ⑤ 选端口 → ⑥ 点「验证」编译</text>
+  <text x="40" y="544" fill="#8B98A5" font-size="11.5">③ 没做就去装库，库装完了照样编不过；④ 没做就点编译，就是你现在看到的 ArduinoJson.h not found</text>
+</svg>

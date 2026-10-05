@@ -20,6 +20,8 @@
 #include <esp_system.h>
 #include <esp_random.h>
 #include "session_registry.h"
+#include "command_gateway.h"
+#include "telemetry_json.h"
 
 namespace bot {
 namespace {
@@ -60,6 +62,7 @@ uint32_t sessionClient(AsyncWebServerRequest* request) {
 
 /** @brief 生成 128 位随机凭据并绑定连接；凭据只在 hello 中单播。 */
 bool openSession(uint32_t client,char (&token)[33]) {
+  if(!client || client>=AutonomousOwner) return false;
   uint8_t random[16];
   esp_fill_random(random,sizeof(random));
   static const char hex[]="0123456789abcdef";
@@ -127,49 +130,15 @@ void response(AsyncWebServerRequest* req, int status, bool ok, const String& mes
  *          REST 连接编号从请求头的随机会话凭据解析，不信任 body.client。
  */
 bool dispatch(JsonVariantConst body, uint32_t client, String& error) {
-  if (!body.is<JsonObjectConst>()) { error="指令必须是JSON对象"; return false; }
-  const char* t=body["t"] | "";
-  if (!*t) t=body["type"] | "";
-  Command cmd; cmd.client=client; cmd.receivedMs=millis();cmd.speed=configSnapshot().defaultSpeed;
-  bool needsOwner=true;
-  if (!strcmp(t,"stop")) { cmd.type=CommandType::Stop; needsOwner=false; }
-  else if (!strcmp(t,"estop")) { cmd.type=CommandType::Estop; needsOwner=false; }
-  else if (!strcmp(t,"unlock")) { cmd.type=CommandType::Unlock; needsOwner=false; }
-  else if (!strcmp(t,"hb")) cmd.type=CommandType::Heartbeat;
-  else if (!strcmp(t,"drv")) {
-    cmd.type=CommandType::Drive;
-    float percent;
-    if (!number(body["x"],cmd.x,-1,1) || !number(body["y"],cmd.y,-1,1) || !number(body["spd"],percent,0,100)) {
-      error="摇杆或速度百分比无效"; return false;
-    }
-    cmd.speed=configSnapshot().maxSpeed*percent/100.0f;
-    // 在固件统一处理径向死区与指数曲线，避免网页再处理一次造成双重衰减。
-    // 半径 <= 0.08 时归零；其余输入先移除死区，再按 1.5 次幂缩放方向向量。
-    const float radius=sqrtf(cmd.x*cmd.x+cmd.y*cmd.y);
-    if(radius<=0.08f){cmd.x=cmd.y=0;}
-    else {const float scaled=powf((fminf(radius,1.0f)-0.08f)/0.92f,1.5f)/radius;cmd.x*=scaled;cmd.y*=scaled;}
-  } else if (!strcmp(t,"move")) {
-    cmd.type=CommandType::Move;
-    if (!number(body["dist"],cmd.value,-1000,1000) || fabsf(cmd.value)<0.5f) {error="距离须为±0.5～1000cm";return false;}
-  } else if (!strcmp(t,"turn")) {
-    cmd.type=CommandType::Turn;
-    if (!number(body["deg"],cmd.value,-1440,1440) || fabsf(cmd.value)<1) {error="转角须为±1～1440°，正值左转";return false;}
-  } else if (!strcmp(t,"servo")) {
-    cmd.type=CommandType::Servo;
-    if (!number(body["pos"],cmd.value,0,1)) {error="舵机位置须为0～1";return false;}
-  } else if (!strcmp(t,"cal")) {
-    const char* mode=body["mode"] | "";
-    if (!strcmp(mode,"imu")) cmd.type=CommandType::ImuCal;
-    else if (!strcmp(mode,"odo")) {cmd.type=CommandType::OdoCalStart;cmd.value=100;}
-    else if (!strcmp(mode,"turn")) {cmd.type=CommandType::TurnCalStart;cmd.value=360;}
-    else {error="未知标定类型";return false;}
-  } else {error="未知指令";return false;}
-  // 网络层只检查会话及保存/重启窗口；控制权、急停锁定和队列容量交给控制器。
-  if (needsOwner && (client==0 || socket.client(client)==nullptr)) {error="请先建立控制WebSocket";return false;}
-  if (needsOwner && editing.load()) {error="配置正在保存，请稍后操作";return false;}
-  if (restartPending.load(std::memory_order_acquire) && needsOwner) {error="设备即将重启";return false;}
-  if (!controllerEnqueue(cmd)) {error="控制忙、被其他客户端占用或安全锁定";return false;}
-  return true;
+  if(!body.is<JsonObjectConst>() || !client || socket.client(client)==nullptr) {
+    error="请先建立有效控制会话"; return false;
+  }
+  const char* type=body["t"] | "";
+  if(!*type) type=body["type"] | "";
+  const bool stop=!strcmp(type,"stop") || !strcmp(type,"estop") || !strcmp(type,"takeover");
+  if(!stop && editing.load()) { error="配置正在保存，请稍后操作"; return false; }
+  if(!stop && restartPending.load(std::memory_order_acquire)) { error="设备即将重启"; return false; }
+  return commandDispatch(body,client,error);
 }
 
 /**
@@ -273,26 +242,8 @@ template<class Operation> void updateConfig(AsyncWebServerRequest* req, Operatio
  */
 void sendTelemetry() {
   const auto tm=controllerSnapshot();
-  const auto cfg=configSnapshot();
   JsonDocument doc;
-  doc["t"]="tm";doc["spd"]=tm.speed;doc["yaw"]=tm.yaw;doc["odo"]=tm.odo;
-  if(tm.sensors.batteryValid)doc["bat"]=tm.sensors.batteryV;else doc["bat"]=nullptr;
-  // 四轮数组保留 LF / RF / LR / RR 顺序，与网页标签和电机采样保持一致。
-  auto rpm=doc["rpm"].to<JsonArray>();auto pulse=doc["pulses"].to<JsonArray>();auto pwm=doc["pwm"].to<JsonArray>();
-  for (int i=0;i<4;i++){rpm.add(tm.rpm[i]);pulse.add(tm.pulses[i]);pwm.add(tm.pwm[i]);}
-  auto ir=doc["ir"].to<JsonArray>();auto valid=doc["irValid"].to<JsonArray>();
-  for(int i=0;i<cfg.irCount;i++){if(tm.sensors.irValid[i])ir.add(tm.sensors.ir[i]);else ir.add(nullptr);valid.add(tm.sensors.irValid[i]);}
-  auto gr=doc["gr"].to<JsonArray>();for(bool v:tm.sensors.gray)gr.add(v);
-  auto e18=doc["e18"].to<JsonArray>();for(bool v:tm.sensors.e18)e18.add(v);
-  auto acc=doc["acc"].to<JsonArray>();for(float v:tm.sensors.acc)acc.add(v);
-  doc["accelSource"]=tm.sensors.accelSource;doc["accelSaturated"]=tm.sensors.accelSaturated;
-  doc["impact"]=tm.sensors.impact;doc["impactG"]=tm.sensors.impactG;
-  doc["irLimited"]=tm.irLimited;doc["irUnavailable"]=tm.irUnavailable;doc["irSpeedScale"]=tm.irSpeedScale;
-  doc["imuOk"]=tm.sensors.imuOk;doc["accelOk"]=tm.sensors.accelOk;doc["ioOk"]=tm.sensors.ioOk;
-  doc["net"]=networkMode();doc["rssi"]=networkRssi();doc["apIp"]=apIp();doc["staIp"]=staIp();
-  doc["ip"]=staIp().length()?staIp():apIp();doc["mdns"]=String(cfg.hostname)+".local";
-  doc["st"]=tm.state;doc["fault"]=tm.fault;doc["estop"]=tm.estop;doc["lowBattery"]=tm.lowBattery;
-  doc["owner"]=tm.owner;doc["progress"]=tm.progress*100;doc["imuCalibrating"]=tm.imuCalibrating;
+  telemetryJson(doc.to<JsonObject>());
   String out;serializeJson(doc,out);socket.textAll(out);
   if(tm.resultReady && tm.resultId!=lastResult){
     lastResult=tm.resultId;JsonDocument done;
@@ -326,6 +277,7 @@ void webBegin() {
   server.on("/api/config",HTTP_GET,[](AsyncWebServerRequest* req){
     if (!sessionClient(req)) {response(req,401,false,"会话无效，请重新连接设备");return;}
     JsonDocument doc;configJson(configSnapshot(),doc.to<JsonObject>(),true);
+    doc["cloudDeviceKey"]=""; // 写入后不回显密钥；省略字段即可保留。
     String out;serializeJson(doc,out);auto* res=req->beginResponse(200,"application/json",out);
     res->addHeader("Cache-Control","no-store");req->send(res);
   });

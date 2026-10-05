@@ -1,0 +1,3 @@
+Command: D:\bin\g++.exe -std=c++17 -static -Wall -Wextra -Werror -Itest/host -Iinclude D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\test\test_session.cpp -o D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\test-artifacts\test_session.exe
+
+[exit code: 0]

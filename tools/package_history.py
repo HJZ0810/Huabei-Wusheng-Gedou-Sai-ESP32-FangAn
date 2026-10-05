@@ -6,7 +6,7 @@
 """
 
 from pathlib import Path
-from zipfile import ZipFile, ZIP_DEFLATED
+from zipfile import ZipFile, ZipInfo, ZIP_DEFLATED
 import hashlib
 import json
 import re
@@ -20,6 +20,8 @@ ROOT = Path(__file__).resolve().parents[1]
 def checked_history():
     """按清单校验每个历史文件，并限制读取范围为仓库内的 versions 目录。"""
     manifest = json.loads((ROOT / "versions/SOURCE_MANIFEST.json").read_text(encoding="utf-8"))
+    if not {"v1.0", "v2.0", "v3.0"}.issubset(manifest["versions"]):
+        raise ValueError("完整历史交付必须保留 V1.0、V2.0、V3.0")
     histories = []
     for version, item in manifest["versions"].items():
         if not re.fullmatch(r"v\d+\.\d+(?:\.\d+)?", version):
@@ -30,14 +32,40 @@ def checked_history():
         actual = {path.relative_to(base).as_posix() for path in base.rglob("*") if path.is_file()}
         if actual != set(item["files"]):
             raise ValueError(f"历史文件集合与清单不一致：{version}，请核对缺失或未登记文件")
+        sketch = item.get("arduinoSketch", base.name + ".ino")
+        sketch_path = (base / sketch).resolve()
+        if sketch not in item["files"] or not sketch_path.is_relative_to(base) or sketch_path.stem != sketch_path.parent.name:
+            raise ValueError(f"历史 Arduino 入口无效：{version}/{sketch}")
         files = []
         for name, digest in item["files"].items():
             path = (base / name).resolve()
             if not path.is_relative_to(base) or hashlib.sha256(path.read_bytes()).hexdigest() != digest:
                 raise ValueError(f"历史快照与清单不一致：{version}/{name}")
             files.append(path)
+        # 在维护仓库中进一步核对原始 Git blob；无 .git 的下载包仍可用 SHA 清单检查。
+        if (ROOT / ".git").exists():
+            refs = [f"{item['commit']}:{name}" for name in item["files"]]
+            result = subprocess.run(["git", "cat-file", "--batch"], cwd=ROOT,
+                                    input=("\n".join(refs) + "\n").encode("utf-8"), capture_output=True, check=True)
+            position = 0
+            for name, digest in item["files"].items():
+                end = result.stdout.index(b"\n", position)
+                header = result.stdout[position:end].split()
+                if len(header) != 3 or header[1] != b"blob":
+                    raise ValueError(f"历史来源 Git blob 缺失：{version}/{name}")
+                size = int(header[2]); position = end + 1
+                blob = result.stdout[position:position + size]; position += size + 1
+                if hashlib.sha256(blob).hexdigest() != digest:
+                    raise ValueError(f"历史清单与原始提交不一致：{version}/{name}")
         histories.append((version, item, base, files))
     return histories
+
+
+def write_entry(output, name, data):
+    """使用固定时间戳和排序生成可复现归档；不继承本机文件时间。"""
+    info = ZipInfo(name, (1980, 1, 1, 0, 0, 0))
+    info.compress_type = ZIP_DEFLATED
+    output.writestr(info, data)
 
 
 def main():
@@ -57,13 +85,13 @@ def main():
     additions += [path for _, _, _, files in histories for path in files]
     with ZipFile(package, "a", ZIP_DEFLATED) as output:
         present = set(output.namelist())
-        for path in additions:
+        for path in sorted(additions):
             name = path.relative_to(ROOT).as_posix()
             if name in present:
                 if output.read(name) != path.read_bytes():
                     raise ValueError(f"包内条目与维护文件不同：{name}")
                 continue
-            output.write(path, name)
+            write_entry(output, name, path.read_bytes())
             present.add(name)
     subprocess.run([sys.executable, str(scripts / "verify_delivery.py")], check=True)
     with ZipFile(package) as check:
@@ -78,12 +106,12 @@ def main():
                 f"来源提交：{item['commit']}。原始源码、README、许可证和文档逐字节保留。\n\n"
                 "本次恢复不包含旧版重新编译或上板验证；原说明中的能力与验证记录属于当时版本。\n\n"
                 f"扩写说明：https://github.com/HJZ0810/Huabei-Wusheng-Gedou-Sai-ESP32-FangAn/blob/main/docs/releases/{title}.md\n\n"
-                f"Arduino 主入口位于 {base.name}/{base.name}.ino；请保留全部同级模块。\n")
+                f"Arduino 主入口位于 {base.name}/{item.get('arduinoSketch', base.name + '.ino')}；请保留全部同级模块。\n")
         with ZipFile(target, "w", ZIP_DEFLATED) as output:
-            for path in files:
-                output.write(path, f"{base.name}/{path.relative_to(base).as_posix()}")
-            output.writestr("归档说明.md", note)
-            output.writestr("SOURCE_SHA256.json", json.dumps(module_hashes, indent=2, ensure_ascii=False) + "\n")
+            for path in sorted(files):
+                write_entry(output, f"{base.name}/{path.relative_to(base).as_posix()}", path.read_bytes())
+            write_entry(output, "归档说明.md", note.encode("utf-8"))
+            write_entry(output, "SOURCE_SHA256.json", (json.dumps(module_hashes, indent=2, ensure_ascii=False) + "\n").encode("utf-8"))
         with ZipFile(target) as check:
             assert check.testzip() is None
             for name, digest in module_hashes.items():

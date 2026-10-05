@@ -8,6 +8,8 @@ CombatBot · Arduino 交付目录编译验证
 """
 from pathlib import Path
 import argparse, configparser, shutil, subprocess
+from release_evidence import dependency_manifest
+from verify_arduino_cli import verify_export
 
 parser = argparse.ArgumentParser(description="编译导出的 Arduino 草图，不上传固件。")
 parser.add_argument("--pio", help="已有 PlatformIO 可执行程序路径；未指定时从 PATH 查找")
@@ -15,6 +17,8 @@ args = parser.parse_args()
 
 ROOT = Path(__file__).resolve().parents[1]
 SKETCH = ROOT.parent / "CombatBotArduino"
+verify_export()
+dependency_manifest()
 for path in (ROOT / "src").glob("*.cpp"):
     delivered = SKETCH / ("CombatBotArduino.ino" if path.name == "main.cpp" else path.name)
     expected = path.read_bytes()
@@ -43,4 +47,12 @@ pio = ROOT / ".tools" / "venv" / "Scripts" / "platformio.exe"
 command = args.pio or (str(pio) if pio.exists() else shutil.which("platformio"))
 if not command: raise RuntimeError("Install PlatformIO before running this verification")
 print("Export equality OK; building delivered CombatBotArduino.ino", flush=True)
-raise SystemExit(subprocess.call([command,"run","-d",str(project),"-e","esp32s3","-j","4"]))
+try:
+    result = subprocess.call([command,"run","-d",str(project),"-e","esp32s3","-j","4"])
+finally:
+    # PIO会在草图旁生成同名 .ino.cpp；仅清理此已知产物，不能让它参与下一次IDE编译。
+    generated = (SKETCH / "CombatBotArduino.ino.cpp").resolve()
+    if generated.parent != SKETCH.resolve():
+        raise RuntimeError("PIO预处理产物路径越界")
+    generated.unlink(missing_ok=True)
+raise SystemExit(result)

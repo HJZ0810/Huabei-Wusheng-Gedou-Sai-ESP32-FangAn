@@ -1,0 +1,25 @@
+[Unit]
+Description=CombatBot V4 HTTPS/WSS relay backend
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=combatbot
+Group=combatbot
+WorkingDirectory=/opt/combatbot/current/server
+EnvironmentFile=/etc/combatbot/relay.env
+ExecStart=/usr/bin/node src/main.mjs
+Restart=on-failure
+RestartSec=3
+TimeoutStopSec=15
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadOnlyPaths=/opt/combatbot /etc/combatbot
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

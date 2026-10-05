@@ -36,11 +36,15 @@ SemaphoreHandle_t configMutex=nullptr;
  X(maxSpeed) X(defaultSpeed) X(acceleration) X(deceleration) X(maxYawRate) X(turnAcceleration) X(turnDeceleration) \
  X(fusionAlpha) X(leftTrim) X(rightTrim) X(pwmDeadzone) X(irThresholdCm) \
  X(batteryLowV) X(batteryScale) X(gyroBias) X(servoDownDeg) X(servoUpDeg) \
- X(irSlowdownCm) X(irScale) X(impactThresholdG)
+ X(irSlowdownCm) X(irScale) X(impactThresholdG) \
+ X(arenaOuterCm) X(arenaPlatformCm) X(arenaBodyLengthCm) X(arenaBodyWidthCm) X(arenaMarginCm) \
+ X(arenaNavSpeed) X(arenaSearchSpeed) X(arenaPushSpeed) X(arenaClimbSpeed) \
+ X(arenaEntryX) X(arenaEntryY) X(arenaEntryHeading)
 #define BOOL_FIELDS(X) X(staEnabled) X(grayActiveHigh) X(e18ActiveHigh) X(safetyEnabled) X(coastOnLoss) \
- X(edgeProtection) X(irProtection) X(tiltProtection) X(irFailSafeStop)
-#define INT_FIELDS(X) X(irCount) X(batteryChannel) X(gyroAxis) X(gyroSign) X(servoMinUs) X(servoMaxUs) X(servoCenterUs) X(digitalDebounceMs) X(telemetryHz)
-#define STRING_FIELDS(X) X(apSsid) X(apPass) X(staSsid) X(staPass) X(hostname)
+ X(edgeProtection) X(irProtection) X(tiltProtection) X(irFailSafeStop) \
+ X(cloudEnabled) X(arenaEnabled) X(arenaCalibrated) X(arenaClimbEnabled)
+#define INT_FIELDS(X) X(irCount) X(batteryChannel) X(gyroAxis) X(gyroSign) X(servoMinUs) X(servoMaxUs) X(servoCenterUs) X(digitalDebounceMs) X(telemetryHz) X(cloudPort) X(arenaTaskMs) X(arenaClimbMs)
+#define STRING_FIELDS(X) X(apSsid) X(apPass) X(staSsid) X(staPass) X(hostname) X(cloudHost) X(cloudPath) X(cloudDeviceId) X(cloudDeviceKey)
 
 // ============================================================================
 // 基础校验 · 将类型、字符串与范围错误转换为可直接展示的字段提示
@@ -114,6 +118,36 @@ bool validate(const Config& c,String& e) {
   for(size_t i=0;i<n;++i) if(!isalnum((unsigned char)c.hostname[i]) && c.hostname[i]!='-')
     return fail(e,"hostname","仅允许ASCII字母、数字和连字符");
 #define CHECK(field,lo,hi) if(!range(c.field,lo,hi,#field,e)) return false
+  CHECK(cloudPort,1,65535);
+  for(const char* p=c.cloudHost;*p;++p) if(!isalnum((unsigned char)*p) && *p!='.' && *p!='-')
+    return fail(e,"cloudHost","仅允许DNS主机名或IP，不含协议与端口");
+  if(c.cloudPath[0]!='/' || strstr(c.cloudPath,"..")) return fail(e,"cloudPath","须为绝对路径，不能含上级目录");
+  for(const char* p=c.cloudPath;*p;++p) if((unsigned char)*p<=32 || *p=='?' || *p=='#') return fail(e,"cloudPath","不能含空白、查询串或片段");
+  for(const char* p=c.cloudDeviceId;*p;++p) if(!isalnum((unsigned char)*p) && *p!='-' && *p!='_') return fail(e,"cloudDeviceId","仅允许字母、数字、连字符、下划线");
+  for(const char* p=c.cloudDeviceKey;*p;++p) if(!isalnum((unsigned char)*p) && *p!='-' && *p!='_') return fail(e,"cloudDeviceKey","密钥格式非法");
+  if(c.cloudEnabled && (!c.staEnabled || !c.cloudHost[0] || !c.cloudDeviceId[0] || strlen(c.cloudDeviceKey)<32))
+    return fail(e,"cloudEnabled","需先启用STA并填写主机、设备编号及至少32字节独立密钥");
+  if(c.cloudEnabled && (!strstr(c.cloudCaPem,"-----BEGIN CERTIFICATE-----") || !strstr(c.cloudCaPem,"-----END CERTIFICATE-----")))
+    return fail(e,"cloudCaPem","需提供有效CA PEM，禁止跳过证书校验");
+  CHECK(arenaOuterCm,200,1000); CHECK(arenaPlatformCm,100,c.arenaOuterCm-40);
+  CHECK(arenaBodyLengthCm,10,80); CHECK(arenaBodyWidthCm,10,80); CHECK(arenaMarginCm,2,30);
+  CHECK(arenaNavSpeed,1,80); CHECK(arenaSearchSpeed,1,80);
+  CHECK(arenaPushSpeed,1,80); CHECK(arenaClimbSpeed,1,80);
+  CHECK(arenaEntryX,-c.arenaOuterCm/2,c.arenaOuterCm/2); CHECK(arenaEntryY,-c.arenaOuterCm/2,c.arenaOuterCm/2);
+  CHECK(arenaEntryHeading,-360,360); CHECK(arenaTaskMs,1000,600000); CHECK(arenaClimbMs,1000,10000);
+  if(c.arenaEnabled && c.arenaBodyWidthCm+2*c.arenaMarginCm>= (c.arenaOuterCm-c.arenaPlatformCm)/2)
+    return fail(e,"arenaBodyWidthCm","车宽和安全余量不能覆盖整个外圈通道");
+  if(c.arenaEnabled) {
+    const float clearance=0.5f*sqrtf(c.arenaBodyLengthCm*c.arenaBodyLengthCm+c.arenaBodyWidthCm*c.arenaBodyWidthCm)+c.arenaMarginCm+2;
+    if(c.arenaOuterCm/2-clearance<=c.arenaPlatformCm/2+clearance+1)
+      return fail(e,"arenaMarginCm","车身外包络、误差与安全余量无法通过外圈");
+    if(c.maxYawRate<5) return fail(e,"maxYawRate","自主控制至少需要5度每秒转向预算");
+    const float heading=fmodf(c.arenaEntryHeading+360,360);
+    if(fabsf(heading/90-roundf(heading/90))>0.001f) return fail(e,"arenaEntryHeading","登台入口仅支持四个正交方向（90度整数倍）");
+    const float offset=(heading==0 || heading==180)?c.arenaEntryY:c.arenaEntryX;
+    if(fabsf(offset)+clearance+12>=c.arenaPlatformCm/2)
+      return fail(e,"arenaEntryX/Y","入口须离台角留足车身和对准余量");
+  }
   // 尺寸为 mm；速度为 cm/s；加减速度为 cm/s²；角速度为 °/s。
   CHECK(wheelMm,20,500); CHECK(wheelbaseMm,30,1000); CHECK(trackMm,50,1000);
   CHECK(ppr,1,10000); CHECK(pulsesPerCm,0,10000); CHECK(turnFactor,0.1f,10);
@@ -192,7 +226,7 @@ bool patch(JsonVariantConst input,Config& c,String& e) {
 #define APPLY_BOOL(field) if(!strcmp(key,#field)) { if(!v.is<bool>()) return fail(e,#field,"必须是布尔值"); c.field=v.as<bool>(); continue; }
     BOOL_FIELDS(APPLY_BOOL)
 #undef APPLY_BOOL
-#define APPLY_INT(field) if(!strcmp(key,#field)) { float f=0; if(!number(v,f,#field,e)) return false; if(floorf(f)!=f || f<-100000 || f>100000) return fail(e,#field,"必须是整数"); c.field=(int)f; continue; }
+#define APPLY_INT(field) if(!strcmp(key,#field)) { float f=0; if(!number(v,f,#field,e)) return false; if(floorf(f)!=f || f<-1000000 || f>1000000) return fail(e,#field,"必须是整数"); c.field=(int)f; continue; }
     INT_FIELDS(APPLY_INT)
 #undef APPLY_INT
 #define APPLY_STRING(field) if(!strcmp(key,#field)) { if(!copyString(v,c.field,sizeof(c.field),#field,e)) return false; continue; }
@@ -214,7 +248,14 @@ bool patch(JsonVariantConst input,Config& c,String& e) {
     if(!strcmp(key,"speedPid")) { if(!patchGains(v,c.speedPid,key,e)) return false; continue; }
     if(!strcmp(key,"positionPid")) { if(!patchGains(v,c.positionPid,key,e)) return false; continue; }
     if(!strcmp(key,"headingPid")) { if(!patchGains(v,c.headingPid,key,e)) return false; continue; }
-    if(!strcmp(key,"hasApPass") || !strcmp(key,"hasStaPass")) continue;
+    if(!strcmp(key,"cloudCaPem")) {
+      if(!v.is<const char*>()) return fail(e,key,"须为PEM字符串");
+      JsonString pem=v.as<JsonString>();
+      if(pem.size()>=sizeof(c.cloudCaPem) || strlen(pem.c_str())!=pem.size()) return fail(e,key,"长度超限或含零字符");
+      for(size_t i=0;i<pem.size();++i) if(((unsigned char)pem.c_str()[i]<32 && pem.c_str()[i]!='\r' && pem.c_str()[i]!='\n') || pem.c_str()[i]==127) return fail(e,key,"含非法控制字符");
+      memcpy(c.cloudCaPem,pem.c_str(),pem.size()+1); continue;
+    }
+    if(!strcmp(key,"hasApPass") || !strcmp(key,"hasStaPass") || !strcmp(key,"hasCloudDeviceKey")) continue;
     return fail(e,key,"未知配置字段");
   }
   return validate(c,e);
@@ -237,7 +278,8 @@ bool saveLocked(const Config& c,String& e) {
   if(!prefs.begin("combatfusion",false)) return fail(e,"NVS","无法打开存储");
   size_t written=prefs.putString("config",text); prefs.end();
   if(written!=text.length()) return fail(e,"NVS","写入失败，当前配置保留");
-  live=c; e=""; return true;
+  const uint32_t revision=live.revision+1;
+  live=c; live.revision=revision; e=""; return true;
 }
 }
 
@@ -284,6 +326,9 @@ void configJson(const Config& c,JsonObject o,bool secrets) {
   o["apSsid"]=c.apSsid; o["staSsid"]=c.staSsid; o["hostname"]=c.hostname;
   o["apPass"]=secrets?c.apPass:""; o["staPass"]=secrets?c.staPass:"";
   o["hasApPass"]=bool(c.apPass[0]); o["hasStaPass"]=bool(c.staPass[0]);
+  o["cloudHost"]=c.cloudHost; o["cloudPort"]=c.cloudPort; o["cloudPath"]=c.cloudPath;
+  o["cloudDeviceId"]=c.cloudDeviceId; o["cloudDeviceKey"]=secrets?c.cloudDeviceKey:"";
+  o["cloudCaPem"]=c.cloudCaPem; o["hasCloudDeviceKey"]=bool(c.cloudDeviceKey[0]);
   o["heartbeatMs"]=c.heartbeatMs;
   o["stallTimeoutMs"]=c.stallTimeoutMs;
   JsonArray a=o["invert"].to<JsonArray>(); for(bool v:c.invert) a.add(v);
@@ -323,6 +368,7 @@ bool configClearWifi(String& error) {
   xSemaphoreTake(configMutex,portMAX_DELAY); Config c=live, defaults;
   memcpy(c.apSsid,defaults.apSsid,sizeof(c.apSsid)); memcpy(c.apPass,defaults.apPass,sizeof(c.apPass));
   c.staSsid[0]=0; c.staPass[0]=0; c.staEnabled=false;
+  c.cloudEnabled=false;
   memcpy(c.hostname,defaults.hostname,sizeof(c.hostname));
   bool ok=saveLocked(c,error); xSemaphoreGive(configMutex); return ok;
 }

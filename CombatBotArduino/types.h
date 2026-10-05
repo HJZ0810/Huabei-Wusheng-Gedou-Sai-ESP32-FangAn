@@ -11,10 +11,12 @@
 #pragma once
 #include <stdint.h>
 #include <stddef.h>
+#include "arena_model.h"
 
 namespace bot {
 /** @brief 固件发行版本；用于启动日志与握手识别，不作为配置版本或账户凭据。 */
-constexpr const char* FirmwareVersion="3.0.0";
+constexpr const char* FirmwareVersion="4.0.0";
+constexpr uint32_t CloudOwner=0xFFFFFFFEu, AutonomousOwner=0xFFFFFFFDu;
 // ============================================================================
 // 控制参数 · PID 系数与车辆配置
 // ============================================================================
@@ -30,12 +32,27 @@ struct Gains {
 };
 /** @brief 保存车辆完整配置；默认值用于首次启动及恢复出厂参数。 */
 struct Config {
+  uint32_t revision=1; ///< 内存发布代次，不序列化；用于控制任务识别配置切换。
   // ============================================================================
   // 网络寻址 · 字符数组容量包含结尾的空字符
   // ============================================================================
   char apSsid[33]="CombatBot-AP", apPass[65]="12345678";
   char staSsid[33]="", staPass[65]="", hostname[33]="combatbot";
   bool staEnabled=false; ///< 是否尝试连接已配置的路由器；AP 由网络模块同时维护。
+
+  // 云端只建立主动 WSS 出站连接；凭据与 WiFi 密码相互独立。
+  bool cloudEnabled=false;
+  char cloudHost[128]="combatbot.luo-jin-ai.com", cloudPath[128]="/ws/device";
+  char cloudDeviceId[49]="combatbot-01", cloudDeviceKey[129]="";
+  char cloudCaPem[2048]=""; ///< 公共 CA PEM；为空时拒绝联网，绝不降级证书校验。
+  int cloudPort=443;
+
+  // 自主模式在安装校准前禁止启动；尺寸是设计起点，须以机械外包络实测更新。
+  bool arenaEnabled=false, arenaCalibrated=false, arenaClimbEnabled=false;
+  float arenaOuterCm=380, arenaPlatformCm=240, arenaBodyLengthCm=26, arenaBodyWidthCm=24;
+  float arenaMarginCm=8, arenaNavSpeed=12, arenaSearchSpeed=12, arenaPushSpeed=18, arenaClimbSpeed=20;
+  float arenaEntryX=0, arenaEntryY=-150, arenaEntryHeading=90;
+  int arenaTaskMs=180000, arenaClimbMs=6000;
 
   // ============================================================================
   // 机械尺寸与运动模型 · 长度配置以 mm 表示，运动控制以 cm 表示
@@ -100,6 +117,8 @@ struct Sensors {
   float batteryV=0; ///< 还原后的电池端电压，单位 V；仅在 batteryValid 为真时有效。
   // 本次采集调用的 millis() 时间；各模拟/数字通道的缓存不是同时采样。
   uint32_t sampledMs=0;
+  uint32_t digitalMs=0, imuMs=0, irMs[12]={0}; ///< 实际成功采样时刻，不能用汇总时刻替代。
+  bool groundRaw[3]={false}; ///< E18 原始归一状态：true 表示见地，危险置位不等待慢速去抖。
 };
 
 // ============================================================================
@@ -107,11 +126,16 @@ struct Sensors {
 // ============================================================================
 
 /** @brief 控制器支持的指令类型；标定开始与标定参数应用使用不同入口。 */
-enum class CommandType { Heartbeat, Drive, Move, Turn, Stop, Estop, Unlock, Servo, ImuCal, OdoCalStart, TurnCalStart };
+enum class CommandType { Heartbeat, Drive, Move, Turn, Stop, Estop, Unlock, Servo, ImuCal, OdoCalStart, TurnCalStart, Pose, Navigate, Battle, Climb, Takeover };
 // client 为 WebSocket 连接编号；它用于控制权协调，不构成身份认证凭据。
 // x/y 为 [-1,1] 摇杆输入（右 / 前为正），speed 为 cm/s。
 // value 随类型表示距离 cm、转角 ° 或舵机归一位置 [0,1]；receivedMs 为接收时间 ms。
-struct Command { CommandType type=CommandType::Stop; uint32_t client=0; float x=0,y=0,speed=40,value=0; uint32_t receivedMs=0; };
+struct Command {
+  CommandType type=CommandType::Stop; uint32_t client=0;
+  float x=0,y=0,speed=40,value=0; uint32_t receivedMs=0;
+  bool expires=false; uint32_t expiresAt=0; ///< 云入口签发的设备时钟期限；入队后不得重算。
+  bool upper=false; ///< Pose：人工明确设置所在层面，不能仅由坐标推断。
+};
 
 // ============================================================================
 // 运行遥测与结果 · 控制器内部快照，网页协议由网络模块转换
@@ -119,6 +143,7 @@ struct Command { CommandType type=CommandType::Stop; uint32_t client=0; float x=
 
 /** @brief 保存控制器当前反馈与最近一次完成结果，供快照接口及网页读取。 */
 struct Telemetry {
+  arena::Decision arena;
   // rpm、wheelSpeed、pulses、pwm 均沿用 LF / RF / LR / RR 轮序。
   float rpm[4]={0}, wheelSpeed[4]={0}, speed=0, yaw=0, odo=0, progress=0; ///< rpm、cm/s、cm/s、°、cm、[0,1] 完成比例。
   int64_t pulses[4]={0}; ///< 有符号累计 FG 脉冲；方向来自驱动指令记忆，单相 FG 不测外力方向。

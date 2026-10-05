@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 470" width="900" height="470" font-family="Segoe UI, Microsoft YaHei, PingFang SC, sans-serif">
+  <rect width="900" height="470" fill="#0B0F14" rx="10"/>
+  <text x="24" y="34" fill="#E6EDF3" font-size="17" font-weight="700">本项目 7 个第三方库的依赖关系</text>
+  <text x="24" y="58" fill="#8B98A5" font-size="12.5">下面画「必须手动装」的；画「自动带出」的不用管，库管理器会弹窗提示一并安装</text>
+
+  <!-- 列 1：Web 通道 -->
+  <rect x="30" y="82" width="270" height="150" rx="10" fill="#0E1A22" stroke="#22D3EE" stroke-width="1.6"/>
+  <text x="48" y="108" fill="#22D3EE" font-size="13.5" font-weight="700">Web 服务（本项目核心）</text>
+
+  <rect x="48" y="122" width="234" height="42" rx="8" fill="#131A22" stroke="#34D399" stroke-width="1.6"/>
+  <text x="62" y="141" fill="#E6EDF3" font-size="13.5" font-weight="600">ESPAsyncWebServer</text>
+  <text x="62" y="158" fill="#34D399" font-size="11.5">必须选作者 ESP32Async（v3.x）</text>
+
+  <path d="M165 168 L165 186" stroke="#8B98A5" stroke-width="1.6" marker-end="url(#ar)"/>
+  <defs>
+    <marker id="ar" markerWidth="8" markerHeight="8" refX="6.5" refY="4" orient="auto">
+      <path d="M0 0 L8 4 L0 8 z" fill="#8B98A5"/>
+    </marker>
+  </defs>
+
+  <rect x="48" y="190" width="234" height="34" rx="8" fill="#131A22" stroke="#34D399" stroke-width="1.6"/>
+  <text x="62" y="212" fill="#E6EDF3" font-size="13">AsyncTCP　<tspan fill="#34D399" font-size="11.5">同时手动装</tspan></text>
+
+  <!-- 列 2：传感器通道 -->
+  <rect x="315" y="82" width="270" height="238" rx="10" fill="#0E1A22" stroke="#22D3EE" stroke-width="1.6"/>
+  <text x="333" y="108" fill="#22D3EE" font-size="13.5" font-weight="700">传感器驱动（手动装 4 个）</text>
+
+  <g fill="#E6EDF3" font-size="12.5">
+    <rect x="333" y="122" width="234" height="30" rx="8" fill="#131A22"/><text x="346" y="142">Adafruit MPU6050</text>
+    <rect x="333" y="158" width="234" height="30" rx="8" fill="#131A22"/><text x="346" y="178">Adafruit ADXL345</text>
+    <rect x="333" y="194" width="234" height="30" rx="8" fill="#131A22"/><text x="346" y="214">Adafruit Unified Sensor</text>
+    <rect x="333" y="230" width="234" height="30" rx="8" fill="#131A22"/><text x="346" y="250">Adafruit MCP23017 Arduino Library</text>
+  </g>
+  <path d="M450 264 L450 282" stroke="#8B98A5" stroke-width="1.6" marker-end="url(#ar)"/>
+  <rect x="333" y="286" width="234" height="30" rx="8" fill="#161A10" stroke="#8B98A5" stroke-dasharray="4 3"/>
+  <text x="346" y="306" fill="#8B98A5" font-size="12.5">Adafruit BusIO（自动带出）</text>
+
+  <!-- 列 3：JSON -->
+  <rect x="600" y="82" width="270" height="112" rx="10" fill="#0E1A22" stroke="#22D3EE" stroke-width="1.6"/>
+  <text x="618" y="108" fill="#22D3EE" font-size="13.5" font-weight="700">配置读写（手动装 1 个）</text>
+  <rect x="618" y="122" width="234" height="30" rx="8" fill="#131A22" stroke="#34D399" stroke-width="1.6"/>
+  <text x="631" y="142" fill="#E6EDF3" font-size="12.5">ArduinoJson　<tspan fill="#34D399" font-size="11.5">选 7.x</tspan></text>
+  <text x="618" y="176" fill="#8B98A5" font-size="11.5">无其它依赖，装完即用</text>
+
+  <!-- 结论区 -->
+  <rect x="30" y="336" width="840" height="110" rx="10" fill="#1A1508" stroke="#FF8A3D" stroke-width="1.6"/>
+  <text x="50" y="364" fill="#FF8A3D" font-size="14" font-weight="700">为什么必须用 ESP32Async 那一版？</text>
+  <text x="50" y="390" fill="#E8D9C0" font-size="12.5">你装的是 esp32 3.3.12（Arduino core 3.x）。老的 me-no-dev 版 ESPAsyncWebServer 1.2.x 是基于 core 2.x 的</text>
+  <text x="50" y="410" fill="#E8D9C0" font-size="12.5">lwIP / FreeRTOS 接口写的，在 core 3.x 上会报一大堆 AsyncTCP、lwip 相关错误，且无法通过改代码绕过。</text>
+  <text x="50" y="432" fill="#FFD7A8" font-size="12.5">库管理器的搜索框里会同时出现两三条同名结果 —— 认准作者是 <tspan font-weight="700">ESP32Async</tspan>、版本是 <tspan font-weight="700">3.x</tspan> 的那一条。</text>
+</svg>

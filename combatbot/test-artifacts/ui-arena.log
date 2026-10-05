@@ -1,0 +1,6 @@
+Command: "C:\Program Files\nodejs\node.exe" test/ui_arena_contract.mjs
+PASS: AP / map selection / explicit navigation / autonomous lifecycle / takeover / manual loss-stop / pose / unclamped estimate / credential edit semantics
+PASS: single vehicle / capability fragment removal / HttpOnly session exchange / explicit claim / lease seq permit / heartbeat / sole device binding / local-only admin / release / reconnect / stale socket / unauthorized entry
+PASS: same-page control link / synchronous fragment removal / prior lease release / stale socket isolation / malformed and duplicate key rejection / stale HTTP response isolation
+
+[exit code: 0]

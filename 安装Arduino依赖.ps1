@@ -12,7 +12,9 @@ $deliveryDirectory = [IO.Path]::GetFullPath($PSScriptRoot)
 $operationId = (Get-Date -Format 'yyyyMMdd-HHmmss') + '-' + [Guid]::NewGuid().ToString('N').Substring(0,8)
 $backupDirectory = Join-Path $deliveryDirectory "Arduino旧库备份\$operationId"
 $stagingDirectory = Join-Path $deliveryDirectory ".arduino-dependency-work\$operationId"
-$libraryVersions = [ordered]@{ArduinoJson='7.3.1'; AsyncTCP='3.3.2'; ESPAsyncWebServer='3.6.0'}
+$dependencySpec = Get-Content -LiteralPath (Join-Path $deliveryDirectory '依赖版本.json') -Raw | ConvertFrom-Json
+$libraryVersions = [ordered]@{}
+foreach ($dependency in $dependencySpec.libraries) { $libraryVersions[$dependency.name] = $dependency.version }
 New-Item -ItemType Directory -Path $stagingDirectory -Force | Out-Null
 New-Item -ItemType Directory -Path $libraryDirectory -Force | Out-Null
 
@@ -23,6 +25,13 @@ foreach ($libraryName in $libraryVersions.Keys) {
   Expand-Archive -LiteralPath $zipPath -DestinationPath $stagingDirectory
   $properties = Get-Content -LiteralPath (Join-Path $stagingDirectory "$libraryName\library.properties")
   if ($properties -notcontains "version=$version") { throw "依赖版本不符：$libraryName" }
+  $specification = $dependencySpec.libraries | Where-Object { $_.name -eq $libraryName }
+  foreach ($patchedFile in $specification.patch.PSObject.Properties) {
+    $patchedPath = Join-Path $stagingDirectory "$libraryName\$($patchedFile.Name)"
+    if ((Get-FileHash -LiteralPath $patchedPath -Algorithm SHA256).Hash.ToLowerInvariant() -ne $patchedFile.Value.patched) {
+      throw "补丁库哈希不符：$libraryName/$($patchedFile.Name)"
+    }
+  }
 }
 
 # 2. 按库头文件识别重复安装目录，避免不同目录名的旧版库继续参与 Arduino 选库。
@@ -30,6 +39,7 @@ $oldLibraries = @(Get-ChildItem -LiteralPath $libraryDirectory -Directory | Wher
   (Test-Path -LiteralPath (Join-Path $_.FullName 'src\ArduinoJson.h')) -or
   (Test-Path -LiteralPath (Join-Path $_.FullName 'src\AsyncTCP.h')) -or
   (Test-Path -LiteralPath (Join-Path $_.FullName 'src\ESPAsyncWebServer.h')) -or
+  (Test-Path -LiteralPath (Join-Path $_.FullName 'src\WebSocketsClient.h')) -or
   ($libraryVersions.Contains($_.Name))
 })
 if ($oldLibraries.Count -gt 0) { New-Item -ItemType Directory -Path $backupDirectory -Force | Out-Null }

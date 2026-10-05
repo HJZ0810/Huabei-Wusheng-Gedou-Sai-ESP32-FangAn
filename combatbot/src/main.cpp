@@ -21,6 +21,7 @@
 #include "controller.h"
 #include "wifi_mgr.h"
 #include "web.h"
+#include "cloud_client.h"
 
 // ============================================================================
 // 启动阶段 · 只建立初始状态，不提交任何运动动作
@@ -44,6 +45,7 @@ void setup() {
   bot::controllerBegin();
   bot::wifiBegin(config);
   bot::webBegin();
+  bot::cloudBegin();
   Serial.printf("CombatBot V%s ready; AP fallback: http://192.168.4.1\n",bot::FirmwareVersion);
 }
 

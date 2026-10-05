@@ -22,7 +22,7 @@ try {
   & "$artifactDirectory/test_motion.exe"
   if ($LASTEXITCODE -ne 0) { throw 'Motion tests failed.' }
   # 3. 控制器：直接包含生产实现，以确定性替身推进各安全与标定场景。
-  & $compilerCommand.Source -std=c++17 -Wall -Wextra -Werror -Itest/host -Iinclude test/test_controller.cpp -o "$artifactDirectory/test_controller.exe"
+  & $compilerCommand.Source -std=c++17 -Wall -Wextra -Werror -Itest/host -Iinclude test/test_controller.cpp src/arena_model.cpp -o "$artifactDirectory/test_controller.exe"
   if ($LASTEXITCODE -ne 0) { throw 'Controller test compilation failed.' }
   & "$artifactDirectory/test_controller.exe"
   if ($LASTEXITCODE -ne 0) { throw 'Controller tests failed.' }

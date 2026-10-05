@@ -1,0 +1,12 @@
+node_modules/
+.env
+.env.*
+!.env.example
+config.private.json
+*.key
+*.pem
+*.device-key
+*.control-key
+.test-artifacts/
+.test-tools/
+logs/

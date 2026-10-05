@@ -1,0 +1,145 @@
+Command: D:\PRO\claw\Codexlinshi\2026-10-04-23-19-00\combatbot\.tools\venv\Scripts\python.exe scripts/verify_arduino.py --pio D:\PRO\claw\Codexlinshi\2026-10-04-23-19-00\combatbot\.tools\venv\Scripts\platformio.exe
+Export equality OK; building delivered CombatBotArduino.ino
+Processing esp32s3 (platform: espressif32@6.9.0; board: esp32-s3-devkitc-1; framework: arduino)
+--------------------------------------------------------------------------------
+Verbose mode can be enabled via `-v, --verbose` option
+CONFIGURATION: https://docs.platformio.org/page/boards/espressif32/esp32-s3-devkitc-1.html
+PLATFORM: Espressif 32 (6.9.0) > Espressif ESP32-S3-DevKitC-1-N8 (8 MB QD, No PSRAM)
+HARDWARE: ESP32S3 240MHz, 320KB RAM, 3MB Flash
+DEBUG: Current (esp-builtin) On-board (esp-builtin) External (cmsis-dap, esp-bridge, esp-prog, iot-bus-jtag, jlink, minimodule, olimex-arm-usb-ocd, olimex-arm-usb-ocd-h, olimex-arm-usb-tiny-h, olimex-jtag-tiny, tumpa)
+PACKAGES: 
+ - framework-arduinoespressif32 @ 3.20017.241212+sha.dcc1105b 
+ - tool-esptoolpy @ 1.40501.0 (4.5.1) 
+ - toolchain-riscv32-esp @ 8.4.0+2021r2-patch5 
+ - toolchain-xtensa-esp32s3 @ 8.4.0+2021r2-patch5
+Converting CombatBotArduino.ino
+LDF: Library Dependency Finder -> https://bit.ly/configure-pio-ldf
+LDF Modes: Finder ~ chain, Compatibility ~ soft
+Found 36 compatible libraries
+Scanning dependencies...
+Dependency Graph
+|-- ArduinoJson @ 7.3.1
+|-- AsyncTCP @ 3.3.2
+|-- ESPAsyncWebServer @ 3.6.0
+|-- Preferences @ 2.0.0
+|-- Wire @ 2.0.0
+|-- DNSServer @ 2.0.0
+|-- ESPmDNS @ 2.0.0
+|-- WiFi @ 2.0.0
+Building in release mode
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\src\CombatBotArduino.ino.cpp.o
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\src\config.cpp.o
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\src\controller.cpp.o
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\src\imu.cpp.o
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\src\motor.cpp.o
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\src\sensors.cpp.o
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\src\web.cpp.o
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\src\wifi_mgr.cpp.o
+Building D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\bootloader.bin
+esptool.py v4.5.1
+Creating esp32s3 image...
+Merged 1 ELF section
+Successfully created esp32s3 image.
+Generating partitions D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\partitions.bin
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\lib46a\AsyncTCP\AsyncTCP.cpp.o
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\lib33c\FS\FS.cpp.o
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\lib33c\FS\vfs_api.cpp.o
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\libe4a\WiFi\WiFi.cpp.o
+Archiving D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\lib46a\libAsyncTCP.a
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\libe4a\WiFi\WiFiAP.cpp.o
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\libe4a\WiFi\WiFiClient.cpp.o
+Archiving D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\lib33c\libFS.a
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\libe4a\WiFi\WiFiGeneric.cpp.o
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\libe4a\WiFi\WiFiMulti.cpp.o
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\libe4a\WiFi\WiFiSTA.cpp.o
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\libe4a\WiFi\WiFiScan.cpp.o
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\libe4a\WiFi\WiFiServer.cpp.o
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\libe4a\WiFi\WiFiUdp.cpp.o
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\lib72e\WebServer\Parsing.cpp.o
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\lib72e\WebServer\WebServer.cpp.o
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\lib72e\WebServer\detail\mimetable.cpp.o
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\lib179\ESPAsyncWebServer\AsyncEventSource.cpp.o
+Archiving D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\libe4a\libWiFi.a
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\lib179\ESPAsyncWebServer\AsyncJson.cpp.o
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\lib179\ESPAsyncWebServer\AsyncMessagePack.cpp.o
+Archiving D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\lib72e\libWebServer.a
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\lib179\ESPAsyncWebServer\AsyncWebHeader.cpp.o
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\lib179\ESPAsyncWebServer\AsyncWebSocket.cpp.o
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\lib179\ESPAsyncWebServer\BackPort_SHA1Builder.cpp.o
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\lib179\ESPAsyncWebServer\ChunkPrint.cpp.o
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\lib179\ESPAsyncWebServer\Middleware.cpp.o
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\lib179\ESPAsyncWebServer\WebAuthentication.cpp.o
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\lib179\ESPAsyncWebServer\WebHandlers.cpp.o
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\lib179\ESPAsyncWebServer\WebRequest.cpp.o
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\lib179\ESPAsyncWebServer\WebResponses.cpp.o
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\lib179\ESPAsyncWebServer\WebServer.cpp.o
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\lib07f\Preferences\Preferences.cpp.o
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\lib819\Wire\Wire.cpp.o
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\libac7\DNSServer\DNSServer.cpp.o
+Archiving D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\lib179\libESPAsyncWebServer.a
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\lib7e0\ESPmDNS\ESPmDNS.cpp.o
+Archiving D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\lib07f\libPreferences.a
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\FrameworkArduino\Esp.cpp.o
+Archiving D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\lib819\libWire.a
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\FrameworkArduino\FirmwareMSC.cpp.o
+Archiving D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\libac7\libDNSServer.a
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\FrameworkArduino\FunctionalInterrupt.cpp.o
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\FrameworkArduino\HWCDC.cpp.o
+Archiving D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\lib7e0\libESPmDNS.a
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\FrameworkArduino\HardwareSerial.cpp.o
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\FrameworkArduino\IPAddress.cpp.o
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\FrameworkArduino\IPv6Address.cpp.o
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\FrameworkArduino\MD5Builder.cpp.o
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\FrameworkArduino\Print.cpp.o
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\FrameworkArduino\Stream.cpp.o
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\FrameworkArduino\StreamString.cpp.o
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\FrameworkArduino\Tone.cpp.o
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\FrameworkArduino\USB.cpp.o
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\FrameworkArduino\USBCDC.cpp.o
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\FrameworkArduino\USBMSC.cpp.o
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\FrameworkArduino\WMath.cpp.o
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\FrameworkArduino\WString.cpp.o
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\FrameworkArduino\base64.cpp.o
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\FrameworkArduino\cbuf.cpp.o
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\FrameworkArduino\esp32-hal-adc.c.o
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\FrameworkArduino\esp32-hal-bt.c.o
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\FrameworkArduino\esp32-hal-cpu.c.o
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\FrameworkArduino\esp32-hal-dac.c.o
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\FrameworkArduino\esp32-hal-gpio.c.o
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\FrameworkArduino\esp32-hal-i2c-slave.c.o
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\FrameworkArduino\esp32-hal-i2c.c.o
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\FrameworkArduino\esp32-hal-ledc.c.o
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\FrameworkArduino\esp32-hal-matrix.c.o
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\FrameworkArduino\esp32-hal-misc.c.o
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\FrameworkArduino\esp32-hal-psram.c.o
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\FrameworkArduino\esp32-hal-rgb-led.c.o
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\FrameworkArduino\esp32-hal-rmt.c.o
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\FrameworkArduino\esp32-hal-sigmadelta.c.o
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\FrameworkArduino\esp32-hal-spi.c.o
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\FrameworkArduino\esp32-hal-time.c.o
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\FrameworkArduino\esp32-hal-timer.c.o
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\FrameworkArduino\esp32-hal-tinyusb.c.o
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\FrameworkArduino\esp32-hal-touch.c.o
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\FrameworkArduino\esp32-hal-uart.c.o
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\FrameworkArduino\firmware_msc_fat.c.o
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\FrameworkArduino\libb64\cdecode.c.o
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\FrameworkArduino\libb64\cencode.c.o
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\FrameworkArduino\main.cpp.o
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\FrameworkArduino\stdlib_noniso.c.o
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\FrameworkArduino\wiring_pulse.c.o
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\FrameworkArduino\wiring_shift.c.o
+Archiving D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\libFrameworkArduino.a
+Linking D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\firmware.elf
+Retrieving maximum program size D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\firmware.elf
+Checking size D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\firmware.elf
+Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
+RAM:   [==        ]  15.8% (used 51668 bytes from 327680 bytes)
+Flash: [===       ]  30.1% (used 946613 bytes from 3145728 bytes)
+Building D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\firmware.bin
+esptool.py v4.5.1
+Creating esp32s3 image...
+Merged 2 ELF sections
+Successfully created esp32s3 image.
+======================== [SUCCESS] Took 109.05 seconds ========================
+
+[exit code: 0]

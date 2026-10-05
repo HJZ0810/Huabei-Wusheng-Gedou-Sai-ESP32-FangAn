@@ -109,6 +109,7 @@ void imuRead(Sensors& s,const Config& cfg) {
         if(abs(raw)>=32700) s.accelSaturated=true;
       }
       s.imuOk=true; s.accelOk=true;
+      s.imuMs=millis();
       s.accelSource=1; // MPU 后备量程仅 ±2 g，不能承诺测出高强度冲击。
     } else mpuPresent=false;
   }

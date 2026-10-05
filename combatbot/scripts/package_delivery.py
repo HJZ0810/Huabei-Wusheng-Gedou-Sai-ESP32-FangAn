@@ -7,71 +7,57 @@ CombatBot · 可分发工程包生成
 ============================================================================
 """
 from pathlib import Path
-from zipfile import ZipFile, ZIP_DEFLATED
-import json, hashlib
-from release_evidence import verify_evidence
+from zipfile import ZipFile, ZipInfo, ZIP_DEFLATED
+import json
+from release_evidence import (ROOT, DELIVERY, archive_name, sha, verify_evidence,
+                              dependency_specs, verify_library_archive)
 from verify_arduino_cli import verify_export
 
-# 编译日志不能脱离当前源码使用；先核对完整验证凭据，再写入任何交付产物。
+# 先核对全部源码、补丁依赖和日志；旧V3或单次预编译不能通过此门控。
 evidence = verify_evidence()
 verify_export()
-
-ROOT = Path(__file__).resolve().parents[1]
-DELIVERY = ROOT.parent
-libraries = DELIVERY / "Arduino依赖库"
-libraries.mkdir(exist_ok=True)
-versions = {"ArduinoJson": "7.3.1", "AsyncTCP": "3.3.2", "ESPAsyncWebServer": "3.6.0"}
-# 依赖库保留原目录与许可证，便于通过 Arduino IDE 的 ZIP 库安装入口导入。
-for name, version in versions.items():
-    source = ROOT / ".pio" / "libdeps" / "esp32s3" / name
-    if not source.is_dir():
-        raise FileNotFoundError(source)
-    properties = dict(line.split("=", 1) for line in
-                      (source / "library.properties").read_text(encoding="utf-8").splitlines()
-                      if "=" in line and not line.startswith("#"))
-    if properties.get("version") != version:
-        raise ValueError(f"Library version mismatch: {name}: {properties.get('version')} != {version}")
-    with ZipFile(libraries / f"{name}-{version}.zip", "w", ZIP_DEFLATED) as output:
-        for path in sorted(source.rglob("*")):
-            if path.is_file() and ".git" not in path.parts and path.name != ".piopm":
-                output.write(path, Path(name) / path.relative_to(source))
-manifest = {}
-# 清单使用正斜线，与 ZIP 内的路径格式一致，方便跨平台校验。
-sketch = DELIVERY / "CombatBotArduino"
-for path in sorted(sketch.iterdir()):
-    if path.is_file():
-        manifest[path.relative_to(DELIVERY).as_posix()] = hashlib.sha256(path.read_bytes()).hexdigest()
-(DELIVERY / "源码SHA256.json").write_text(json.dumps(manifest, indent=2, ensure_ascii=False)+"\n", encoding="utf-8")
-archive = DELIVERY / "CombatBot_V3.0_Arduino完整工程.zip"
-build_logs = {
-    "ArduinoESP32-2.0.17.log": ROOT / "test-artifacts" / "core2-compatibility.log",
-    "ArduinoESP32-3.3.12.log": ROOT / "test-artifacts" / "ide-core3-default.log",
-}
-# 双版本验证未完成时拒绝生成最终包，避免把仍在构建中的目录提前交付。
-if "[SUCCESS]" not in build_logs["ArduinoESP32-2.0.17.log"].read_text(encoding="utf-8-sig"):
-    raise RuntimeError("Arduino ESP32 2.0.17 build has not passed")
-if not build_logs["ArduinoESP32-3.3.12.log"].read_text(encoding="utf-8").rstrip().endswith("[exit code: 0]"):
-    raise RuntimeError("Native Arduino ESP32 3.3.12 build has not passed")
-with ZipFile(archive,"w",ZIP_DEFLATED) as output:
-    for base in (sketch,libraries):
-        for path in sorted(base.rglob("*")):
-            if path.is_file(): output.write(path,path.relative_to(DELIVERY))
-    for name in ("README.md","验收与验证.md","注释风格规范.md","源码SHA256.json","安装Arduino依赖.ps1",
-                 "融合说明与参数表.md","新手安装与接线.md","CHANGELOG.md","VERSION","LICENSE"):
-        output.write(DELIVERY/name,name)
-    for path in sorted((DELIVERY / "docs").rglob("*")):
-        if path.is_file(): output.write(path,path.relative_to(DELIVERY))
-    output.write(ROOT/"web"/"index.html","网页源码/index.html")
-    for name,path in build_logs.items():
-        output.write(path,Path("验证日志")/name)
-    output.write(ROOT/"test-artifacts"/"release-evidence.json","combatbot/test-artifacts/release-evidence.json")
-    for item in evidence["checks"].values():
-        path = ROOT / item["log"]
-        output.write(path,Path("combatbot")/item["log"])
-    # 维护源码只从白名单目录收集，不递归遍历 .tools/.pio 等构建目录。
-    for sub in ("src","include","scripts","test"):
-        for path in sorted((ROOT/sub).rglob("*")):
-            if path.is_file() and path.suffix not in (".exe",".pyc") and "__pycache__" not in path.parts:
-                output.write(path,Path("combatbot")/path.relative_to(ROOT))
-    output.write(ROOT/"platformio.ini","combatbot/platformio.ini")
-print(f"Packaged {archive.name}: {archive.stat().st_size} bytes")
+files = {}
+for path in sorted((DELIVERY / "CombatBotArduino").iterdir()):
+    files[path.relative_to(DELIVERY).as_posix()] = path
+for name in evidence["sources"]:
+    files[name] = DELIVERY / name
+for spec in dependency_specs():
+    target = DELIVERY / "Arduino依赖库" / f"{spec['name']}-{spec['version']}.zip"
+    verify_library_archive(target, spec, evidence["dependencies"][spec["name"]])
+for name in ("README.md", "验收与验证.md", "注释风格规范.md", "安装Arduino依赖.ps1",
+             "融合说明与参数表.md", "新手安装与接线.md", "CHANGELOG.md", "VERSION", "LICENSE",
+             "依赖版本.json", "server/README.md"):
+    files[name] = DELIVERY / name
+for path in sorted((DELIVERY / "docs").rglob("*")):
+    if path.is_file(): files[path.relative_to(DELIVERY).as_posix()] = path
+files["网页源码/index.html"] = ROOT / "web/index.html"
+files["combatbot/test-artifacts/release-evidence.json"] = ROOT / "test-artifacts/release-evidence.json"
+for item in evidence["checks"].values():
+    files["combatbot/" + item["log"]] = ROOT / item["log"]
+core2 = ROOT / evidence["checks"]["core2"]["log"]
+native = ROOT / evidence["checks"]["core3-native"]["log"]
+if "[SUCCESS]" not in core2.read_text(encoding="utf-8-sig"):
+    raise RuntimeError("core2日志缺少成功标记")
+if not native.read_text(encoding="utf-8").rstrip().endswith("[exit code: 0]"):
+    raise RuntimeError("core3原生日志缺少成功退出标记")
+fqbn = evidence["builds"]["core3"]["fqbn"]
+if "FQBN: " + fqbn + "\n" not in native.read_text(encoding="utf-8"):
+    raise RuntimeError("core3实际FQBN与发布凭据不一致")
+files["验证日志/ArduinoESP32-2.0.17.log"] = DELIVERY / "验证日志" / "ArduinoESP32-2.0.17.log"
+files["验证日志/ArduinoESP32-3.3.12-" + evidence["builds"]["core3"]["buildName"] + ".log"] = (
+    DELIVERY / "验证日志" / f"ArduinoESP32-3.3.12-{evidence['builds']['core3']['buildName']}.log"
+)
+for name, path in files.items():
+    if not path.resolve().is_relative_to(DELIVERY.resolve()):
+        raise RuntimeError(f"交付路径越界：{name}")
+manifest = {name: sha(path.read_bytes()) for name, path in sorted(files.items())}
+manifest_path = DELIVERY / "源码SHA256.json"
+manifest_path.write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+files["源码SHA256.json"] = manifest_path
+archive = DELIVERY / archive_name()
+with ZipFile(archive, "w", ZIP_DEFLATED) as output:
+    for name, path in sorted(files.items()):
+        info = ZipInfo(name, (1980, 1, 1, 0, 0, 0))
+        info.compress_type = ZIP_DEFLATED
+        output.writestr(info, path.read_bytes())
+print(f"Packaged {archive.name}: {archive.stat().st_size} bytes; {len(files)} checked entries")

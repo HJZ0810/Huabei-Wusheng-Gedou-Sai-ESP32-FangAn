@@ -1,0 +1,21 @@
+Command: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.EXE -NoProfile -ExecutionPolicy Bypass -File D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\test\run_motor_tests.ps1 -Compiler D:\bin\g++.exe
+PASS core 2: motor / servo / stop / reversal
+PASS core 2: attach-failure 0
+PASS core 2: attach-failure 1
+PASS core 2: attach-failure 2
+PASS core 2: attach-failure 3
+PASS core 2: attach-failure 4
+PASS core 3: motor / servo / stop / reversal
+PASS core 3: attach-failure 0
+PASS core 3: attach-failure 1
+PASS core 3: attach-failure 2
+PASS core 3: attach-failure 3
+PASS core 3: attach-failure 4
+PASS core 3: write-failure 0
+PASS core 3: write-failure 1
+PASS core 3: write-failure 2
+PASS core 3: write-failure 3
+PASS core 3: write-failure 4
+Motor compatibility and initialization safety regressions passed.
+
+[exit code: 0]

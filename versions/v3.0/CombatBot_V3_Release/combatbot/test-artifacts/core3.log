@@ -1,0 +1,14 @@
+Command: D:\PRO\claw\Codexlinshi\2026-10-04-23-19-00\combatbot\.tools\venv\Scripts\python.exe scripts/verify_arduino_cli.py --jobs 8 --incremental
+交付源码一致；正在编译 D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\CombatBotArduino
+完整日志：D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\test-artifacts\ide-core3-default.log
+Arduino CLI：arduino-cli  Version: 1.5.1 Commit: 01f3d4f2b Date: 2026-06-05T10:22:12Z
+已安装开发板版本：
+ID          Installed Latest Name
+arduino:avr 1.8.8     1.8.8  Arduino AVR Boards
+esp32:esp32 3.3.12    3.3.12 esp32
+Sketch uses 1128500 bytes (86%) of program storage space. Maximum is 1310720 bytes.
+Global variables use 53192 bytes (16%) of dynamic memory, leaving 274488 bytes for local variables. Maximum is 327680 bytes.
+
+编译成功；完整日志：D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\test-artifacts\ide-core3-default.log
+
+[exit code: 0]

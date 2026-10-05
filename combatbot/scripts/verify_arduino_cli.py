@@ -16,6 +16,7 @@ import re
 import shutil
 import subprocess
 import sys
+from release_evidence import create_dependency_archives, prepare_isolated_libraries, dependency_specs
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -25,6 +26,7 @@ ESP32_INDEX = "https://espressif.github.io/arduino-esp32/package_esp32_index.jso
 
 def verify_export() -> None:
     """逐文件校验导出内容；仅允许草图入口的 @file 名称随文件名改变。"""
+    expected_names = set()
     for folder, pattern in (("src", "*.cpp"), ("include", "*.h")):
         for source in (ROOT / folder).glob(pattern):
             expected = source.read_bytes()
@@ -35,8 +37,13 @@ def verify_export() -> None:
                     "@file    main.cpp", "@file    CombatBotArduino.ino", 1
                 ).encode("utf-8")
             target = SKETCH / name
+            expected_names.add(name)
             if not target.is_file() or target.read_bytes() != expected:
                 raise RuntimeError(f"交付源码未同步：{target}，请先运行 export_arduino.py")
+    actual_names = {path.name for path in SKETCH.iterdir() if path.is_file()}
+    if actual_names != expected_names:
+        raise RuntimeError("草图文件集合不匹配，拒绝多余模块/PIO生成文件：" +
+                           str(sorted(actual_names.symmetric_difference(expected_names))))
 
 
 def find_cli(explicit: str | None) -> Path:
@@ -85,14 +92,20 @@ def run_logged(command: list[str], log) -> subprocess.CompletedProcess[str]:
 def main() -> int:
     parser = argparse.ArgumentParser(description="使用 Arduino IDE 原生 CLI 编译交付草图，不上传固件。")
     parser.add_argument("--fqbn", default="esp32:esp32:esp32s3", help="完整开发板标识及可选菜单参数")
-    parser.add_argument("--build-name", default="ide-core3-default", help="产物前缀，仅允许字母、数字、点、横线及下划线")
+    parser.add_argument("--build-name", help="产物前缀；未指定时按实际FQBN选择default或huge-app")
     parser.add_argument("--cli", help="已有 arduino-cli 可执行文件的完整路径")
     parser.add_argument("--jobs", type=int, default=4, help="编译并发数，范围1~32；默认4")
     parser.add_argument("--incremental", action="store_true", help="保留当前构建缓存，由CLI按改动重新编译；默认clean")
-    parser.add_argument("--user-dir", type=Path, help="用户库目录；默认 ~/Documents/Arduino")
+    parser.add_argument("--user-dir", type=Path, help="本工程test-artifacts中的隔离用户库目录；默认按四库内容哈希新建")
     args = parser.parse_args()
     if not 1 <= args.jobs <= 32:
         parser.error("--jobs 必须为1~32")
+    if not args.fqbn.startswith("esp32:esp32:esp32s3"):
+        parser.error("本交付只验证 esp32:esp32:esp32s3 及其菜单参数")
+    if not args.build_name:
+        args.build_name = "ide-core3-huge-app" if "PartitionScheme=huge_app" in args.fqbn else "ide-core3-default"
+    if "PartitionScheme=huge_app" in args.fqbn and args.build_name == "ide-core3-default":
+        parser.error("Huge APP 构建不能使用默认分区日志名称")
     if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]*", args.build_name):
         parser.error("--build-name 必须为安全文件名前缀，不允许路径分隔符")
 
@@ -102,7 +115,8 @@ def main() -> int:
     artifact_dir = ROOT / "test-artifacts"
     artifact_dir.mkdir(parents=True, exist_ok=True)
     data_dir = Path(os.environ.get("LOCALAPPDATA", Path.home() / "AppData/Local")) / "Arduino15"
-    user_dir = (args.user_dir or Path.home() / "Documents/Arduino").expanduser().resolve()
+    create_dependency_archives()
+    user_dir = prepare_isolated_libraries(args.user_dir)
     config_path = artifact_dir / f"{args.build_name}.arduino-cli.yaml"
     log_path = artifact_dir / f"{args.build_name}.log"
     build_path = artifact_dir / f"{args.build_name}-build"
@@ -122,6 +136,8 @@ def main() -> int:
     print(f"完整日志：{log_path}", flush=True)
     with log_path.open("w", encoding="utf-8") as log:
         log.write(f"Sketch: {SKETCH}\nFQBN: {args.fqbn}\nUser libraries: {user_dir}\n")
+        log.write("Dependency versions: " + ", ".join(f"{s['name']}={s['version']}" for s in dependency_specs()) + "\n")
+        log.write("WebSockets: audited CombatBot patch; TLS CA required; timeout units fixed\n")
         version = run_logged(base + ["version"], log)
         cores = run_logged(base + ["core", "list"], log)
         print("Arduino CLI：" + version.stdout.strip(), flush=True)
@@ -129,6 +145,8 @@ def main() -> int:
         if version.returncode or cores.returncode:
             print(f"环境检查失败，详情见：{log_path}", file=sys.stderr)
             return 1
+        if not re.search(r"^esp32:esp32\s+3\.3\.12\s", cores.stdout, re.MULTILINE):
+            raise RuntimeError("本交付需要已安装的 ESP32 core 3.3.12；未修改全局开发板配置")
 
         # 03. 默认 clean；显式增量模式仍由 CLI 跟踪依赖并重编译改动模块，不触发烧录。
         result = run_logged(base + [

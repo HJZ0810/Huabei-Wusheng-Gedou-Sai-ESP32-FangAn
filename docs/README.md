@@ -1,11 +1,18 @@
 # 文档索引
 
-## V3.0 当前资料
+## V4.0 当前资料
+
+V4使用分文件Arduino工程，AP本地与STA公网共用网页；估计地图和有界自主在车端运行。公网入口为 [combatbot.luo-jin-ai.com](https://combatbot.luo-jin-ai.com/)，专属控制链接无需账户或选车，操作前手动接管。独立服务、公网协议替身与专属链接浏览器检查已通过；最终固件双编译与全量软件门控已通过，完整包和GitHub仍在发布准备；证据见发布记录。旧版本源码使用固定标签与历史目录，不能把当前维护目录当作V3快照。
 
 | 资料 | 内容 |
 |---|---|
 | [项目入口](../README.md) | 下载、编译、运行和保护边界 |
-| [发布与迁移](releases/V3.0.md) | V2 → V3 差异、进步、取舍与回退 |
+| [V4发布记录](releases/V4.0.md) | V3 → V4 差异、进步、取舍与验证证据 |
+| [V4安装与校准](hardware/V4传感器安装与校准.md) | 原创安装图、探头坐标、电平与支撑检测 |
+| [V4服务器部署](setup/V4服务器部署.md) | 单车域名/证书/进程、公网协议替身检查与回退 |
+| [V4联网与比赛操作](setup/V4联网与比赛操作.md) | STA/CA配置、专属链接、地图任务与接管 |
+| [V4自主控制与定位](design/V4自主控制与定位.md) | 分层地图、估计误差、导航、登台、格斗与断网继续 |
+| [V3发布与迁移历史](releases/V3.0.md) | V2 → V3 差异、进步、取舍与回退 |
 | [更新记录](../CHANGELOG.md) | 按版本归纳变化 |
 | [新手安装与接线](../新手安装与接线.md) | 当前依赖、开发板设置、引脚与排错 |
 | [参数表](../融合说明与参数表.md) | 字段、单位、策略与离线转换 |
@@ -13,15 +20,18 @@
 | [验收与验证](../验收与验证.md) | 编译、回归、发布凭据及装机项目 |
 | [注释规范](../注释风格规范.md) | 中文 Doxygen、单位与设计边界 |
 
+推荐阅读顺序：[安装与接线](../新手安装与接线.md) → [传感器校准](hardware/V4传感器安装与校准.md) → [联网与比赛操作](setup/V4联网与比赛操作.md)。维护者再看[设计](design/V4自主控制与定位.md)、[协议](接口协议.md)与[验证](../验收与验证.md)。软件通过不等于机械爬阶或实车防掉通过。
+
 Arduino 入口：[CombatBotArduino.ino](../CombatBotArduino/CombatBotArduino.ino)。维护源码：[combatbot](../combatbot/)。
 
 ## 全部版本与演进资料
 
-根 [README 的完整版本更新记录](../README.md#完整版本更新记录) 全部展开 V3、V2、V1。新增版本从顶部追加，旧版本的完整源码、原始说明、扩写资料和发布入口持续保留。
+根 [README 的完整版本更新记录](../README.md#完整版本更新记录) 全部展开 V4、V3、V2、V1。新增版本从顶部追加，旧版本的完整源码、原始说明、扩写资料和发布入口持续保留。
 
 | 版本 | 扩写说明 | 完整旧工程 / 当前工程 | 原始说明 | 发布入口 |
 |---|---|---|---|---|
-| V3.0 | [控制正确性与可验证交付](releases/V3.0.md) | [当前 Arduino 草图](../CombatBotArduino/) | [固定发布提交](https://github.com/HJZ0810/Huabei-Wusheng-Gedou-Sai-ESP32-FangAn/tree/v3.0) | [V3.0](https://github.com/HJZ0810/Huabei-Wusheng-Gedou-Sai-ESP32-FangAn/releases/tag/v3.0) |
+| V4.0 | [云端与自主扩展](releases/V4.0.md) | [当前 Arduino 草图](../CombatBotArduino/) | [当前 README](../README.md) | 本地验证通过，GitHub发布准备中 |
+| V3.0 | [控制正确性与可验证交付](releases/V3.0.md) | [固定V3 Arduino源码](https://github.com/HJZ0810/Huabei-Wusheng-Gedou-Sai-ESP32-FangAn/tree/v3.0/CombatBotArduino) | [固定发布提交](https://github.com/HJZ0810/Huabei-Wusheng-Gedou-Sai-ESP32-FangAn/tree/v3.0) | [V3.0](https://github.com/HJZ0810/Huabei-Wusheng-Gedou-Sai-ESP32-FangAn/releases/tag/v3.0) |
 | V2.0 | [并发、安全与异常处理加固](releases/V2.0.md) | [CombatBot_Fusion](../versions/v2.0/CombatBot_Fusion/) | [V2 原始 README](../versions/v2.0/CombatBot_Fusion/README.md) | [V2.0 历史归档](https://github.com/HJZ0810/Huabei-Wusheng-Gedou-Sai-ESP32-FangAn/releases/tag/v2.0) |
 | V1.0 | [完整控制与标定链路](releases/V1.0.md) | [CombatBot_ESP32S3](../versions/v1.0/CombatBot_ESP32S3/) | [V1 原始 README](../versions/v1.0/CombatBot_ESP32S3/README.md) | [V1.0 历史归档](https://github.com/HJZ0810/Huabei-Wusheng-Gedou-Sai-ESP32-FangAn/releases/tag/v1.0) |
 
@@ -29,7 +39,7 @@ Arduino 入口：[CombatBotArduino.ino](../CombatBotArduino/CombatBotArduino.ino
 
 ## V2 历史归档
 
-以下资料保留作历史对照，其中草图、依赖、PWM 位数、协议、默认保护及参数可能属于 V2，**请勿据此安装或配置 V3**。当前接线和运行说明以上方 V3 资料为准。
+以下资料保留作历史对照，其中草图、依赖、PWM 位数、协议、默认保护及参数可能属于 V2，**请勿据此安装或配置 V4**。当前接线和运行说明以上方 V4 资料为准。
 
 - [V2 Arduino 环境指南](archive/v2.0/setup/新手文档_Arduino环境搭建.md)
 - [V2 接线表](archive/v2.0/hardware/接线表.md)

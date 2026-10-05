@@ -1,30 +1,45 @@
 <!doctype html>
 <!--
 ============================================================================
-CombatBot 离线车控页面
-页面结构：连续控制 / 精准动作 / 传感器 / 参数设置。
+CombatBot V4 本地与云端车控页面
+页面结构：连续控制 / 竞技地图 / 精准动作 / 传感器 / 参数设置。
 资源约定：样式、项目脚本和第三方二维码库均随固件内嵌。
 ============================================================================
 -->
-<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><meta name="theme-color" content="#0b0f14"><title>CombatBot Fusion · 四驱格斗车</title>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><meta name="theme-color" content="#f5f8fd"><title>CombatBot · 竞技控制台</title>
 <!-- 视觉样式 · 布局、主题与移动端适配 -->
 <style>
-:root{--bg:#0b0f14;--card:#131a22;--line:rgba(255,255,255,.09);--text:#e6edf3;--muted:#8b98a5;--cyan:#22d3ee;--orange:#ff8a3d;--green:#34d399;--red:#f43f5e}*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top,#122531,var(--bg) 55%);color:var(--text);font:15px system-ui,Arial,sans-serif}button,input,select{font:inherit}button{color:var(--text);background:#202c39;border:1px solid var(--line);border-radius:10px;padding:12px 16px;cursor:pointer;transition:background .15s,transform .15s;touch-action:manipulation}button:hover{background:#304253}button:active{transform:translateY(2px)}button:disabled{opacity:.35;cursor:not-allowed}.primary{color:#071219;background:var(--cyan);font-weight:700}.danger{background:#562234;color:#ffb9c5;border-color:#8b344c}.orange{color:var(--orange)}.muted,small{color:var(--muted)}.mono,.value{font-family:ui-monospace,Consolas,monospace;font-variant-numeric:tabular-nums}.topbar{position:fixed;top:0;z-index:10;width:100%;background:#0b1019f2;border-bottom:1px solid var(--line);padding:12px max(14px,env(safe-area-inset-left));display:flex;align-items:center;gap:14px;backdrop-filter:blur(18px)}.brand{font-weight:900;letter-spacing:2px}.brand small{font-size:10px;display:block;letter-spacing:3px}.status-dot{display:inline-block;width:8px;height:8px;background:var(--muted);border-radius:50%;margin-right:6px}.status-dot.on{background:var(--green);box-shadow:0 0 12px #34d39980}.topstate{display:flex;gap:12px;flex:1;flex-wrap:wrap;font-size:12px}.badge{background:#1d2d3a;padding:3px 7px;border-radius:5px}.estop{background:var(--red);font-weight:800;min-width:105px;padding:14px;color:white;border-color:#ff6e85;box-shadow:0 0 18px #f43f5e20}.estop.locked{background:#783044}.shell{max-width:1160px;margin:0 auto;padding:110px 18px calc(100px + env(safe-area-inset-bottom))}.heading{display:flex;justify-content:space-between;align-items:center;margin:6px 0 22px}.heading h1{font-size:24px;margin:0}.eyebrow{font-size:11px;text-transform:uppercase;color:var(--cyan);letter-spacing:3px;margin-bottom:6px}.grid{display:grid;grid-template-columns:1.35fr 1fr;gap:18px}.card{background:#131a22e8;border:1px solid var(--line);border-radius:14px;padding:20px;box-shadow:0 12px 24px #0002}.card h2{font-size:16px;margin:0 0 18px}.card p{line-height:1.7;font-size:13px}.tabs{position:fixed;bottom:0;left:0;width:100%;padding:10px 16px calc(10px + env(safe-area-inset-bottom));background:#0b1019f5;border-top:1px solid var(--line);display:flex;justify-content:center;gap:10px;z-index:10}.tabs button{min-width:100px;background:transparent;color:var(--muted);border-color:transparent;padding:10px}.tabs button.active{color:var(--cyan);background:#15303a}.tab{display:none}.tab.active{display:block}.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.stack{display:flex;flex-direction:column;gap:18px}.joystick-wrap{display:flex;justify-content:center;align-items:center;min-height:310px}.joystick{height:270px;width:270px;border-radius:50%;border:1px solid #294351;position:relative;touch-action:none;user-select:none;background:repeating-radial-gradient(circle,#14232f 0px,#14232f 43px,#253645 44px,#14232f 45px);box-shadow:inset 0 0 50px #0005;outline:none}.joystick:before,.joystick:after{content:"";position:absolute;background:#2a3d4a;pointer-events:none}.joystick:before{left:50%;top:10%;width:1px;height:80%}.joystick:after{top:50%;left:10%;height:1px;width:80%}.stick{position:absolute;left:50%;top:50%;width:84px;height:84px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#32829b,#185069);border:2px solid var(--cyan);box-shadow:0 0 30px #22d3ee25;transform:translate(-50%,-50%);pointer-events:none}.joystick-label{position:absolute;left:0;right:0;text-align:center;font-size:11px;color:var(--muted);pointer-events:none}.joystick-label.top{top:12px}.joystick-label.bottom{bottom:12px}.readout{display:flex;justify-content:space-around;gap:12px;padding-top:15px;border-top:1px solid var(--line)}.readout .value{font-size:22px;display:block;margin-top:4px}.speed-row{display:flex;align-items:center;gap:20px}.speed-number{font-size:36px;color:var(--cyan)}input[type=range]{accent-color:var(--cyan);width:100%}.dpad{display:grid;grid-template-columns:repeat(3,54px);gap:7px;justify-content:center;margin:20px 0}.dpad button{height:49px;padding:0;touch-action:none;user-select:none}.dpad .blank{visibility:hidden}.wheel{display:flex;align-items:center;gap:10px;margin:13px 0;font-size:12px}.wheel-label{width:45px}.bar{height:7px;background:#243240;flex:1;overflow:hidden;border-radius:8px}.bar i{display:block;height:100%;background:var(--cyan);width:0;transition:width .1s}.wheel .mono{width:73px;text-align:right}.full{grid-column:1/-1}.warning{border:1px solid #78442c;background:#302218;color:#ffd0ab;padding:12px 16px;border-radius:10px;line-height:1.5;font-size:13px;margin-bottom:18px}.warning:empty{display:none}.field{display:flex;flex-direction:column;gap:7px;font-size:13px}.field input:not([type=checkbox]),.field select{width:100%;background:#0c121a;border:1px solid #2c3b48;border-radius:7px;color:var(--text);padding:11px;outline:none;min-width:0}.field input:focus{border-color:var(--cyan)}.field input:invalid{border-color:var(--red)}.field input[type=checkbox]{accent-color:var(--cyan);width:18px;height:18px}.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.field .check{display:flex;align-items:center;gap:8px;min-height:43px}.chips{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}.chips button{padding:7px 12px;font-size:13px}.action-row{display:flex;gap:10px;margin-top:16px}.action-row button{flex:1}.progress{height:10px;border-radius:10px;background:#25323e;overflow:hidden;margin-top:13px}.progress i{display:block;background:var(--cyan);width:0;height:100%;transition:width .15s}.result{font:14px ui-monospace,Consolas,monospace;padding:12px;background:#0c141c;border-radius:8px;margin-top:14px;line-height:1.8;min-height:55px}.sensor-lights{display:flex;gap:10px;flex-wrap:wrap}.sensor-light{background:#0d151e;border:1px solid var(--line);border-radius:8px;padding:12px;text-align:center;min-width:62px}.sensor-light i{width:13px;height:13px;border-radius:50%;display:block;background:#34404c;margin:0 auto 8px}.sensor-light.on i{background:var(--orange);box-shadow:0 0 15px #ff8a3d80}.sensor-light span{font-size:11px}.sensor-light.unknown{opacity:.5}canvas{display:block;width:100%;height:auto}.radar{max-width:500px;margin:auto}.settings{display:grid;grid-template-columns:1fr 1fr;gap:18px}.settings .actions{position:sticky;bottom:85px;background:#192633f8;padding:16px;border-radius:12px;border:1px solid #365266;z-index:2}.pid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.log{max-height:180px;overflow:auto;font-size:12px;line-height:1.7}.log div{border-bottom:1px solid var(--line);padding:7px 0}.qr{padding:10px;background:white;display:inline-block;border-radius:10px;margin-top:10px;max-width:100%}.qr canvas{width:150px;height:150px;image-rendering:pixelated}.toast{position:fixed;bottom:94px;left:50%;transform:translateX(-50%);padding:12px 20px;max-width:90%;background:#203747;border:1px solid #3b6274;border-radius:9px;z-index:50;opacity:0;pointer-events:none;transition:opacity .2s}.toast.show{opacity:1}.config-state{color:var(--orange);font-size:12px;margin-bottom:16px}.tiny{font-size:11px}.split{display:flex;gap:18px;justify-content:space-between}.link{color:var(--cyan);word-break:break-all}.calbox{padding-top:16px;margin-top:16px;border-top:1px solid var(--line)}button:focus-visible{outline:2px solid var(--cyan);outline-offset:3px}
-@media(max-width:700px){.shell{padding-top:118px}.grid,.settings{grid-template-columns:1fr}.topbar{gap:8px;padding-top:max(10px,env(safe-area-inset-top))}.brand{font-size:13px}.topstate{gap:5px;font-size:10px}.topstate .host{display:none}.estop{min-width:85px;padding:13px 10px;font-size:14px}.tabs{gap:0}.tabs button{min-width:0;flex:1}.card{padding:17px}.heading h1{font-size:21px}.joystick-wrap{min-height:285px}.joystick{height:245px;width:245px}.fields{gap:12px}.settings .actions{bottom:80px}.split{flex-wrap:wrap}.full{grid-column:auto}}
+/* 视觉基线：浅色留白承载信息，蓝色标识操作，危险动作保留独立红色。 */
+:root{--bg:#f5f8fd;--card:#fff;--line:#e5ecf5;--text:#20324c;--muted:#718198;--cyan:#2765e8;--orange:#b67513;--green:#159578;--red:#e34458}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#eef5ff 0,#f7f9fd 360px);color:var(--text);font:14px -apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif;line-height:1.5}button,input,select,textarea{font:inherit}button{color:#375575;background:#f4f7fc;border:1px solid #e2eaf5;border-radius:11px;padding:11px 16px;cursor:pointer;transition:background .15s,border-color .15s,transform .15s;touch-action:manipulation;font-weight:600}button:hover{background:#eaf1fc;border-color:#c9daf5}button:active{transform:translateY(1px)}button:disabled{opacity:.4;cursor:not-allowed}.primary{color:white;background:var(--cyan);border-color:var(--cyan);box-shadow:0 4px 10px #2765e815}.primary:hover{background:#1855d4;border-color:#1855d4}.danger{background:#fff1f3;color:#c7384c;border-color:#f5d6dc}.danger:hover{background:#ffe4e9;border-color:#edbbc5}.orange{color:var(--orange)}.muted,small{color:var(--muted)}small{font-weight:400}.mono,.value{font-family:ui-monospace,"Cascadia Code",Consolas,monospace;font-variant-numeric:tabular-nums}
+.topbar{position:fixed;top:0;z-index:10;width:100%;background:#ffffffed;border-bottom:1px solid var(--line);padding:14px max(24px,env(safe-area-inset-left));display:flex;align-items:center;gap:24px;backdrop-filter:blur(18px)}.brand{font-size:18px;font-weight:800;letter-spacing:.3px;color:#273e5f}.brand small{font-size:10px;display:block;letter-spacing:1.5px;margin-top:1px}.status-dot{display:inline-block;width:7px;height:7px;background:#a9b7c9;border-radius:50%;margin-right:6px}.status-dot.on{background:var(--green);box-shadow:0 0 0 3px #15957813}.topstate{display:flex;gap:18px;flex:1;flex-wrap:wrap;font-size:12px;color:var(--muted)}.topstate b{font-weight:600;color:#3d5677}.badge{background:#edf3fc;color:#567397;padding:5px 9px;border-radius:7px;font-size:11px;white-space:nowrap}.estop{background:var(--red);font-weight:700;min-width:102px;padding:12px 18px;color:white;border-color:var(--red);box-shadow:0 4px 10px #e3445814}.estop:hover{background:#d6394d;border-color:#d6394d}.estop.locked{background:#9f3d4c;border-color:#9f3d4c}
+.shell{max-width:1176px;margin:0 auto;padding:108px 24px calc(110px + env(safe-area-inset-bottom))}.heading{display:flex;justify-content:space-between;align-items:center;margin:8px 0 24px;gap:14px}.heading h1{font-size:26px;font-weight:700;letter-spacing:.3px;margin:0}.eyebrow{font-size:10px;text-transform:uppercase;color:var(--cyan);letter-spacing:2px;margin-bottom:7px;font-weight:700}.grid{display:grid;grid-template-columns:1.35fr 1fr;gap:20px}.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:24px;box-shadow:0 5px 20px #25476a04}.card h2{font-size:15px;font-weight:650;margin:0 0 18px;letter-spacing:.2px}.card h2 small{font-size:11px;margin-left:6px}.card p{line-height:1.75;font-size:12px}.tabs{position:fixed;bottom:0;left:0;width:100%;padding:12px 16px calc(12px + env(safe-area-inset-bottom));background:#ffffffed;border-top:1px solid var(--line);display:flex;justify-content:center;gap:12px;z-index:10;backdrop-filter:blur(18px)}.tabs button{min-width:110px;background:transparent;color:var(--muted);border-color:transparent;padding:11px 18px;font-size:13px;font-weight:600}.tabs button:hover{background:#f4f7fc}.tabs button.active{color:var(--cyan);background:#edf3ff}.tab{display:none}.tab.active{display:block}.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.stack{display:flex;flex-direction:column;gap:20px}.full{grid-column:1/-1}
+.joystick-wrap{display:flex;justify-content:center;align-items:center;min-height:310px}.joystick{height:270px;width:270px;border-radius:50%;border:1px solid #d7e5fa;position:relative;touch-action:none;user-select:none;background:repeating-radial-gradient(circle,#f5f9ff 0px,#f5f9ff 43px,#e0ebfa 44px,#f5f9ff 45px);box-shadow:inset 0 0 38px #b6cdf512;outline:none}.joystick:before,.joystick:after{content:"";position:absolute;background:#d7e5f8;pointer-events:none}.joystick:before{left:50%;top:10%;width:1px;height:80%}.joystick:after{top:50%;left:10%;height:1px;width:80%}.stick{position:absolute;left:50%;top:50%;width:80px;height:80px;border-radius:50%;background:radial-gradient(circle at 35% 25%,#6c9bff,#2765e8);border:3px solid #fff;box-shadow:0 7px 20px #2765e82c;transform:translate(-50%,-50%);pointer-events:none}.joystick-label{position:absolute;left:0;right:0;text-align:center;font-size:11px;color:#8295ae;pointer-events:none}.joystick-label.top{top:12px}.joystick-label.bottom{bottom:12px}.readout{display:flex;justify-content:space-around;gap:12px;padding:19px 0 4px;border-top:1px solid var(--line);text-align:center}.readout small{font-size:11px}.readout .value{font-size:24px;display:block;margin-top:7px;color:#314e75}.speed-row{display:flex;align-items:center;gap:20px;margin-bottom:12px}.speed-number{font-size:36px;color:var(--cyan);letter-spacing:-1px}.speed-row strong{font-size:13px}input[type=range]{accent-color:var(--cyan);width:100%;height:20px}.dpad{display:grid;grid-template-columns:repeat(3,54px);gap:7px;justify-content:center;margin:18px 0}.dpad button{height:49px;padding:0;touch-action:none;user-select:none;font-size:20px}.dpad .blank{visibility:hidden}.wheel{display:flex;align-items:center;gap:10px;margin:15px 0;font-size:12px}.wheel-label{width:45px;color:#72849c}.bar{height:6px;background:#edf2f9;flex:1;overflow:hidden;border-radius:8px}.bar i{display:block;height:100%;background:var(--cyan);width:0;transition:width .1s;border-radius:8px}.wheel .mono{width:73px;text-align:right;color:#456184}
+.warning{border:1px solid #dce8fc;background:#edf4ff;color:#5b7599;padding:12px 16px;border-radius:12px;line-height:1.6;font-size:12px;margin-bottom:20px}.warning:empty{display:none}.field{display:flex;flex-direction:column;gap:7px;font-size:12px;color:#526985}.field input:not([type=checkbox]),.field select,.field textarea{width:100%;background:#fafcff;border:1px solid #dfe7f3;border-radius:9px;color:var(--text);padding:11px;outline:none;min-width:0;transition:border-color .15s,box-shadow .15s}.field input:focus,.field select:focus,.field textarea:focus{border-color:#8eaff5;box-shadow:0 0 0 3px #2765e80a}.field input:invalid{border-color:#e797a4}.field input[type=checkbox]{accent-color:var(--cyan);width:17px;height:17px}.field textarea{min-height:110px;resize:vertical;font:12px ui-monospace,Consolas,monospace}.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.field .check{display:flex;align-items:center;gap:8px;min-height:43px}.chips{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}.chips button{padding:7px 12px;font-size:12px}.action-row{display:flex;gap:10px;margin-top:18px}.action-row button{flex:1}.progress{height:7px;border-radius:10px;background:#edf2fa;overflow:hidden;margin-top:18px}.progress i{display:block;background:var(--cyan);width:0;height:100%;transition:width .15s}.result{font:13px ui-monospace,Consolas,monospace;padding:14px;background:#f6f9fe;border-radius:10px;margin-top:16px;line-height:1.8;min-height:55px;color:#5a7394}.sensor-lights{display:flex;gap:10px;flex-wrap:wrap}.sensor-light{background:#f9fbfe;border:1px solid var(--line);border-radius:10px;padding:12px;text-align:center;min-width:62px}.sensor-light i{width:11px;height:11px;border-radius:50%;display:block;background:#cfdaea;margin:0 auto 8px}.sensor-light.on i{background:var(--orange);box-shadow:0 0 0 4px #b6751312}.sensor-light span{font-size:11px}.sensor-light.unknown{opacity:.5}canvas{display:block;width:100%;height:auto}.radar{max-width:500px;margin:auto}.settings{display:grid;grid-template-columns:1fr 1fr;gap:20px}.settings .actions{position:sticky;bottom:85px;background:#fffffff5;padding:16px;border-radius:12px;border:1px solid #dce7f7;z-index:2}.pid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.log{max-height:180px;overflow:auto;font-size:12px;line-height:1.7;color:#6e8199}.log div{border-bottom:1px solid var(--line);padding:9px 0}.qr{padding:10px;background:white;display:inline-block;border-radius:10px;margin-top:10px;max-width:100%;border:1px solid var(--line)}.qr canvas{width:150px;height:150px;image-rendering:pixelated}.toast{position:fixed;bottom:96px;left:50%;transform:translateX(-50%);padding:12px 20px;max-width:90%;background:#203756;color:white;border:1px solid #203756;border-radius:12px;z-index:50;opacity:0;pointer-events:none;transition:opacity .2s;box-shadow:0 5px 20px #20375615}.toast.show{opacity:1}.config-state{color:#7f90a7;font-size:12px;margin-bottom:16px}.tiny{font-size:11px}.split{display:flex;gap:18px;justify-content:space-between}.link{color:var(--cyan);word-break:break-all}.calbox{padding-top:16px;margin-top:16px;border-top:1px solid var(--line)}button:focus-visible{outline:2px solid var(--cyan);outline-offset:3px}
+/* 地图沿用车端坐标；图形与页面共享蓝色主色，误差范围始终保留。 */
+.arena-layout{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(310px,1fr);gap:20px}.arena-map-card{padding:24px}.arena-map{aspect-ratio:1;background:#f9fbff;border-radius:14px;border:1px solid #e1eaf8;touch-action:manipulation;cursor:crosshair}.arena-map:focus-visible{outline:2px solid var(--cyan);outline-offset:4px}.arena-legend{display:flex;gap:16px;flex-wrap:wrap;font-size:11px;color:var(--muted);margin:16px 0 0}.arena-legend i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px}.arena-metrics{display:grid;grid-template-columns:1fr 1fr;gap:10px}.arena-metrics>div{background:#f7faff;border:1px solid #edf2fa;padding:13px 14px;border-radius:11px}.arena-metrics b{display:block;font:19px ui-monospace,Consolas,monospace;margin-top:7px;color:#355984}.arena-metrics small{font-size:11px}.arena-status{color:#47688f;font-size:12px;line-height:1.65;padding:11px 13px;border-radius:10px;background:#f0f5ff;margin:14px 0}.arena-target{font:13px ui-monospace,Consolas,monospace;padding:12px 13px;border:1px dashed #bed0ee;border-radius:10px;background:#f9fbff;color:#4d6d99}.arena-steps{font-size:11px;line-height:1.8;color:var(--muted);margin-bottom:0}.cloud-bar{margin-bottom:20px}.cloud-bar[hidden]{display:none}.cloud-login{display:grid;grid-template-columns:1fr 1fr auto;gap:12px;align-items:end}.cloud-devices{display:flex;align-items:center;flex-wrap:wrap;gap:10px}.cloud-devices select{flex:1;min-width:150px;background:#fafcff;border:1px solid #dfe7f3;border-radius:9px;color:var(--text);padding:11px}.arena-controls{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}.arena-controls button{min-height:44px;font-size:12px}.arena-controls .danger{grid-column:1/-1}.arena-source{margin-top:14px;font-size:11px;line-height:1.7;color:var(--muted)}
+@media(max-width:850px){.arena-layout{grid-template-columns:1fr}.cloud-login{grid-template-columns:1fr 1fr}.cloud-login button{grid-column:1/-1}}
+@media(max-width:700px){.shell{padding:104px 14px calc(94px + env(safe-area-inset-bottom))}.grid,.settings{grid-template-columns:1fr}.topbar{gap:12px;padding:12px max(14px,env(safe-area-inset-left));padding-top:max(12px,env(safe-area-inset-top))}.brand{font-size:15px}.brand small{font-size:8px;letter-spacing:.8px}.topstate{gap:5px 10px;font-size:10px}.topstate .host{display:none}.estop{min-width:76px;padding:11px 9px;font-size:12px}.tabs{gap:0;padding:9px 6px calc(9px + env(safe-area-inset-bottom))}.tabs button{min-width:0;flex:1;padding:11px 2px;font-size:12px}.card,.arena-map-card{padding:18px;border-radius:15px}.heading{margin:4px 0 18px}.heading h1{font-size:22px}.joystick-wrap{min-height:280px}.joystick{height:245px;width:245px}.fields{gap:12px}.settings .actions{bottom:80px}.split{flex-wrap:wrap}.full{grid-column:auto}.arena-metrics b{font-size:17px}.arena-legend{gap:9px 13px}.card h2 small{margin-left:4px}.stack,.grid,.settings,.arena-layout{gap:16px}.readout .value{font-size:22px}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style></head><body>
 <!-- 全局状态栏 · 连接信息、电池与急停入口 -->
-<header class="topbar"><div class="brand">COMBAT<span style="color:var(--cyan)">BOT</span><small>FUSION / ESP32-S3</small></div><div class="topstate"><span><i class="status-dot" id="connDot"></i><b id="conn">离线</b> <span class="badge" id="net">—</span></span><span>电池 <b class="mono" id="bat">— V</b></span><span>RSSI <b class="mono" id="rssi">—</b></span><span class="host" id="address">等待设备地址</span></div><button class="estop" id="estop" aria-label="急停并锁定">■ 急停</button></header>
-<main class="shell"><div class="warning" id="banner">设备尚未连接。请连接小车 AP，访问 http://192.168.4.1。此页面不会模拟车辆运行。</div>
+<header class="topbar"><div class="brand">Combat<span style="color:var(--cyan)">Bot</span><small>竞技控制台</small></div><div class="topstate"><span><i class="status-dot" id="connDot"></i><b id="conn">离线</b> <span class="badge" id="net">—</span></span><span>电池 <b class="mono" id="bat">— V</b></span><span>信号 <b class="mono" id="rssi">—</b></span><span class="host" id="address">等待设备地址</span></div><button class="estop" id="estop" aria-label="急停并锁定">■ 急停</button></header>
+<main class="shell"><div class="warning" id="banner">等待小车连接 · 本地请连接车辆 Wi-Fi 后访问 192.168.4.1</div>
+
+<!-- 公网页面直连唯一车辆；专用链接换取会话后仅显示控制状态。 -->
+<section id="cloudPanel" class="card cloud-bar" hidden><div class="row" style="justify-content:space-between"><div><h2 style="margin:0">远程连接 <small id="cloudIdentity">等待连接</small></h2></div><div class="row"><span class="badge" id="cloudState">未连接</span><button class="primary" id="cloudClaim">接管控制</button><button id="cloudRelease">释放控制</button></div></div><p class="tiny muted" id="cloudHint" style="margin:12px 0 0">请使用专用控制链接</p></section>
 <!-- 连续控制 · 摇杆、方向按钮与四轮反馈 -->
-<section class="tab active" id="continuous"><div class="heading"><div><div class="eyebrow">Live drive</div><h1>按住，即刻掌控</h1></div><span class="badge" id="driveState">等待连接</span></div><div class="grid"><div class="card"><h2>连续控制 <small>松手即停</small></h2><div class="joystick-wrap"><div class="joystick" id="joystick" role="group" tabindex="0" aria-label="虚拟摇杆，前后与转向"><span class="joystick-label top">前进</span><span class="joystick-label bottom">后退</span><div class="stick" id="stick"></div></div></div><div class="readout"><div><small>线速度 cm/s</small><span class="value" id="speed">—</span></div><div><small>融合航向 °</small><span class="value" id="yaw">—</span></div><div><small>累计里程 cm</small><span class="value" id="odo">—</span></div></div><p class="muted">WASD / 方向键控制 · 空格急停。摇杆死区 0.08、指数 1.5 由固件统一处理。</p></div><div class="stack"><div class="card"><h2>速度上限</h2><div class="speed-row"><span class="speed-number mono" id="speedPct">40%</span><div><strong class="mono" id="speedLimit">等待配置</strong><small style="display:block">这是速度上限，不是 PWM 占空比</small></div></div><input id="speedSlider" type="range" min="0" max="100" value="40" aria-label="速度百分比"><div class="dpad"><span class="blank"></span><button data-dir="0,1" aria-label="前进">↑</button><span class="blank"></span><button data-dir="-1,0" aria-label="左转">←</button><button id="stop">■</button><button data-dir="1,0" aria-label="右转">→</button><span class="blank"></span><button data-dir="0,-1" aria-label="后退">↓</button><span class="blank"></span></div><div class="row"><button data-servo="1" class="orange motion">举铲 ↑</button><button data-servo="0" class="motion">放铲 ↓</button></div></div><div class="card"><h2>四轮转速 <small>rpm · 左前 / 右前 / 左后 / 右后</small></h2><div id="wheels"></div><small>方向来自固件指令记忆；单相 FG 无法识别外力反向滑动。</small></div></div></div></section>
+<section class="tab active" id="continuous"><div class="heading"><div><div class="eyebrow">MANUAL CONTROL</div><h1>驾驶控制</h1></div><span class="badge" id="driveState">等待连接</span></div><div class="grid"><div class="card"><h2>虚拟摇杆 <small>松手即停</small></h2><div class="joystick-wrap"><div class="joystick" id="joystick" role="group" tabindex="0" aria-label="虚拟摇杆，前后与转向"><span class="joystick-label top">前进</span><span class="joystick-label bottom">后退</span><div class="stick" id="stick"></div></div></div><div class="readout"><div><small>线速度 cm/s</small><span class="value" id="speed">—</span></div><div><small>航向 °</small><span class="value" id="yaw">—</span></div><div><small>里程 cm</small><span class="value" id="odo">—</span></div></div><p class="muted">WASD / 方向键驾驶 · 空格急停</p></div><div class="stack"><div class="card"><h2>速度上限</h2><div class="speed-row"><span class="speed-number mono" id="speedPct">40%</span><div><strong class="mono" id="speedLimit">等待配置</strong><small style="display:block">驾驶速度</small></div></div><input id="speedSlider" type="range" min="0" max="100" value="40" aria-label="速度百分比"><div class="dpad"><span class="blank"></span><button data-dir="0,1" aria-label="前进">↑</button><span class="blank"></span><button data-dir="-1,0" aria-label="左转">←</button><button id="stop">■</button><button data-dir="1,0" aria-label="右转">→</button><span class="blank"></span><button data-dir="0,-1" aria-label="后退">↓</button><span class="blank"></span></div><div class="row"><button data-servo="1" class="orange motion">举铲 ↑</button><button data-servo="0" class="motion">放铲 ↓</button></div></div><div class="card"><h2>四轮转速 <small>rpm · 左前 / 右前 / 左后 / 右后</small></h2><div id="wheels"></div></div></div></div></section>
+
+<!-- 竞技地图显示估计位姿；选点与执行分开，避免触屏误触直接启动车辆。 -->
+<section class="tab" id="arena"><div class="heading"><div><div class="eyebrow">ARENA</div><h1>竞技地图</h1></div><span class="badge" id="arenaMode">等待定位</span></div><div class="arena-layout"><div class="card arena-map-card"><div class="row" style="justify-content:space-between;margin-bottom:14px"><h2 style="margin:0">擂台 <small>估计位置</small></h2><button id="clearTrail" class="tiny">清除轨迹</button></div><canvas id="arenaMap" class="arena-map" width="720" height="720" tabindex="0" role="application" aria-label="擂台目标选择，方向键移动候选点，回车选定；使用执行导航按钮启动" aria-describedby="mapHelp"></canvas><div class="arena-legend"><span><i style="background:#2765e8"></i>车辆 / 航向</span><span><i style="background:#159578"></i>候选目标</span><span><i style="background:#b67513"></i>登台入口</span><span><i style="background:#87a9d6"></i>估计误差范围</span></div><p id="mapHelp" class="tiny muted">点击地图选点，再执行导航。方向键微调，Shift 加大步长。</p><p class="arena-source">外场 380 × 380 cm · 高台 240 × 240 cm · 登台点为对准位置</p></div><div class="stack"><div class="card"><h2>实时状态 <small id="arenaAge">等待遥测</small></h2><div class="arena-metrics"><div><small>估计坐标 / cm</small><b id="arenaPosition">— / —</b></div><div><small>航向 / °</small><b id="arenaHeading">—</b></div><div><small>误差范围 / cm</small><b id="arenaUncertainty">—</b></div><div><small>定位质量</small><b id="arenaQuality">未知</b></div></div><div class="arena-status" id="arenaStatus" role="status">等待定位 · 请先完成本地校准</div><div class="arena-target" id="arenaTarget">导航目标：未选择</div><div class="arena-controls"><button class="primary" id="arenaGoto">执行导航 →</button><button class="orange" id="arenaAuto">自动格斗</button><button id="arenaClimb">尝试登台 ↑</button><button id="arenaTakeover">人工接管</button><button class="danger" id="arenaStop">停止全部任务</button></div><p class="arena-steps">自主任务断网继续 · 手动失联停车。位置与目标均为传感器估计，质量为估计评分。</p></div><div class="card"><h2>设置起点 <small>摆车后更新</small></h2><form id="poseForm"><div class="fields"><label class="field">X / cm<input id="poseX" type="number" step="0.1" min="-190" max="190" value="0" required></label><label class="field">Y / cm<input id="poseY" type="number" step="0.1" min="-190" max="190" value="0" required></label><label class="field">航向 / °<input id="poseHeading" type="number" step="0.1" min="-360" max="360" value="90" required></label><label class="field">所在区域<select id="poseFloor"><option value="lower">低层外圈</option><option value="upper">中央高台（人工确认）</option></select></label></div><button class="primary" id="setPose" type="submit" style="width:100%;margin-top:14px">确认起点</button></form><p class="tiny muted">摆到已知位置后确认坐标与朝向。登台需先启用并验证机械能力。</p></div></div></div></section>
 <!-- 精准动作 · 定距、定角与设备完成结果 -->
-<section class="tab" id="precise"><div class="heading"><div><div class="eyebrow">Precision motion</div><h1>让每一步都有目标</h1></div><button class="danger" id="preciseStop">立即停车</button></div><div class="grid"><div class="card"><h2>定距直线</h2><label class="field">目标距离 / cm <input type="number" id="distance" value="30" step="0.1" min="-1000" max="1000"></label><div class="chips" id="distancePresets"></div><small>正数前进，负数后退。保持此页前台，整个动作持续发送心跳。</small><div class="action-row"><button class="primary motion" id="move">执行直线 →</button></div></div><div class="card"><h2>原地转向</h2><label class="field">角度 / ° <input type="number" id="angle" value="90" step="0.1" min="-1440" max="1440"></label><div class="chips" id="anglePresets"></div><small>左转为正，右转为负。使用 IMU 与里程计融合反馈。</small><div class="action-row"><button class="primary motion" id="turnLeft">↶ 左转</button><button class="motion" id="turnRight">右转 ↷</button></div></div><div class="card full"><div class="row" style="justify-content:space-between"><h2 style="margin:0">执行反馈</h2><b class="mono" id="progressText">—</b></div><div class="progress"><i id="progress"></i></div><div class="result" id="result">尚未收到真实动作结果。</div></div><div class="card full"><h2>设备事件</h2><div class="log" id="events"><div class="muted">事件仅来自真实设备与本地操作。</div></div></div></div></section>
+<section class="tab" id="precise"><div class="heading"><div><div class="eyebrow">PRECISE MOTION</div><h1>精准动作</h1></div><button class="danger" id="preciseStop">立即停车</button></div><div class="grid"><div class="card"><h2>定距直线</h2><label class="field">目标距离 / cm <input type="number" id="distance" value="30" step="0.1" min="-1000" max="1000"></label><div class="chips" id="distancePresets"></div><small>正数前进，负数后退 · 动作中请保持页面前台</small><div class="action-row"><button class="primary motion" id="move">执行直线 →</button></div></div><div class="card"><h2>原地转向</h2><label class="field">角度 / ° <input type="number" id="angle" value="90" step="0.1" min="-1440" max="1440"></label><div class="chips" id="anglePresets"></div><small>左转为正，右转为负</small><div class="action-row"><button class="primary motion" id="turnLeft">↶ 左转</button><button class="motion" id="turnRight">右转 ↷</button></div></div><div class="card full"><div class="row" style="justify-content:space-between"><h2 style="margin:0">执行反馈</h2><b class="mono" id="progressText">—</b></div><div class="progress"><i id="progress"></i></div><div class="result" id="result">等待动作结果</div></div><div class="card full"><h2>设备事件</h2><div class="log" id="events"><div class="muted">暂无事件</div></div></div></div></section>
 <!-- 传感器展示 · 测距、加速度与数字触发 -->
-<section class="tab" id="sensors"><div class="heading"><div><div class="eyebrow">Sensor telemetry</div><h1>看见车身周围</h1></div><span class="badge" id="sensorAge">等待遥测</span></div><div class="grid"><div class="card"><h2>红外扇区 <small>20–150 cm · 超量程不可视为安全</small></h2><canvas class="radar" id="radar" width="520" height="400" aria-label="红外测距雷达"></canvas><div class="row tiny muted" id="irValues">没有有效测距</div><p class="tiny muted">按实际配置数量，从正前方开始顺时针等角排列。6 路：前、右前、右后、后、左后、左前；12 路每路间隔 30°。安装方位须与此约定一致。</p></div><div class="stack"><div class="card"><h2>姿态 / 加速度 <small>ADXL345；非偏航来源</small></h2><p class="tiny muted" id="accelMeta">等待加速度来源</p><canvas id="attitude" width="440" height="200"></canvas><div class="row mono" id="accValues">X — · Y — · Z — g</div><canvas id="wave" width="440" height="110" aria-label="三轴加速度波形"></canvas><small id="waveRange" class="muted">显示范围 ±2 g</small> · <small style="color:#22d3ee">X</small> <small style="color:#ff8a3d">Y</small> <small style="color:#34d399">Z</small></div><div class="card"><h2>数字灰度 <small>亮灯 = 已归一的有效触发</small></h2><div class="sensor-lights" id="grayLights"></div><h2 style="margin-top:20px">E18 光电开关</h2><div class="sensor-lights" id="e18Lights"></div><p class="muted tiny">无数字传感器有效性时显示未知。灰度只有高/低电平，无模拟灰度阈值。</p></div></div></div></section>
+<section class="tab" id="sensors"><div class="heading"><div><div class="eyebrow">SENSORS</div><h1>传感器</h1></div><span class="badge" id="sensorAge">等待遥测</span></div><div class="grid"><div class="card"><h2>红外扇区 <small>20–150 cm · 超量程未知</small></h2><canvas class="radar" id="radar" width="520" height="400" aria-label="红外测距雷达"></canvas><div class="row tiny muted" id="irValues">没有有效测距</div><p class="tiny muted">从车头起顺时针排列 · 安装方向须与配置一致</p></div><div class="stack"><div class="card"><h2>姿态 / 加速度 <small>ADXL345</small></h2><p class="tiny muted" id="accelMeta">等待加速度来源</p><canvas id="attitude" width="440" height="200"></canvas><div class="row mono" id="accValues">X — · Y — · Z — g</div><canvas id="wave" width="440" height="110" aria-label="三轴加速度波形"></canvas><small id="waveRange" class="muted">显示范围 ±2 g</small> · <small style="color:#2765e8">X</small> <small style="color:#b67513">Y</small> <small style="color:#159578">Z</small></div><div class="card"><h2>数字灰度 <small>亮灯表示触发</small></h2><div class="sensor-lights" id="grayLights"></div><h2 style="margin-top:20px">E18 光电开关</h2><div class="sensor-lights" id="e18Lights"></div><p class="muted tiny">无效信号显示未知</p></div></div></div></section>
 <!-- 配置管理 · 参数表单、外部实测标定与连接地址 -->
-<section class="tab" id="settings"><div class="heading"><div><div class="eyebrow">Vehicle configuration</div><h1>参数，全部在这里</h1></div><button id="reloadConfig">重新读取</button></div><div class="config-state" id="configState">未读取设备配置，无法保存。</div><form id="configForm"><div class="settings" id="settingsGroups"></div></form><div class="card" style="margin-top:18px"><h2>三步标定</h2><p class="muted">标定前确认运动空间安全，举轮检查极性后再落地。在标定动作运行期间保持页面前台；输入的是尺/量角器测得的真实值，不能使用遥测值自证精度。</p><div class="row"><button class="motion" id="calImu">① 静止 IMU 零偏</button><button class="motion" id="calOdo">② 行程标定 100 cm</button><button class="motion" id="calTurn">③ 转向标定 360°</button></div><div class="calbox fields"><label class="field">行程外部实测 / cm <input id="measuredOdo" type="number" min="1" max="1500" step="0.1" placeholder="先完成行程标定"></label><label class="field">转向外部实测 / ° <input id="measuredTurn" type="number" min="10" max="1800" step="0.1" placeholder="先完成转向标定"></label><button id="applyOdo">应用行程实测</button><button id="applyTurn">应用转向实测</button></div><p class="tiny muted" id="calStatus">需要先执行相应标定，再提交外部实测。应用后重新读取设备保存的参数。</p></div><div class="card" style="margin-top:18px"><div class="split"><div><h2>连接到这台设备</h2><div class="mono link" id="currentUrl">—</div><p class="mono tiny" id="deviceAddresses">等待设备网络信息</p><small>二维码在本地生成，纯 AP 模式无需互联网。</small></div><div class="qr" id="qrcode"></div></div></div><div class="actions row" style="margin-top:18px"><button class="primary" id="saveConfig">保存至设备 NVS</button><button id="exportConfig">导出 JSON</button><button id="importConfig">导入 JSON</button><input id="importFile" type="file" accept=".json,application/json" hidden><button class="danger" id="defaults">恢复默认</button><button class="danger" id="clearWifi">清除 WiFi</button><button class="danger" id="reboot">重启设备</button></div></section>
-</main><nav class="tabs" aria-label="控制面板页面"><button data-tab="continuous" class="active">◉ 连续</button><button data-tab="precise">◎ 精准</button><button data-tab="sensors">⌁ 传感器</button><button data-tab="settings">⚙ 设置</button></nav><div class="toast" id="toast" role="status"></div>
+<section class="tab" id="settings"><div class="heading"><div><div class="eyebrow">SETTINGS</div><h1>车辆设置</h1></div><button id="reloadConfig">重新读取</button></div><div class="config-state" id="configState">未读取设备配置，无法保存。</div><form id="configForm"><div class="settings" id="settingsGroups"></div></form><div class="card" style="margin-top:18px"><h2>三步标定</h2><p class="muted">先举轮检查极性，确认场地安全。标定时保持页面前台，填写尺或量角器的实测值。</p><div class="row"><button class="motion" id="calImu">① 静止 IMU 零偏</button><button class="motion" id="calOdo">② 行程标定 100 cm</button><button class="motion" id="calTurn">③ 转向标定 360°</button></div><div class="calbox fields"><label class="field">行程外部实测 / cm <input id="measuredOdo" type="number" min="1" max="1500" step="0.1" placeholder="先完成行程标定"></label><label class="field">转向外部实测 / ° <input id="measuredTurn" type="number" min="10" max="1800" step="0.1" placeholder="先完成转向标定"></label><button id="applyOdo">应用行程实测</button><button id="applyTurn">应用转向实测</button></div><p class="tiny muted" id="calStatus">完成对应标定后，填写并应用实测值。</p></div><div class="card" style="margin-top:18px"><div class="split"><div><h2>连接到这台设备</h2><div class="mono link" id="currentUrl">—</div><p class="mono tiny" id="deviceAddresses">等待设备网络信息</p><small>扫码连接 · 本地模式无需互联网</small></div><div class="qr" id="qrcode"></div></div></div><div class="actions row" style="margin-top:18px"><button class="primary" id="saveConfig">保存设置</button><button id="exportConfig">导出 JSON</button><button id="importConfig">导入 JSON</button><input id="importFile" type="file" accept=".json,application/json" hidden><button class="danger" id="defaults">恢复默认</button><button class="danger" id="clearWifi">清除 WiFi</button><button class="danger" id="reboot">重启设备</button></div></section>
+</main><nav class="tabs" aria-label="控制面板页面"><button data-tab="continuous" class="active">◉ 驾驶</button><button data-tab="arena">▧ 地图</button><button data-tab="precise">◎ 精准</button><button data-tab="sensors">⌁ 传感器</button><button data-tab="settings">⚙ 设置</button></nav><div class="toast" id="toast" role="status"></div>
 <script>
 //---------------------------------------------------------------------
 //
@@ -2347,6 +2362,10 @@ const $ = (id) => document.getElementById(id),
 // requestedAt 为本地请求时间，lastTm 为最近遥测到达时间，均不代表设备执行时间。
 // motionSession 绑定动作与握手会话；inputRevision 隔离已经取消的指针释放。
 // automaticStopIssued 合并同一次离页的多个事件，手动停止不受该标志限制。
+let cloudMode = false, cloudInfo = null, cloudAuthorized = false, cloudDeviceState = null, cloudDeviceId = "", cloudEntryRevision = 0,
+  cloudLease = "", cloudPermit = "", cloudSeq = 0, cloudBoot = "", cloudLink = "",
+  autonomousRequested = false, autonomousRequestedAt = 0, selectedTarget = null;
+const arenaTrail = [];
 let ws = null,
   client = 0,
   sessionToken = "",
@@ -2380,12 +2399,14 @@ const online = () =>
   ws &&
   ws.readyState === WebSocket.OPEN &&
   client > 0 &&
-  sessionToken.length === 32 &&
+  (cloudMode ? cloudAuthorized && !!cloudDeviceId : sessionToken.length === 32) &&
   lastTm > 0 &&
   Date.now() - lastTm < 1600;
 // owner / client 是连接协调编号，不是账户身份，也不提供身份认证。
-const ownedElsewhere = () => tm && tm.owner && tm.owner !== client;
-const canMove = () => online() && !ownedElsewhere() && !tm.estop;
+const ownedElsewhere = () => cloudMode ? !cloudLease : tm && tm.owner && tm.owner !== client;
+const autonomyActive = () => !!tm?.arena?.active || autonomousRequested;
+const cloudCanControl = () => !cloudMode || (cloudAuthorized && !!cloudLease);
+const canMove = () => online() && cloudCanControl() && !ownedElsewhere() && !tm.estop && !autonomyActive();
 /**
  * @brief 显示短时提示，后续提示会替换当前内容并重新计时。
  * @param {string} msg 待显示文字，以 textContent 写入。
@@ -2412,6 +2433,15 @@ function event(msg) {
  * @return {boolean} 已提交传输返回 true；不表示收到 ACK 或完成动作。
  */
 function send(msg) {
+  if (cloudMode) {
+    if (!ws || ws.readyState !== WebSocket.OPEN || !cloudCanControl() || !cloudPermit) return false;
+    if (!["drv","move","turn","servo","stop","estop","hb","pose","goto","auto","climb","takeover"].includes(msg.t)) {
+      toast("该操作仅能在本地 AP 连接中执行"); return false;
+    }
+    ws.send(JSON.stringify({t:"command",deviceId:cloudDeviceId,lease:cloudLease,
+      seq:++cloudSeq,permit:cloudPermit,command:msg}));
+    return true;
+  }
   if (!ws || ws.readyState !== WebSocket.OPEN || !client || !sessionToken)
     return false;
   ws.send(JSON.stringify(msg));
@@ -2427,6 +2457,8 @@ function ensureControl() {
     toast("未连接设备或遥测已中断");
     return false;
   }
+  if (!cloudCanControl()) { toast("请先点击接管控制"); return false; }
+  if (autonomyActive()) { toast("车端自主任务正在运行，请先点击人工接管"); return false; }
   if (ownedElsewhere()) {
     toast("其他客户端正在控制，请等待其停止");
     return false;
@@ -2461,6 +2493,9 @@ function resetInput() {
  * @details 手动停止仍允许旁观者执行；失焦、后台或卸载时网络发送可能丢失，固件心跳兜底。
  */
 function stop(reason, automatic = false) {
+  // 自治不依赖网页存活；页面生命周期只能终止本页人工输入。
+  if (automatic && autonomyActive()) { active = false; resetInput(); return; }
+  if (!automatic) autonomousRequested = false;
   // 遥测受理前用本页请求凭据判断；已被其他连接接管时绝不能自动停车。
   // 同一动作只自动停止一次，避免 blur / pagehide 等连续事件重复干扰后续驾驶者。
   const ownMotion = client > 0 && sessionToken.length === 32 &&
@@ -2560,11 +2595,11 @@ function connectionUI() {
   const warning = [];
   if (!ok)
     warning.push(
-      "设备未连接或遥测过期。控制输入已禁用；请连上小车 AP 后访问 http://192.168.4.1。",
+      "等待小车连接 · 本地请连接车辆 Wi-Fi 后访问 192.168.4.1",
     );
   if (ok && tm.estop) warning.push("急停已锁定：所有运动禁止，须明确解锁。");
   if (ok && ownedElsewhere())
-    warning.push("客户端 " + tm.owner + " 持有控制权；本页仍可急停。");
+    warning.push(cloudMode ? "点击接管控制后即可驾驶" : "客户端 " + tm.owner + " 持有控制权；本页仍可急停。");
   if (ok && tm.fault) warning.push("故障：" + tm.fault);
   if (ok && tm.lowBattery) warning.push("电池低压，固件正在限速。");
   if (ok && tm.irLimited)
@@ -2581,6 +2616,7 @@ function connectionUI() {
         " g；该告警不自动停车。",
     );
   if (ok && tm.accelSaturated && !tm.impact) warning.push("加速度已超出传感器量程，冲击幅度未知；当前读数不能证明低于告警阈值。");
+  if (cloudMode && !ok) { warning.length = 0; warning.push(cloudAuthorized ? "等待小车上线 · 请确认车辆已连接 Wi-Fi" : "请使用专用控制链接"); }
   $("banner").textContent = warning.join(" ");
   $("driveState").textContent = ok
     ? (tm.st || "未知状态") + (tm.owner === client ? " · 本页控制" : "")
@@ -2588,7 +2624,9 @@ function connectionUI() {
   $$(".motion").forEach((b) => (b.disabled = !canMove()));
   $("estop").classList.toggle("locked", !!(ok && tm.estop));
   $("estop").textContent = ok && tm.estop ? "解锁急停" : "■ 急停";
-  $("estop").disabled = !ok;
+  $("estop").disabled = !ok || !cloudCanControl() || (cloudMode && !!tm?.estop);
+  updateArenaControls();
+  updateCloudUI();
   $("sensorAge").textContent = lastTm
     ? ok
       ? "实时 · " + (Date.now() - lastTm) + " ms"
@@ -2602,11 +2640,13 @@ function connectionUI() {
  *          done 向所有连接广播；本页以 pendingCal 和结果类型配对标定反馈。
  */
 function connect() {
+  if (cloudMode && !cloudAuthorized) { connectionUI(); return; }
   if (location.protocol === "file:") {
     connectionUI();
     return;
   }
   clearTimeout(reconnectTimer);
+  if (cloudMode) { cloudLease = ""; cloudPermit = ""; cloudSeq = 0; }
   active = false;
   motionSession = "";
   automaticStopIssued = false;
@@ -2622,7 +2662,7 @@ function connect() {
   ws = new WebSocket(
     (location.protocol === "https:" ? "wss://" : "ws://") +
       location.host +
-      "/ws",
+      (cloudMode ? cloudInfo.wsOperator : "/ws"),
   );
   const connection = ws;
   ws.onopen = () => event("WebSocket 已建立，等待设备握手");
@@ -2634,6 +2674,7 @@ function connect() {
     } catch {
       return;
     }
+    if (cloudMode) { cloudMessage(m); return; }
     if (m.t === "hello") {
       client = Number(m.client) || 0;
       sessionToken = /^[0-9a-f]{32}$/.test(m.session || "") ? m.session : "";
@@ -2665,6 +2706,7 @@ function connect() {
         (!requestedAt || Date.now() - requestedAt > 1500)
       )
         active = false;
+      acceptArenaTelemetry(m);
       renderTelemetry();
       connectionUI();
     } else if (m.t === "done") {
@@ -2726,7 +2768,8 @@ function connect() {
     recentCal.odo = recentCal.turn = false;
     $("configState").textContent = "连接已断开，需重新读取设备配置。";
     connectionUI();
-    event("连接断开；设备依据失联保护停车");
+    cloudLease = ""; cloudPermit = ""; cloudSeq = 0;
+    event("连接断开：人工输入已清除；车端自主任务按设备策略继续");
     reconnectTimer = setTimeout(connect, 2000);
   };
   ws.onerror = () => connectionUI();
@@ -2734,7 +2777,7 @@ function connect() {
 // 每 200 ms 尝试保持心跳，并续传当前连续输入，精准动作也需要心跳。
 // 200 ms 是浏览器定时器设置，不是实测时延；后台节流时仍依赖固件失联停车。
 setInterval(() => {
-  if (active && online() && !ownedElsewhere()) send({ t: "hb" });
+  if (((active && !autonomyActive()) || (cloudMode && !!cloudLease)) && online() && !ownedElsewhere()) send({ t: "hb" });
   if (continuous && online() && !ownedElsewhere())
     send({
       t: "drv",
@@ -2810,6 +2853,7 @@ function renderTelemetry() {
   drawRadar();
   drawAttitude(acc);
   drawWave();
+  renderArena();
 }
 /**
  * @brief 将已归一的数字触发状态显示为指示灯。
@@ -2846,8 +2890,8 @@ function drawRadar() {
     cy = 205,
     r = 155;
   ctx.clearRect(0, 0, c.width, c.height);
-  ctx.strokeStyle = "#28414f";
-  ctx.fillStyle = "#8b98a5";
+  ctx.strokeStyle = "#d5e2f4";
+  ctx.fillStyle = "#718198";
   ctx.font = "11px monospace";
   for (let d = 50; d <= 150; d += 50) {
     ctx.beginPath();
@@ -2868,15 +2912,15 @@ function drawRadar() {
       valid = Number.isFinite(v) && tm.irValid?.[i] !== false,
       rr = valid ? (Math.max(20, Math.min(150, v)) / 150) * r : r;
     const alert = valid && v < (config?.irThresholdCm || 25);
-    ctx.fillStyle = valid ? (alert ? "#f43f5e40" : "#22d3ee30") : "#8b98a514";
-    ctx.strokeStyle = valid ? (alert ? "#f43f5e" : "#22d3ee") : "#536572";
+    ctx.fillStyle = valid ? (alert ? "#f43f5e40" : "#2765e830") : "#71819814";
+    ctx.strokeStyle = valid ? (alert ? "#f43f5e" : "#2765e8") : "#a5b7ce";
     ctx.beginPath();
     ctx.moveTo(cx, cy);
     ctx.arc(cx, cy, rr, a - 0.14, a + 0.14);
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
-    ctx.fillStyle = valid ? "#e6edf3" : "#8b98a5";
+    ctx.fillStyle = valid ? "#314e75" : "#718198";
     ctx.textAlign = "center";
     ctx.fillText(
       i + 1 + ": " + (valid ? n(v, 0) : "—"),
@@ -2886,9 +2930,9 @@ function drawRadar() {
     texts.push("IR" + (i + 1) + " " + (valid ? n(v, 0) + "cm" : "无效"));
   });
   ctx.textAlign = "left";
-  ctx.fillStyle = "#1c3745";
+  ctx.fillStyle = "#eaf2ff";
   ctx.fillRect(cx - 13, cy - 20, 26, 40);
-  ctx.strokeStyle = "#22d3ee";
+  ctx.strokeStyle = "#2765e8";
   ctx.strokeRect(cx - 13, cy - 20, 26, 40);
   $("irValues").textContent = texts.join(" · ") || "等待有效测距";
 }
@@ -2900,7 +2944,7 @@ function drawRadar() {
 function drawAttitude(a) {
   const ctx = $("attitude").getContext("2d");
   ctx.clearRect(0, 0, 440, 200);
-  ctx.strokeStyle = "#2a4250";
+  ctx.strokeStyle = "#e0e8f5";
   ctx.beginPath();
   ctx.arc(220, 100, 76, 0, Math.PI * 2);
   ctx.stroke();
@@ -2911,13 +2955,13 @@ function drawAttitude(a) {
   ctx.lineTo(220, 185);
   ctx.stroke();
   if (!a || !a.every(Number.isFinite) || tm?.accelOk === false) {
-    ctx.fillStyle = "#8b98a5";
+    ctx.fillStyle = "#718198";
     ctx.fillText("等待加速度", 181, 103);
     return;
   }
   const roll = Math.atan2(a[1], a[2]),
     pitch = Math.atan2(-a[0], Math.hypot(a[1], a[2]));
-  ctx.fillStyle = "#22d3ee";
+  ctx.fillStyle = "#2765e8";
   ctx.beginPath();
   ctx.arc(
     220 + Math.max(-1, Math.min(1, roll)) * 60,
@@ -2927,7 +2971,7 @@ function drawAttitude(a) {
     Math.PI * 2,
   );
   ctx.fill();
-  ctx.fillStyle = "#8b98a5";
+  ctx.fillStyle = "#718198";
   ctx.font = "12px monospace";
   ctx.fillText("ROLL " + n((roll * 180) / Math.PI) + "°", 12, 185);
   ctx.fillText("PITCH " + n((pitch * 180) / Math.PI) + "°", 305, 185);
@@ -2941,14 +2985,14 @@ function drawWave() {
   $("waveRange").textContent = "显示范围 ±" + range + " g";
   const ctx = $("wave").getContext("2d");
   ctx.clearRect(0, 0, 440, 110);
-  ctx.strokeStyle = "#243a48";
+  ctx.strokeStyle = "#e4ebf6";
   for (let y = 10; y <= 110; y += 25) {
     ctx.beginPath();
     ctx.moveTo(0, y);
     ctx.lineTo(440, y);
     ctx.stroke();
   }
-  ["#22d3ee", "#ff8a3d", "#34d399"].forEach((color, axis) => {
+  ["#2765e8", "#b67513", "#159578"].forEach((color, axis) => {
     ctx.strokeStyle = color;
     ctx.beginPath();
     samples.forEach((a, i) => {
@@ -3000,6 +3044,7 @@ $("preciseStop").onclick = () => stop("精准动作停止");
 $("estop").onclick = () => {
   if (!online()) return;
   if (tm.estop) {
+    if (cloudMode) { toast("急停解锁仅在本地 AP 开放"); return; }
     if (confirm("确认环境安全并解除急停锁定？解锁本身不会启动电机。"))
       send({ t: "unlock" });
   } else {
@@ -3187,6 +3232,23 @@ presets("anglePresets", "angle", [45, 90, 180, 360], "°");
 // 配置字段与固件 Config 一一对应；PID 保持对象，invert 保持四元素数组。
 // 字段描述、范围和步长供表单构建使用；服务端仍会独立检查完整配置。
 const groups = [
+  ["STA 云端连接", "仅在 STA 联网时启用。设备密钥不回读：未编辑保持原值，编辑后留空表示清除。必须提供可信 CA PEM，禁止跳过证书验证。云端配置仅在本地 AP 可修改。", [
+    ["cloudEnabled","启用云端 WSS","bool"], ["cloudHost","云端主机名（不含协议）","text",0,127],
+    ["cloudPort","端口（HTTPS 通常 443）","number",1,65535,1], ["cloudPath","设备 WebSocket 路径","text",0,127],
+    ["cloudDeviceId","设备编号","text",0,63], ["cloudDeviceKey","设备密钥（编辑后留空清除）","password",0,127],
+    ["cloudCaPem","可信 CA 证书 / PEM","textarea",0,2047]
+  ]],
+  ["擂台与自主任务", "单位为 cm、cm/s、ms。装好向下探头并完成现场校准后，才启用自治。中央台边不能靠轮速估计取代实体探头；登台需单独启用，限时尝试不保证机械可行。", [
+    ["arenaEnabled","启用车端自治","bool"], ["arenaCalibrated","已完成现场边缘校准","bool"], ["arenaClimbEnabled","允许限时冲台尝试","bool"],
+    ["arenaOuterCm","外场边长 / cm","number",100,1000], ["arenaPlatformCm","中央高台边长 / cm","number",50,800],
+    ["arenaBodyLengthCm","车身长度 / cm","number",10,100], ["arenaBodyWidthCm","车身宽度 / cm","number",10,100],
+    ["arenaMarginCm","额外边界余量 / cm","number",2,80], ["arenaNavSpeed","导航速度 / cm/s","number",1,100],
+    ["arenaSearchSpeed","搜索速度 / cm/s","number",1,100], ["arenaPushSpeed","推撞速度 / cm/s","number",1,220],
+    ["arenaClimbSpeed","冲台速度 / cm/s","number",1,220], ["arenaTaskMs","自治任务总时限 / ms","number",1000,600000,1],
+    ["arenaClimbMs","冲台阶段时限 / ms","number",200,10000,1], ["arenaEntryX","登台对准点 X / cm","number",-500,500],
+    ["arenaEntryY","登台对准点 Y / cm","number",-500,500], ["arenaEntryHeading","登台朝向 / °","number",-360,360]
+  ]],
+
   [
     "网络与寻址",
     "WiFi 密码仅通过已握手的设备会话读取；页面与导出文件包含真实密码，请妥善保管。网络更改后按设备提示重启。",
@@ -3359,8 +3421,8 @@ function fieldNode(f) {
           ]
       ).forEach(([v, l]) => input.add(new Option(l, v)));
     } else {
-      input = document.createElement("input");
-      input.type = type === "bool" ? "checkbox" : type;
+      input = document.createElement(type === "textarea" ? "textarea" : "input");
+      if (type !== "textarea") input.type = type === "bool" ? "checkbox" : type;
       if (type === "number") {
         input.min = min;
         input.max = max;
@@ -3374,6 +3436,7 @@ function fieldNode(f) {
       }
     }
     input.id = "cfg_" + key;
+    if (key === "cloudDeviceKey") input.oninput = () => { input.dataset.edited = "true"; };
     wrap.append(input);
   }
   return wrap;
@@ -3402,6 +3465,7 @@ groups.forEach(([title, description, fields]) => {
  */
 function fillConfig(c) {
   allFields.forEach(([key, , type]) => {
+    if (key === "cloudDeviceKey") { $("cfg_" + key).value = ""; $("cfg_" + key).dataset.edited = "false"; return; }
     if (!(key in c)) return;
     if (type === "pid") {
       ["kp", "ki", "kd"].forEach(
@@ -3414,7 +3478,8 @@ function fillConfig(c) {
     } else if (type === "bool") $("cfg_" + key).checked = !!c[key];
     else $("cfg_" + key).value = c[key];
   });
-  config = c;
+  config = { ...c };
+  delete config.cloudDeviceKey;
   hasConfig = true;
   configRevision++;
   $("configState").textContent = "已读取设备配置，编辑后需保存到设备。";
@@ -3433,6 +3498,7 @@ function collectConfig() {
     if (config && key in config) out[key] = config[key];
   });
   allFields.forEach(([key, , type]) => {
+    if (key === "cloudDeviceKey" && $("cfg_" + key).dataset.edited !== "true") return;
     if (type === "pid") {
       out[key] = {};
       ["kp", "ki", "kd"].forEach(
@@ -3455,6 +3521,13 @@ function collectConfig() {
 function validateForm() {
   if (!$("configForm").reportValidity()) return false;
   const c = collectConfig();
+  if (c.cloudEnabled && (!c.staEnabled || !c.cloudHost || !c.cloudDeviceId || !c.cloudCaPem || !c.cloudPath?.startsWith("/"))) {
+    toast("启用云端需先启用 STA，填写主机、设备编号、路径和可信 CA"); return false;
+  }
+  if (typeof c.cloudCaPem === "string" && new TextEncoder().encode(c.cloudCaPem).length > 2047) {
+    toast("CA 证书不能超过 2047 UTF-8 字节"); return false;
+  }
+  if (c.arenaPlatformCm >= c.arenaOuterCm) { toast("中央高台必须小于围栏内场"); return false; }
   if (c.irSlowdownCm <= c.irThresholdCm) {
     toast("红外开始减速距离必须大于停止距离");
     return false;
@@ -3522,6 +3595,7 @@ function validateForm() {
  * @details 动作类请求附带当前 client，配置请求提交完整配置；随机会话凭据只绑定当前连接，不提供账户身份认证。
  */
 async function api(path, data) {
+  if (cloudMode) throw new Error("云端不开放设备配置、解锁或标定，请连接本地 AP 操作");
   if (
     location.protocol === "file:" ||
     !sessionToken ||
@@ -3598,7 +3672,7 @@ $("exportConfig").onclick = () => {
     return;
   }
   if (!validateForm()) return;
-  if (!confirm("JSON 包含真实 WiFi 密码及当前表单参数。确认下载并妥善保管？"))
+  if (!confirm("JSON 包含真实 WiFi 密码及当前表单参数；显式编辑的设备密钥也会导出。确认下载并妥善保管？"))
     return;
   const blob = new Blob([JSON.stringify(collectConfig(), null, 2)], {
       type: "application/json",
@@ -3621,6 +3695,7 @@ $("importFile").onchange = () =>
     if (!c || Array.isArray(c) || typeof c !== "object")
       throw new Error("配置应为 JSON 对象");
     for (const [key, , type] of allFields) {
+      if (key === "cloudDeviceKey") continue;
       if (!(key in c)) throw new Error("导入配置缺少字段 " + key);
       if (
         type === "pid" &&
@@ -3639,10 +3714,11 @@ $("importFile").onchange = () =>
         throw new Error("字段必须为布尔值：" + key);
       if (["number", "axis", "sign"].includes(type) && !Number.isFinite(c[key]))
         throw new Error("数值无效：" + key);
-      if (["text", "password"].includes(type) && typeof c[key] !== "string")
+      if (["text", "password", "textarea"].includes(type) && typeof c[key] !== "string")
         throw new Error("文本无效：" + key);
     }
     fillConfig(c);
+    if (typeof c.cloudDeviceKey === "string") { $("cfg_cloudDeviceKey").value = c.cloudDeviceKey; $("cfg_cloudDeviceKey").dataset.edited = "true"; }
     $("configState").textContent =
       "已导入到表单，尚未应用到设备；检查后点击保存。";
     toast("JSON 已载入表单，尚未保存");
@@ -3756,6 +3832,236 @@ function applyCalibration(mode, id) {
 $("applyOdo").onclick = () => applyCalibration("odo", "measuredOdo");
 $("applyTurn").onclick = () => applyCalibration("turn", "measuredTurn");
 
+
+// ============================================================================
+// 竞技态势 · 真实遥测驱动的估计地图与显式任务请求
+// ============================================================================
+
+/** 坐标不钳回场内：越界和漂移必须对操作者可见，不能被显示层掩盖。 */
+function arenaGeometry() {
+  const a = tm?.arena || {};
+  const outer = Number.isFinite(a.outerSize) && a.outerSize > 0 ? a.outerSize : 380;
+  const platform = Number.isFinite(a.platformSize) && a.platformSize > 0 ? a.platformSize : 240;
+  const extent = Math.max(outer / 2 + 22,
+    Number.isFinite(a.x) ? Math.abs(a.x) + 22 : 0,
+    Number.isFinite(a.y) ? Math.abs(a.y) + 22 : 0);
+  return {a, outer, platform, extent};
+}
+function mapPoint(x, y) {
+  const c = $("arenaMap"), {extent} = arenaGeometry(), scale = c.width / (extent * 2);
+  return {x:c.width / 2 + x * scale, y:c.height / 2 - y * scale, scale};
+}
+function selectArenaTarget(x, y) {
+  const {outer} = arenaGeometry();
+  if (![x,y].every(Number.isFinite) || Math.abs(x) > outer / 2 || Math.abs(y) > outer / 2) {
+    toast("候选目标必须位于围栏内；车端还会检查车身余量与台边安全"); return false;
+  }
+  selectedTarget = {x:Math.round(x*10)/10,y:Math.round(y*10)/10};
+  $("arenaTarget").textContent = "导航目标：("+n(selectedTarget.x)+", "+n(selectedTarget.y)+") cm · 尚未执行";
+  renderArena(); updateArenaControls(); return true;
+}
+function acceptArenaTelemetry(m) {
+  const a = m.arena;
+  if (!a) return;
+  if (a.active) autonomousRequested = false;
+  else if (Date.now() - autonomousRequestedAt > 1500) autonomousRequested = false;
+  if ([a.x,a.y].every(Number.isFinite)) {
+    const last = arenaTrail.at(-1);
+    if (!last || Math.hypot(a.x-last.x,a.y-last.y) >= 1) {
+      arenaTrail.push({x:a.x,y:a.y}); if (arenaTrail.length > 300) arenaTrail.shift();
+    }
+  }
+}
+/** 绘制采用世界坐标；轨迹、误差圆、传感器候选与车头共同遵循同一航向约定。 */
+function renderArena() {
+  const c = $("arenaMap"), ctx = c.getContext("2d"), {a,outer,platform} = arenaGeometry();
+  const center = mapPoint(0,0), scale = center.scale;
+  ctx.clearRect(0,0,c.width,c.height);
+  ctx.fillStyle="#f9fbff";ctx.fillRect(0,0,c.width,c.height);
+  const square = (size,color,line) => {
+    const p=mapPoint(-size/2,size/2);ctx.fillStyle=color;ctx.fillRect(p.x,p.y,size*scale,size*scale);
+    ctx.strokeStyle=line;ctx.lineWidth=2;ctx.strokeRect(p.x,p.y,size*scale,size*scale);
+  };
+  square(outer,"#f0f5fc","#9bb4d7");square(platform,"#e3edfc","#7f9fd0");
+  ctx.strokeStyle="#a8bfdf40";ctx.lineWidth=1;
+  for(let v=-outer/2;v<=outer/2;v+=20){
+    let p=mapPoint(v,outer/2),q=mapPoint(v,-outer/2);ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(q.x,q.y);ctx.stroke();
+    p=mapPoint(-outer/2,v);q=mapPoint(outer/2,v);ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(q.x,q.y);ctx.stroke();
+  }
+  ctx.fillStyle="#5d7ba5";ctx.font="13px sans-serif";ctx.textAlign="center";
+  ctx.fillText("中央高台 · "+n(platform,0)+" × "+n(platform,0)+" cm",center.x,mapPoint(0,platform/2-12).y);
+  ctx.fillText("低层外圈 · "+n(outer,0)+" × "+n(outer,0)+" cm",center.x,mapPoint(0,-outer/2+12).y);
+  ctx.fillStyle="#8199b9";ctx.fillText("+Y",center.x,18);ctx.textAlign="right";ctx.fillText("+X",c.width-10,center.y-8);
+  ctx.strokeStyle="#a1b6d3";ctx.beginPath();ctx.moveTo(center.x-7,center.y);ctx.lineTo(center.x+7,center.y);ctx.moveTo(center.x,center.y-7);ctx.lineTo(center.x,center.y+7);ctx.stroke();
+  // 入口是配置的对准点，不是坡道；未知时不补出虚构入口。
+  if ([a.entryX,a.entryY].every(Number.isFinite)) {
+    const e=mapPoint(a.entryX,a.entryY);ctx.strokeStyle="#b67513";ctx.lineWidth=2;ctx.strokeRect(e.x-9,e.y-9,18,18);
+    ctx.fillStyle="#a87017";ctx.font="12px sans-serif";ctx.textAlign="center";ctx.fillText("登台对准点",e.x,e.y+25);
+  }
+  if(arenaTrail.length>1){ctx.strokeStyle="#2765e866";ctx.lineWidth=2;ctx.beginPath();arenaTrail.forEach((p,i)=>{const q=mapPoint(p.x,p.y);i?ctx.lineTo(q.x,q.y):ctx.moveTo(q.x,q.y)});ctx.stroke();}
+  if ([a.x,a.y,a.heading].every(Number.isFinite)) {
+    const p=mapPoint(a.x,a.y), fresh=online();
+    if(Number.isFinite(a.uncertainty)&&a.uncertainty>=0){ctx.fillStyle="#2765e80c";ctx.strokeStyle="#6b95e888";ctx.setLineDash([5,5]);ctx.beginPath();ctx.arc(p.x,p.y,a.uncertainty*scale,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.setLineDash([]);}
+    // 测距反射可能来自围栏或台面，不标注为已识别对手。
+    if(Array.isArray(tm?.ir))tm.ir.forEach((distance,i)=>{if(!Number.isFinite(distance)||distance<20||distance>150)return;const angle=(a.heading-i*360/tm.ir.length)*Math.PI/180;const q=mapPoint(a.x+distance*Math.cos(angle),a.y+distance*Math.sin(angle));ctx.fillStyle="#d49a3b88";ctx.beginPath();ctx.arc(q.x,q.y,4,0,Math.PI*2);ctx.fill();});
+    ctx.save();ctx.translate(p.x,p.y);ctx.rotate(-a.heading*Math.PI/180);
+    const length=(config?.arenaBodyLengthCm||28)*scale,width=(config?.arenaBodyWidthCm||24)*scale;
+    ctx.fillStyle=fresh?"#2765e8":"#a2b3ca";ctx.strokeStyle="#184ca9";ctx.lineWidth=2;ctx.fillRect(-length/2,-width/2,length,width);ctx.strokeRect(-length/2,-width/2,length,width);
+    ctx.fillStyle="#fff";ctx.beginPath();ctx.moveTo(length/2+9,0);ctx.lineTo(length/2-4,-6);ctx.lineTo(length/2-4,6);ctx.closePath();ctx.fill();ctx.restore();
+  }
+  if(a.active&&[a.targetX,a.targetY].every(Number.isFinite)){const p=mapPoint(a.targetX,a.targetY);ctx.strokeStyle="#159578";ctx.setLineDash([4,4]);ctx.beginPath();ctx.arc(p.x,p.y,12,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);}
+  if(selectedTarget){const p=mapPoint(selectedTarget.x,selectedTarget.y);ctx.strokeStyle="#159578";ctx.lineWidth=2;ctx.beginPath();ctx.arc(p.x,p.y,9,0,Math.PI*2);ctx.moveTo(p.x-16,p.y);ctx.lineTo(p.x+16,p.y);ctx.moveTo(p.x,p.y-16);ctx.lineTo(p.x,p.y+16);ctx.stroke();}
+  $("arenaPosition").textContent=n(a.x)+" / "+n(a.y);
+  $("arenaHeading").textContent=n(a.heading);
+  $("arenaUncertainty").textContent=Number.isFinite(a.uncertainty)?"± "+n(a.uncertainty):"未知";
+  $("arenaQuality").textContent=Number.isFinite(a.quality)?n(a.quality<=1?a.quality*100:a.quality,0)+"%":(a.quality||"未知");
+  const floors={lower:"低层外圈",upper:"高台 · 人工设定",upper_anchored:"高台 · 人工设定",upper_estimated:"高台 · 仅推定",transition:"登台过渡",transition_unknown:"登台过渡",unknown:"区域未知"};
+  const modes={idle:"待命",navigate:"导航中",battle:"自动格斗",climb:"登台中",escape:"避险中",halted:"已停止"};
+  const phases={none:"待命",idle:"待命",travel:"行进",align:"对准",search:"寻找目标",approach:"接近目标",push:"推撞",retreat:"撤离",climb_approach:"接近高台",climb_align:"对准入口",climb_contact:"接触台阶",climb_crest:"越过台阶",climb_settle:"确认停稳",complete:"已完成"};
+  const reasons={cancelled:"已取消",not_armed:"自治未启用",invalid_config:"配置无效",pose_required:"请设置起点",invalid_goal:"目标无效",invalid_frame:"传感器数据异常",sensor_unavailable:"传感器不可用",pose_uncertain:"位置误差过大",outside_safe_region:"超出安全范围",task_timeout:"任务超时",edge_blocked:"检测到边缘",escape_timeout:"避险超时",climb_unsupported:"登台未启用",climb_timeout:"登台超时",climb_distance_limit:"已达登台距离限制",climb_evidence_insufficient:"登台证据不足",excessive_tilt:"倾斜过大",complete:"任务完成"};
+  $("arenaMode").textContent=(modes[a.mode]||a.mode||"未启用")+" · "+(floors[a.floor]||"区域未知");
+  $("arenaAge").textContent=lastTm?(online()?"实时估计":"遥测过期 · 位置冻结"):"等待遥测";
+  $("arenaStatus").textContent=a.phase?(phases[a.phase]||a.phase)+(a.reason&&a.reason!=="none"?" · "+(reasons[a.reason]||a.reason):"") : "等待定位 · 请先完成本地校准";
+  c.setAttribute("aria-label","擂台估计坐标 "+n(a.x)+", "+n(a.y)+" cm，航向 "+n(a.heading)+" 度。方向键选择候选目标，执行导航按钮启动。");
+}
+function updateArenaControls() {
+  const ready=online()&&cloudCanControl()&&!ownedElsewhere()&&!tm?.estop;
+  ["arenaGoto","arenaAuto","arenaClimb","setPose"].forEach(id=>$(id).disabled=!ready||autonomyActive()||(id==="arenaGoto"&&!selectedTarget));
+  $("arenaTakeover").disabled=!online()||!cloudCanControl()||!!tm?.estop;
+  $("arenaStop").disabled=!online()||!cloudCanControl();
+}
+/** 自主动作不设置手动 active；后台和关闭页面不自动取消已提交的自治。 */
+function requestArenaTask(command) {
+  if(!ensureControl())return false;
+  if(send(command)){resetInput();active=false;autonomousRequested=true;autonomousRequestedAt=Date.now();event("已请求车端自主任务："+command.t);updateArenaControls();return true;}
+  return false;
+}
+$("arenaMap").onclick=e=>{const r=$("arenaMap").getBoundingClientRect(),{extent}=arenaGeometry();selectArenaTarget(((e.clientX-r.left)/r.width-.5)*extent*2,(.5-(e.clientY-r.top)/r.height)*extent*2)};
+$("arenaMap").onkeydown=e=>{
+  if(!["ArrowLeft","ArrowRight","ArrowUp","ArrowDown","Enter"].includes(e.key))return;
+  e.preventDefault();const p=selectedTarget||{x:Number.isFinite(tm?.arena?.x)?tm.arena.x:0,y:Number.isFinite(tm?.arena?.y)?tm.arena.y:0},step=e.shiftKey?20:5;
+  selectArenaTarget(p.x+(e.key==="ArrowRight"?step:e.key==="ArrowLeft"?-step:0),p.y+(e.key==="ArrowUp"?step:e.key==="ArrowDown"?-step:0));
+};
+$("arenaGoto").onclick=()=>{if(selectedTarget)requestArenaTask({t:"goto",...selectedTarget});};
+$("arenaAuto").onclick=()=>requestArenaTask({t:"auto"});
+$("arenaClimb").onclick=()=>{if(confirm("这是限时冲台尝试，机械能力尚未验证。确认已完成本地启用、场地净空与实测准备？"))requestArenaTask({t:"climb"});};
+$("arenaStop").onclick=()=>stop("停止全部任务");
+$("arenaTakeover").onclick=()=>{if(!online()||!cloudCanControl())return;if(send({t:"takeover"})){autonomousRequested=false;active=false;resetInput();event("已请求停止自治并取得人工控制；等待设备遥测确认");}};
+$("clearTrail").onclick=()=>{arenaTrail.length=0;renderArena();};
+$("poseForm").onsubmit=e=>{e.preventDefault();if(!$("poseForm").reportValidity()||!ensureControl())return;const x=Number($("poseX").value),y=Number($("poseY").value),heading=Number($("poseHeading").value),floor=$("poseFloor").value;if(![x,y,heading].every(Number.isFinite)||!["lower","upper"].includes(floor)){toast("起点坐标、航向或楼层无效");return;}if(send({t:"pose",x,y,heading,floor})){arenaTrail.length=0;event("已提交人工起点；位置是否受理由设备确认");}};
+
+// ============================================================================
+// 云端传输 · 专用控制链接、唯一车辆与短期控制租约
+// ============================================================================
+
+/**
+ * @brief 消费专用链接的片段密钥，并立即从地址栏移除。
+ * @details 片段不会发送给 HTTP 服务。密钥只用于换取 HttpOnly 会话，
+ *          不写入页面、事件、设备指令或浏览器持久存储。
+ */
+function consumeControlLink() {
+  const params=new URLSearchParams((location.hash||"").slice(1)),keys=params.getAll("control");
+  if(!keys.length)return {present:false,key:""};
+  params.delete("control");
+  const remaining=params.toString();
+  history.replaceState(null,"",location.pathname+location.search+(remaining?"#"+remaining:""));
+  return {present:true,key:keys.length===1?keys[0]:""};
+}
+/**
+ * @brief 关闭旧网页连接并释放本页控制权，再建立新的专用链接会话。
+ * @details 不发送全局停车；车端自主任务按断线策略继续。新连接只恢复遥测，
+ *          必须再次明确接管，不重放旧人工输入。
+ */
+function resetCloudConnection() {
+  if(cloudMode&&cloudLease)cloudSendControl({t:"release",deviceId:cloudDeviceId,lease:cloudLease});
+  clearTimeout(reconnectTimer);
+  const prior=ws;ws=null;prior?.close?.();
+  cloudAuthorized=false;cloudDeviceState=null;cloudLease="";cloudPermit="";cloudSeq=0;cloudBoot="";cloudLink="";
+  active=false;motionSession="";pendingCal=null;autonomousRequested=false;resetInput();
+  client=0;sessionToken="";lastTm=0;tm=null;hasConfig=false;config=null;
+}
+/** 云端探测失败与 file:// 均保留 AP 原有入口；代次隔离并发入口的旧响应。 */
+async function discoverCloud() {
+  if(location.protocol==="file:")return;
+  const link=consumeControlLink(),entry=++cloudEntryRevision;
+  try {
+    let info=cloudMode?cloudInfo:null;
+    if(!info){
+      const response=await fetch("./api/info",{cache:"no-store",credentials:"same-origin"});
+      if(!response.ok||entry!==cloudEntryRevision)return;
+      info=await response.json();
+    }
+    if(entry!==cloudEntryRevision||info.mode!=="cloud"||info.singleDevice!==true||typeof info.deviceId!=="string"||
+       typeof info.basePath!=="string"||typeof info.wsOperator!=="string"||!info.wsOperator.startsWith("/"))return;
+    resetCloudConnection();
+    cloudInfo=info;cloudMode=true;cloudDeviceId=info.deviceId;$("cloudPanel").hidden=false;
+    if(link.present&&!/^[a-f0-9]{64}$/.test(link.key)){connectionUI();return;}
+    try {
+      const result=link.present?await cloudRequest("connect",{controlKey:link.key}):await cloudRequest("me");
+      if(entry!==cloudEntryRevision)return;
+      if(bindCloudDevice(result.device))connect();
+    } catch { if(entry!==cloudEntryRevision)return;cloudAuthorized=false; }
+    connectionUI();
+  } catch { /* 普通 AP 无公网描述，沿用本地设备入口。 */ }
+}
+// 同源片段导航不会重载页面；已打开的控制台也须消费新链接。
+window.addEventListener("hashchange",()=>{
+  if(new URLSearchParams((location.hash||"").slice(1)).has("control"))return discoverCloud();
+});
+async function cloudRequest(path,data) {
+  const response=await fetch(cloudInfo.basePath+"/api/"+path,{method:data===undefined?"GET":"POST",credentials:"same-origin",cache:"no-store",headers:data===undefined?{}:{"Content-Type":"application/json"},...(data===undefined?{}:{body:JSON.stringify(data)})});
+  let result;try{result=await response.json();}catch{throw new Error("连接响应无效");}
+  if(!response.ok||result.ok===false)throw new Error(result.message||"连接失败 / "+response.status);
+  return result;
+}
+function cloudSendControl(message) { if(ws?.readyState!==WebSocket.OPEN)return false;ws.send(JSON.stringify(message));return true; }
+/** 绑定服务器配置中的唯一车辆，不接受页面自行切换设备。 */
+function bindCloudDevice(device) {
+  if(!device||device.deviceId!==cloudInfo?.deviceId)return false;
+  cloudDeviceId=device.deviceId;cloudDeviceState=device;cloudAuthorized=true;
+  return true;
+}
+function updateCloudUI() {
+  if(!cloudMode)return;
+  $("cloudPanel").hidden=false;
+  $("cloudIdentity").textContent=cloudAuthorized?(cloudDeviceState?.online?"车辆在线":"车辆离线"):"等待连接";
+  $("cloudState").textContent=cloudLease?"本页控制":cloudAuthorized?"已连接":"未连接";
+  $("cloudClaim").disabled=!cloudAuthorized||!cloudDeviceId||!!cloudLease||!cloudDeviceState?.online;
+  $("cloudRelease").disabled=!cloudLease;
+  $("cloudHint").textContent=!cloudAuthorized?"请使用专用控制链接":cloudLease?"手动失联停车 · 自主任务断网继续":"点击接管控制开始驾驶 · 设置与解锁请连接本地车辆 Wi-Fi";
+  ["reloadConfig","saveConfig","exportConfig","importConfig","defaults","clearWifi","reboot","calImu","calOdo","calTurn","applyOdo","applyTurn"].forEach(id=>$(id).disabled=true);
+  $("configState").textContent="设置与标定请连接本地车辆 Wi-Fi";
+  $("stop").disabled=$("preciseStop").disabled=!online()||!cloudCanControl();
+}
+function cloudMessage(m) {
+  if(m.t==="welcome"){
+    if(!bindCloudDevice(m.device)){cloudAuthorized=false;connectionUI();return;}
+    // 单车在服务端已绑定；握手恢复遥测，控制权仍需明确接管。
+    client=1;sessionToken="00000000000000000000000000000000";
+    cloudBoot=m.device.boot||"";cloudLink=m.device.link||"";cloudPermit=m.device.permit||"";
+    updateCloudUI();return;
+  }
+  if(m.deviceId&&m.deviceId!==cloudDeviceId)return;
+  if(m.t==="lease") { cloudLease=m.lease;cloudPermit=m.permit||"";cloudBoot=m.boot||"";cloudLink=m.link||"";cloudSeq=0;active=false;resetInput();event("已取得控制租约；未恢复任何旧动作"); }
+  else if(m.t==="permit"||m.t==="device") {
+    if(cloudLease&&((m.boot&&cloudBoot&&m.boot!==cloudBoot)||(m.link&&cloudLink&&m.link!==cloudLink))){cloudLease="";cloudSeq=0;active=false;resetInput();event("设备会话已变更；旧控制租约已撤销");}
+    cloudBoot=m.boot||"";cloudLink=m.link||"";cloudPermit=m.permit||"";
+    if(m.t==="device"){cloudDeviceState={...cloudDeviceState,...m};}
+    if(m.t==="device"&&m.online===false){lastTm=0;cloudLease="";cloudSeq=0;active=false;resetInput();}
+  }
+  else if(m.t==="lease_end") { if(m.lease===cloudLease){cloudLease="";cloudSeq=0;active=false;resetInput();event("控制租约已结束："+(m.reason||"设备已收回控制"));} }
+  else if(m.t==="tm") {
+    tm=m;lastTm=Date.now();if(m.estop){active=false;pendingCal=null;resetInput();}
+    if(active&&!continuous&&m.owner===0&&(m.st==="idle"||m.st==="done")&&Date.now()-requestedAt>1500)active=false;
+    acceptArenaTelemetry(m);renderTelemetry();
+  } else if(m.t==="error") { active=false;pendingCal=null;resetInput();if(["invalid_lease","device_offline"].includes(m.code)){cloudLease="";cloudSeq=0;}if(m.code==="permit_expired")cloudPermit="";toast(m.message||"云端拒绝操作");event("云端拒绝："+(m.message||m.code||"未知错误")); }
+  else if(m.t==="ack") { if(m.ok===false){active=false;resetInput();}event((m.ok===false?"设备拒绝：":"请求已受理：")+(m.message||m.command||"执行情况以遥测为准")); }
+  else if(m.t==="done") {active=false;resetInput();event("设备动作完成："+(m.type||"任务"));$("result").textContent=(m.type||"动作")+" · 目标 "+n(m.target)+" / 实际 "+n(m.actual)+" / 误差 "+n(m.err);}
+  connectionUI();
+}
+$("cloudClaim").onclick=()=>{if(!cloudAuthorized||!cloudDeviceState?.online)return;cloudSendControl({t:"claim",deviceId:cloudDeviceId});};
+$("cloudRelease").onclick=()=>{if(cloudLease)cloudSendControl({t:"release",deviceId:cloudDeviceId,lease:cloudLease});cloudLease="";cloudSeq=0;active=false;resetInput();connectionUI();};
+
 // ============================================================================
 // 离线入口二维码与页面启动
 // ============================================================================
@@ -3802,4 +4108,6 @@ function drawQR() {
 drawQR();
 connectionUI();
 connect();
+renderArena();
+Promise.resolve().then(discoverCloud);
 </script></body></html>

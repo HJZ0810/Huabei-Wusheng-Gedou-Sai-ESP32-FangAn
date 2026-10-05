@@ -1,0 +1,6 @@
+Command: "C:\Program Files\nodejs\node.exe" test/ui_contract.mjs
+PASS: 双脚本语法 / 离线 QR / 无 CDN / 握手与遥测门控 / 控制权 / 精准心跳 / 失焦与 pointercancel 停车 / 急停 / 标定结果 / 配置字段
+PASS: spectator lifecycle / pending and confirmed owner Stop / repeated departure / takeover / manual Stop and estop / reconnect and stale pointer isolation
+PASS: session headers / pre-telemetry config / HTTP failures / disconnect invalidation / stale responses / keyboard lifecycle / compatible legacy fields / IR mapping
+
+[exit code: 0]

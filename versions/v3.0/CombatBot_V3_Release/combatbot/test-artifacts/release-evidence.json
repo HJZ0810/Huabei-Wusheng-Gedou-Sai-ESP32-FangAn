@@ -1,0 +1,121 @@
+{
+  "verifiedAtUtc": "2026-10-05T10:50:31.168133+00:00",
+  "sources": {
+    "include/config.h": "65892a60f3fbee257b993531b6e80f18e9bb8aba531e1860e98e199b1371b8e5",
+    "include/controller.h": "0bb95c37761cbe7a97f9c31793840f8e610bfa3c9b3396055650ea0571862583",
+    "include/hardware.h": "77d04c2921dc8b16d94e22d1230261515b1263da7ad846c9a9d57854482f3149",
+    "include/hardware_internal.h": "0a2c9f6cbe31494d22298e46ca086aa15492fba290c47d61321a3e943d88a9a5",
+    "include/kinematics.h": "a4083172598b2cfe38802d0173c31bc7c220c6ff24a478971a54cee1939603fa",
+    "include/pid.h": "34655e59bc42b6b210742d1f9e2c23542fa647c00a4f95bffd870823c9437dba",
+    "include/safety.h": "306e430af0b482e4df81f7e5b813733910644e72721d15631803dcfa5a82b9e4",
+    "include/session_registry.h": "ae3c2b9604a0adda7c1929d53a3a61a5610d0d395ca5d59f097fbe190d5666e3",
+    "include/types.h": "0d5d25c2c4bfd7b7cd631fd1f8b93b74ed42b956c1e00d0197e1de126dce97c0",
+    "include/web.h": "5c016d11269d90949cebc275d87cdea9e004b260dfce9703831a7e88df0b0777",
+    "include/web_asset.h": "76f899389627528aa013ae3cc5cae7966a21417be6f373d13e5391040868202f",
+    "include/wifi_mgr.h": "7081840a4538bff58bc52f17ac9cd072ea73ef61ed9d94b800c7d0627c518f2a",
+    "platformio.ini": "d420b6d13d5aa96549ba230d90585e1d29b1566a48f45ba988a6d2e7ac50bf3f",
+    "scripts/convert_workbuddy_config.py": "43c753f21f825d354a17f78964ed206e74042e8b91edb6f54984baa186b8746b",
+    "scripts/embed_web.py": "e89d37a4972fa482f7adb1fa807a0695b6b86f118615406e14e05ea906467e88",
+    "scripts/export_arduino.py": "e6b6872017e3bbc232839b80e749f416f4c4341c10d3420ab48cfba73e1f5337",
+    "scripts/package_delivery.py": "2c9b80afeb410bf2d0b9bf5d39eca54fd3205fb3a919f082db3926b65ef92369",
+    "scripts/release_evidence.py": "841fbf2f48545b4b7f589fa49a395675ee04c3d0b2531a34a50d5f34eb9ec3f4",
+    "scripts/verify_arduino.py": "539940f96af06caf524ffc0cd1d6fea79de5574df64f19f27c47bff1d8ca0968",
+    "scripts/verify_arduino_cli.py": "fe9559178bab97029b8be445280bf69539ca398f3db2c2b57cc5868d38cdbc7c",
+    "scripts/verify_delivery.py": "41aa5cae1c55104587280a567ef48d10d3766d0cb6f530c1760435a5adfa3f12",
+    "scripts/verify_release.py": "9e97174c39671b13bbbd1f5b93455e455d9ee7ddb53dd4366e136c066457934a",
+    "src/config.cpp": "90cda1edae524f6286a9ad68008eb25b2f265b8744f6ac49f8e5b81a79153d39",
+    "src/controller.cpp": "e239e82880e82222758d2b2d2d4e2fdf3e40b0cda85539e758878f579e8acdb4",
+    "src/imu.cpp": "3c38b2adf23468d78f5de9cc8e1e0d85af1069f1eb91abe2267ebb1209f04934",
+    "src/main.cpp": "f4d1b205a0ebee2f7526deb21164a0d27d10f0d5031537322b96efd0b78cf955",
+    "src/motor.cpp": "e933910c1cd4ae05457d705e72b61f1d84ce6f79a7389592a86774251da23f19",
+    "src/sensors.cpp": "0ec334553dc31cbc8fbc245d053fb249acf5ed35c2da69d5e1998103c1ed5927",
+    "src/web.cpp": "c258db676cfec5496bf76fbe9e0f87f2d7a5fa58b28c90bde1b6b6ac8714412c",
+    "src/wifi_mgr.cpp": "77509fd60b95ecc62370a4077fedeebc1317f08b5c149664f811823885404889",
+    "test/host/Arduino.h": "9cb016554c41616d6c166b9db1acadcfaef24ae5797c3d542b2d5605858e3fde",
+    "test/host/ArduinoJson.h": "3460bf27d52467c749c7131e460dfa28ca749183ab898003cdc7f8b27a6e444b",
+    "test/host/freertos/FreeRTOS.h": "f3df25822d5ff14e89e7e8933fae645aa988ab69177ddc274372a41b60085eaa",
+    "test/host/freertos/queue.h": "3b606e86039875bb1e78bfa2a5fe85dcfcccb912dc3cd751475604cdc37d006c",
+    "test/host/freertos/semphr.h": "1486fcd0ca3001aff79700802ded221a7854bac397ca1909133289ebd7836b19",
+    "test/host/freertos/task.h": "b1c8b73eb7ef2f28b27ae53c4c5c6ac5c7e0239bb8423b945a88866e55b2ebdd",
+    "test/host/Preferences.h": "cfa7d95531ef4e2c6e285ac782d5f42f32916507ded0a29ff0b66b965059ddb7",
+    "test/motor_host/Arduino.h": "504ea015949aaa4ba6e7445dc3e432023bd538c4831fcac408e21e39a23a897f",
+    "test/motor_host/driver/pcnt.h": "6f66a9ba53b425d6a8b58988fe13ecb16ce658c5effcd3c9c256b4f5976ac6e6",
+    "test/motor_host/esp_arduino_version.h": "e0c4ba5d7f545f55bfcbf6c41d77672618af3463e2930b3f432db12dd5fc8432",
+    "test/motor_host/Wire.h": "371ce75e40662aadb519b9f76f500b1575a9fc32581d76369f51669da55c078b",
+    "test/run_host_tests.ps1": "b39808ed2b65074c8a6bd949c4d516b1f1cab92389a6c2b685f819bb37dc380a",
+    "test/run_motor_tests.ps1": "e6f0e0e55c788465709de9f297c619ecbd5a09b9b6e4b72b78d5070c023057eb",
+    "test/sensor_host/Arduino.h": "97dc08bea84a03448e4e4a6d850dec584bf4dea0d85752a3340822478e7145db",
+    "test/sensor_host/Wire.h": "aa7cfbe38f243bb5dcbd0d163d9826eb6f17f205578dd9c4a15c7ca8ef42a404",
+    "test/test_config.cpp": "e64097233ab555db0056db3549681a77e1fcc838b33eebeb4b5a038b7b499710",
+    "test/test_controller.cpp": "191ec18405fafaa06289fec5a0692ee8bc27269b69ddaa024ac4fe5bd7b1671f",
+    "test/test_migration.py": "38778906cad178eaf7ca5a088577e3cac20d2018205dd1d5ce57a5fbc3065076",
+    "test/test_motion.cpp": "f969c78dcd5cae5862c13ae97332e36d57e6c36af8938a57d00c63f9b3b8921d",
+    "test/test_motor.cpp": "df5b0ea7b7c6ffbd45d943a96e8d3ac9129a2580b3fb9aa488a4d3896d2e9ec4",
+    "test/test_sensor_model.cpp": "1224cb213d292ed357ab6cd47f235a802a38968d232bfbfdd7eed020ff1290c0",
+    "test/test_session.cpp": "d985def67499a1021061ae5aeee19fde8f5142b6f469070e1e0955aab0ee9e92",
+    "test/ui_contract.mjs": "afa103c075e481dae81dd19a3a6660ac612c921070de88122a5445496098e404",
+    "web/index.html": "eb55da6d89f010895d0ab2c87fe57741ed770b5bece76078c83f8b60e5fbaa0a"
+  },
+  "checks": {
+    "host": {
+      "exitCode": 0,
+      "log": "test-artifacts/host.log",
+      "sha256": "7a6a3b5aa34949014f941455f3de9c240ce3765160610818b67f5efe93d5045e"
+    },
+    "motor": {
+      "exitCode": 0,
+      "log": "test-artifacts/motor.log",
+      "sha256": "9d9d074d5f1cae47152ab459c52d4a83e7e1e4704ed00c5e522a738b65aeb6ec"
+    },
+    "test_session-compile": {
+      "exitCode": 0,
+      "log": "test-artifacts/test_session-compile.log",
+      "sha256": "32155ebac0bd783f8613e8b4a193a54bf525b9352fba01d784f0143ace698392"
+    },
+    "test_session": {
+      "exitCode": 0,
+      "log": "test-artifacts/test_session.log",
+      "sha256": "a73e6f08b9ff57f2d3d9cfc8dd29e565db238982895da6a0cbe76c26fc0f936d"
+    },
+    "test_sensor_model-compile": {
+      "exitCode": 0,
+      "log": "test-artifacts/test_sensor_model-compile.log",
+      "sha256": "55a6f545da420f0a95da61cdc9a958d94fb5cc1bd73cc966913f93ad18aa0fbc"
+    },
+    "test_sensor_model": {
+      "exitCode": 0,
+      "log": "test-artifacts/test_sensor_model.log",
+      "sha256": "0de77bf54b608306411268a7a2f83e32ca9a24d182e9c875444834f9c902606c"
+    },
+    "ui": {
+      "exitCode": 0,
+      "log": "test-artifacts/ui.log",
+      "sha256": "1423c20c38e733a52a3ac9d9f611e537b7a48682ea698b01472edd2c52191877"
+    },
+    "ui-offline": {
+      "exitCode": 0,
+      "log": "test-artifacts/ui-offline.log",
+      "sha256": "7e207615c3fcc9f173715c9254e6ca62efeaba80ed07b2d8274984c058cafa3a"
+    },
+    "migration": {
+      "exitCode": 0,
+      "log": "test-artifacts/migration.log",
+      "sha256": "da9d49d40783d72cc4d4fe8331381c4a501910aed06aeea4da007e90425f5030"
+    },
+    "core2": {
+      "exitCode": 0,
+      "log": "test-artifacts/core2-compatibility.log",
+      "sha256": "797d3d755a8914d99148c1b7878f547ef3c57f02e19629f4984c1a51ce7fbec2"
+    },
+    "core3": {
+      "exitCode": 0,
+      "log": "test-artifacts/core3.log",
+      "sha256": "abc9466189706ddee47fa922648dc005f003fd1df1163aeb0ba94ecfa387f5a1"
+    },
+    "core3-native": {
+      "exitCode": 0,
+      "log": "test-artifacts/ide-core3-default.log",
+      "sha256": "c37d6aeae09524f46c4e72db0699e6b6a46f61b7e36b587731a15c1e74ea5dfb"
+    }
+  }
+}

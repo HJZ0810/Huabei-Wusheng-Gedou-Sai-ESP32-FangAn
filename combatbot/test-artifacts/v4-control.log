@@ -1,0 +1,6 @@
+Command: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.EXE -NoProfile -ExecutionPolicy Bypass -File D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\test\run_v4_tests.ps1 -Compiler D:\bin\g++.exe
+PASS: real cloud protocol epoch / lease / replay sequence / strict token bounds / 600 ms boundary / future permit / clock rollover / bounded history / reset
+PASS: real gateway JSON types / finite bounds / aliases / local calibration / cloud permissions / monotonic expiry and rollover / autonomous heartbeat
+PASS: real controller V4 uncalibrated rejection / ground interpretation / autonomous disconnect / manual loss-stop / finite task budget / takeover generation / cloud queue expiry / stationary pose / manual floor loss
+
+[exit code: 0]

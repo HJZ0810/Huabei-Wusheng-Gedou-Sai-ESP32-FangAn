@@ -26,7 +26,7 @@ const tabs=['continuous','precise','sensors','settings'].map(name=>{const el=new
 const directionButtons=[...html.matchAll(/data-dir="([^"]+)"/g)].map(match=>{const el=new Element('button');el.dataset.dir=match[1];return el});
 const motion=[...elements.values()].filter(e=>e.classList.contains('motion'));
 const sent=[],fetchCalls=[];class WS {static OPEN=1;constructor(url){this.url=url;this.readyState=1}send(value){sent.push(JSON.parse(value))}}
-const context={console,Date,Math,Number,Array,Object,JSON,Error,TextEncoder,Blob,URL,Option:function(label,value){this.label=label;this.value=value},WebSocket:WS,
+const context={console,Date,Math,Number,Array,Object,JSON,Error,TextEncoder,Blob,URL,URLSearchParams,Option:function(label,value){this.label=label;this.value=value},WebSocket:WS,
   location:{protocol:fileMode?'file:':'http:',host:'192.168.4.1',hostname:'192.168.4.1',origin:'http://192.168.4.1'},
   document:{hidden:false,getElementById:id=>elements.get(id),createElement:tag=>new Element(tag),createTextNode:text=>({textContent:text}),querySelectorAll:selector=>selector==='[data-tab]'?tabs:selector==='[data-dir]'?directionButtons:selector==='.tab'?['continuous','precise','sensors','settings'].map(id=>elements.get(id)):selector==='.motion'?motion:[],addEventListener:(type,fn)=>documentEvents[type]=fn},
   window:{addEventListener:(type,fn)=>windowEvents[type]=fn},setInterval:fn=>intervals.push(fn),setTimeout:()=>1,clearTimeout:()=>{},confirm:()=>true,

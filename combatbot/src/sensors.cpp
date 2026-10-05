@@ -90,6 +90,7 @@ Sensors sensorsRead(const Config& cfg) {
       bool allReady=true;
       for(int i=0;i<7;++i) {
         bool sensed=bool(data&(1<<i))==(i<4?cfg.grayActiveHigh:cfg.e18ActiveHigh);
+        if(i>=4) cache.groundRaw[i-4]=sensed;
         if(!digitalSeen[i] || sensed!=digitalCandidate[i]) {
           digitalSeen[i]=true; digitalCandidate[i]=sensed; candidateSince[i]=now;
         }
@@ -102,6 +103,7 @@ Sensors sensorsRead(const Config& cfg) {
       // 首次启动/重连需等待全部 7 路完成首次稳定，ioOk 才成立。
       // 已就绪的通道出现新候选值时，旧输出暂时保留，ioOk 不因候选变化撤销。
       cache.ioOk=allReady;
+      cache.digitalMs=now;
     } else {
       cache.ioOk=false; ioPresent=false;
       for(int i=0;i<7;++i) { digitalSeen[i]=false; digitalReady[i]=false; }
@@ -135,6 +137,7 @@ Sensors sensorsRead(const Config& cfg) {
       float cm=60.0f/fmaxf(0.05f,volts-0.05f);
       cache.ir[slot]=constrain(cm,20.0f,150.0f)*cfg.irScale;
       cache.irValid[slot]=volts>=0.35f && volts<=3.15f && cm>=20 && cm<=150;
+      cache.irMs[slot]=now;
     }
     slot=(slot+1)%(cfg.irCount+1); selectChannel(channelFor(slot,cfg));
   }

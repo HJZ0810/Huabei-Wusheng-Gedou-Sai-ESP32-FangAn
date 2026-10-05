@@ -35,7 +35,7 @@ namespace {
 // 控制任务私有状态与跨任务门控
 // ============================================================================
 // 除原子门控、命令队列和发布快照外，本命名空间的运动状态由 run() 独占。
-enum class Mode:uint8_t { Idle,Drive,Move,Turn,OdoCal,TurnCal,ImuCal };
+enum class Mode:uint8_t { Idle,Drive,Move,Turn,OdoCal,TurnCal,ImuCal,Autonomous };
 /** @brief 命令携带投递代次；停止后不再执行旧代次的排队命令。 */
 struct Queued { Command command; uint32_t generation; };
 QueueHandle_t queue=nullptr; ///< 网络侧生产、控制任务消费的有界命令队列。
@@ -68,6 +68,34 @@ double calSum=0, calSumSq=0;
 uint32_t calSamples=0;
 bool pendingBiasSave=false;
 float newBias=0;
+arena::ArenaModel arenaModel;
+arena::Frame arenaFrame;
+uint32_t arenaRevision=0;
+uint32_t poseQuietStarted=0;
+bool poseQuiet=false;
+arena::Mode arenaDriveMode=arena::Mode::Idle;
+
+/** @brief 将本周期参数映射为无网络依赖的自主配置；保存只在空闲窗口进行。 */
+void configureArena(const Config& c) {
+  if(arenaRevision==c.revision) return;
+  arena::Config a;
+  a.armed=c.arenaEnabled && c.arenaCalibrated; a.climbEnabled=c.arenaClimbEnabled;
+  a.outerSizeCm=c.arenaOuterCm; a.platformSizeCm=c.arenaPlatformCm;
+  a.bodyRadiusCm=0.5f*std::sqrt(c.arenaBodyLengthCm*c.arenaBodyLengthCm+c.arenaBodyWidthCm*c.arenaBodyWidthCm);
+  a.safetyMarginCm=c.arenaMarginCm; a.navigationSpeedCmS=c.arenaNavSpeed;
+  a.searchSpeedCmS=c.arenaSearchSpeed; a.attackSpeedCmS=c.arenaPushSpeed;
+  a.climbSpeedCmS=c.arenaClimbSpeed; a.taskLimitMs=c.arenaTaskMs; a.climbLimitMs=c.arenaClimbMs;
+  a.maxYawDegS=std::min(60.0f,c.maxYawRate);
+  a.sensorFrontCm=a.sensorRearCm=c.arenaBodyLengthCm/2+5;
+  a.grayFrontCm=a.grayRearCm=c.arenaBodyLengthCm/2+1.5f;
+  a.grayLeftCm=a.grayRightCm=std::max(1.0f,c.arenaBodyWidthCm/2-1);
+  const float heading=arena::wrapDegrees(c.arenaEntryHeading);
+  if(std::fabs(heading)<45) { a.entrySide=arena::EntrySide::West; a.entryOffsetCm=c.arenaEntryY; }
+  else if(heading>=45 && heading<135) { a.entrySide=arena::EntrySide::South; a.entryOffsetCm=c.arenaEntryX; }
+  else if(heading<=-45 && heading>-135) { a.entrySide=arena::EntrySide::North; a.entryOffsetCm=c.arenaEntryX; }
+  else { a.entrySide=arena::EntrySide::East; a.entryOffsetCm=c.arenaEntryY; }
+  arenaModel.configure(a); arenaRevision=c.revision;
+}
 
 // ============================================================================
 // 状态转换、统一停止与结果发布
@@ -90,6 +118,10 @@ void resetLoops() {
  *       此函数不改变命令代次；需使旧命令失效的调用路径另行增加 generation。
  */
 void stopMotion(const char* reason=nullptr,bool latch=false) {
+  const auto arenaState=arenaModel.snapshot();
+  if(arenaState.mode!=arena::Mode::Idle && arenaState.mode!=arena::Mode::Halted) arenaModel.cancel();
+  t.arena=arenaModel.snapshot();
+  arenaDriveMode=arena::Mode::Idle;
   motorStop(); outputsStopped.store(true); resetLoops(); mode=Mode::Idle;
   owner.store(0); busy.store(false); continuous.store(false);
   t.owner=0; t.imuCalibrating=false;
@@ -126,10 +158,16 @@ void result(const Config& c) {
 const char* sensorFault(const Sensors& s,const Config& c,uint32_t now) {
   if(!hardwareHealthy() || !s.imuOk || !std::isfinite(s.gyroDps)) return "imu_or_motor_unavailable";
   if(timedOut(now,s.sampledMs,250)) return "sensor_timeout";
+  if(c.arenaEnabled) {
+    if(!s.ioOk || timedOut(now,s.digitalMs,80)) return "floor_sensor_unavailable";
+    // 自主边缘处理由模型选择有限撤离方向；人工驾驶则立即撤去输出。
+    if(mode!=Mode::Autonomous) for(int i=0;i<3;++i)
+      if(!s.e18[i] || !s.groundRaw[i]) return "floor_support_lost";
+  }
   if(c.safetyEnabled) {
     if(c.edgeProtection) {
       if(!s.ioOk) return "safety_io_unavailable";
-      if(sensorEdge(s)) return "edge_detected";
+      if(!c.arenaEnabled && sensorEdge(s)) return "edge_detected";
     }
     if(c.tiltProtection) {
       if(!s.accelOk || !std::isfinite(s.acc[0]) || !std::isfinite(s.acc[1]) || !std::isfinite(s.acc[2])) return "tilt_sensor_unavailable";
@@ -154,6 +192,10 @@ bool sensorsPermit(const Sensors& s,const Config& c,uint32_t now) {
  * @note 解锁要求当前为空闲且相关传感条件恢复；解锁本身不启动电机。
  */
 void accept(const Command& cmd,const Config& c,uint32_t now) {
+  if(cmd.expires && static_cast<int32_t>(now-cmd.expiresAt)>=0) {
+    if(cmd.client==owner.load()) stopMotion("command_expired");
+    return;
+  }
   if(cmd.type==CommandType::Unlock) {
     if(mode==Mode::Idle && !sensorFault(t.sensors,c,now)) {
       locked.store(false); t.estop=false; text(t.fault,sizeof(t.fault),""); text(t.state,sizeof(t.state),"idle");
@@ -163,6 +205,14 @@ void accept(const Command& cmd,const Config& c,uint32_t now) {
   if(locked.load()) return;
   if(cmd.type==CommandType::Servo) { servoWrite(cmd.value,c); return; }
   if(mode!=Mode::Idle && !(mode==Mode::Drive && cmd.type==CommandType::Drive && cmd.client==t.owner)) return;
+  if(cmd.type==CommandType::Pose) {
+    bool still=poseQuiet && uint32_t(now-poseQuietStarted)>=120;
+    for(float speed:t.wheelSpeed) still=still && std::fabs(speed)<=0.8f;
+    const bool ok=still && arenaModel.setPoseAnchor(cmd.x,cmd.y,cmd.value,
+      cmd.upper?arena::Layer::UpperAnchored:arena::Layer::Lower,now);
+    owner.store(0); busy.store(false); continuous.store(false); t.arena=arenaModel.snapshot();
+    text(t.fault,sizeof(t.fault),ok?"":"pose_requires_stationary_valid_location"); return;
+  }
   if(cmd.type==CommandType::ImuCal) {
     if(!t.sensors.imuOk) { text(t.fault,sizeof(t.fault),"imu_unavailable"); busy.store(false); owner.store(0); return; }
     stopMotion(); mode=Mode::ImuCal; busy.store(true); owner.store(cmd.client); t.owner=cmd.client;
@@ -170,6 +220,15 @@ void accept(const Command& cmd,const Config& c,uint32_t now) {
     std::memcpy(startPulses,t.pulses,sizeof(startPulses)); actionStarted=now; calSum=calSumSq=0; calSamples=0; return;
   }
   if(!sensorsPermit(t.sensors,c,now)) return;
+  if(cmd.type==CommandType::Navigate || cmd.type==CommandType::Battle || cmd.type==CommandType::Climb) {
+    const bool ok=cmd.type==CommandType::Navigate?arenaModel.startNavigate(cmd.x,cmd.y,now):
+      cmd.type==CommandType::Battle?arenaModel.startBattle(now):arenaModel.startClimb(now);
+    if(!ok) { stopMotion(arena::reasonName(arenaModel.snapshot().reason)); return; }
+    resetLoops(); mode=Mode::Autonomous; owner.store(AutonomousOwner); busy.store(true); continuous.store(false);
+    t.arena=arenaModel.snapshot();
+    t.owner=AutonomousOwner; actionSpeed=c.maxSpeed; t.resultReady=false; t.progress=0;
+    text(t.fault,sizeof(t.fault),""); text(t.state,sizeof(t.state),"autonomous"); return;
+  }
   if(mode==Mode::Drive && cmd.type==CommandType::Drive) {
     driveX=clampf(cmd.x,-1,1); driveY=clampf(cmd.y,-1,1); actionSpeed=clampf(cmd.speed,0,c.maxSpeed); return;
   }
@@ -234,7 +293,7 @@ void updateCalibration(const Config& c,uint32_t now) {
 void updateMotion(const Config& c,float dt,uint32_t now) {
   // 1. 先检查运动条件、占用者心跳与动作期限，再计算任何输出需求。
   if(!sensorsPermit(t.sensors,c,now)) return;
-  if(timedOut(now,heartbeat.load(),c.heartbeatMs)) { stopMotion("heartbeat_lost"); generation.fetch_add(1); return; }
+  if(mode!=Mode::Autonomous && timedOut(now,heartbeat.load(),c.heartbeatMs)) { stopMotion("heartbeat_lost"); generation.fetch_add(1); return; }
   if(precision() && timedOut(now,actionStarted,actionTimeout)) { fault("action_timeout"); return; }
   // 2. 按动作模式生成四轮速度需求，统一使用 cm/s。
   //    电池电压有效且低于门限时，限速降至配置最大速度的一半。
@@ -243,7 +302,21 @@ void updateMotion(const Config& c,float dt,uint32_t now) {
   const float requested=std::min(limit,actionSpeed);
   float translation=0, rotation=0;
   bool arrived=false;
-  if(mode==Mode::Drive) {
+  if(mode==Mode::Autonomous) {
+    const auto a=t.arena;
+    if(a.mode==arena::Mode::Escape && arenaDriveMode!=arena::Mode::Escape) {
+      // 边缘危险先撤旧驱动；下一拍才提交撤离方向，仍受驱动层换向等待约束。
+      arenaDriveMode=a.mode; motorStop(); resetLoops(); return;
+    }
+    arenaDriveMode=a.mode;
+    if(a.mode==arena::Mode::Halted || a.mode==arena::Mode::Idle) {
+      stopMotion(arena::reasonName(a.reason)); generation.fetch_add(1); return;
+    }
+    translation=clampf(a.forwardCmS,-requested,requested);
+    yawDemand=rampVelocity(yawDemand,clampf(a.yawDegS,-c.maxYawRate,c.maxYawRate),c.turnAcceleration,c.turnDeceleration,dt);
+    rotation=wheelTurnDistance(yawDemand,c);
+    desired[0]=desired[2]=translation-rotation; desired[1]=desired[3]=translation+rotation;
+  } else if(mode==Mode::Drive) {
     // x 正值表示摇杆向右，y 正值表示前进；估计偏航以逆时针为正。
     // 因而右转需求取负旋转量；左右轮混合后同比缩放，保留操纵比例。
     translation=driveY*requested;
@@ -306,8 +379,10 @@ void updateMotion(const Config& c,float dt,uint32_t now) {
   }
   // 3. 用当前运动方向筛选障碍；停止后使已经排队的旧代次命令失效。
   t.irSpeedScale=1; t.irLimited=false; t.irUnavailable=false;
-  if(c.safetyEnabled && c.irProtection) {
-    DirectionSafety safety=directionSafety(t.sensors,c,translation,rotation);
+  if(c.safetyEnabled && c.irProtection && (mode!=Mode::Autonomous || t.arena.mode==arena::Mode::Navigate)) {
+    Config irConfig=c;
+    if(mode==Mode::Autonomous) irConfig.irFailSafeStop=false; // 远场超量程不等于必需地面反馈失效。
+    DirectionSafety safety=directionSafety(t.sensors,irConfig,translation,rotation);
     // 换向或减速期间，新指令方向不等于当前运动方向。
     // 同时检查旧目标斜坡与测得轮速；近障碍不得因操作者反打摇杆而被漏掉。
     // 单相 FG 的测量方向仍由已施加的驱动方向推定，不能识别外力推动。
@@ -315,7 +390,7 @@ void updateMotion(const Config& c,float dt,uint32_t now) {
     for(const float* speeds:residuals) {
       const float left=(speeds[0]+speeds[2])*0.5f;
       const float right=(speeds[1]+speeds[3])*0.5f;
-      const DirectionSafety residual=directionSafety(t.sensors,c,(left+right)*0.5f,(right-left)*0.5f);
+      const DirectionSafety residual=directionSafety(t.sensors,irConfig,(left+right)*0.5f,(right-left)*0.5f);
       safety.speedScale=std::min(safety.speedScale,residual.speedScale);
       safety.unavailable=safety.unavailable || residual.unavailable;
     }
@@ -374,9 +449,11 @@ void run(void*) {
   // 唯一任务持有时基；静态存储也让确定性测试逐周期恢复任务时保留真实 dt。
   static TickType_t wake=xTaskGetTickCount(); static uint32_t previous=millis();
   for(;;) {
-    const uint32_t now=millis(); const float dt=clampf(float(uint32_t(now-previous))*0.001f,0.001f,0.1f); previous=now;
+    const uint32_t now=millis(); const uint32_t elapsedMs=uint32_t(now-previous);
+    const float dt=clampf(float(elapsedMs)*0.001f,0.001f,0.1f); previous=now;
     // 1. 获取配置快照并处理待停止标志；电机与传感器均在本任务中采样。
     const Config c=configSnapshot();
+    configureArena(c);
     const unsigned stopped=pendingStop.exchange(0);
     if(stopped) stopMotion(stopped&2?"emergency_stop":nullptr,(stopped&2)!=0);
     motorSample(dt,c,t.pulses,t.wheelSpeed,t.rpm);
@@ -391,6 +468,9 @@ void run(void*) {
     bool quiet=true; for(float v:delta) quiet=quiet && v==0;
     uint16_t actualPwm[4]; motorOutputs(actualPwm);
     bool zeroOutput=true; for(uint16_t v:actualPwm) zeroOutput=zeroOutput && v==0;
+    const bool anchorStill=quiet && zeroOutput && t.sensors.imuOk && std::fabs(t.sensors.gyroDps-c.gyroBias)<2 && std::fabs(t.speed)<=0.8f;
+    if(!anchorStill) poseQuiet=false;
+    else if(!poseQuiet) { poseQuiet=true; poseQuietStarted=now; }
     const float accMagnitude=std::sqrt(t.sensors.acc[0]*t.sensors.acc[0]+t.sensors.acc[1]*t.sensors.acc[1]+t.sensors.acc[2]*t.sensors.acc[2]);
     const bool stationary=quiet && mode==Mode::Idle && zeroOutput && t.sensors.imuOk && t.sensors.accelOk && std::fabs(accMagnitude-1)<0.08f;
     if(!stationary) { quietSince=now; quietGyroCount=quietGyroIndex=0; }
@@ -408,7 +488,22 @@ void run(void*) {
     }
     // 空闲且无轮脉冲时冻结偏航积分，减少静置漂移；
     // 此约定也意味着无轮活动的外部转动不会被完整追踪。
+    const float previousYaw=t.yaw;
     if(moving() || !quiet) t.yaw+=t.sensors.imuOk?fusedYawIncrement(t.sensors.gyroDps-adaptiveBias,dt,wheelYaw,c):wheelYaw;
+    arenaFrame.nowMs=now; arenaFrame.dtS=elapsedMs?float(elapsedMs)*0.001f:0.001f;
+    arenaFrame.deltaCm=wheelMean(delta); arenaFrame.deltaYawDeg=t.yaw-previousYaw;
+    arenaFrame.imuOk=t.sensors.imuOk; arenaFrame.imuFresh=!timedOut(now,t.sensors.imuMs,80);
+    arenaFrame.accelOk=t.sensors.accelOk; arenaFrame.accelSaturated=t.sensors.accelSaturated; arenaFrame.impact=t.sensors.impact;
+    arenaFrame.tiltDeg=accMagnitude>0.3f?std::acos(clampf(t.sensors.acc[2]/accMagnitude,-1,1))*180/pi:0;
+    arenaFrame.digitalOk=t.sensors.ioOk; arenaFrame.digitalFresh=!timedOut(now,t.sensors.digitalMs,80);
+    for(int i=0;i<3;++i) { arenaFrame.groundPresent[i]=t.sensors.e18[i]; arenaFrame.rawGroundPresent[i]=t.sensors.groundRaw[i]; }
+    for(int i=0;i<4;++i) arenaFrame.grayBright[i]=t.sensors.gray[i];
+    arenaFrame.irCount=c.irCount;
+    for(int i=0;i<12;++i) {
+      arenaFrame.irCm[i]=t.sensors.ir[i]; arenaFrame.irSampledMs[i]=t.sensors.irMs[i];
+      arenaFrame.irValid[i]=t.sensors.irValid[i] && !timedOut(now,t.sensors.irMs[i],250);
+    }
+    t.arena=arenaModel.tick(arenaFrame);
     t.lowBattery=t.sensors.batteryValid && t.sensors.batteryV<c.batteryLowV;
     // 4. 每周期最多消费 16 条命令；丢弃停止前的旧代次命令。
     Queued q;
@@ -446,14 +541,14 @@ void run(void*) {
 void controllerBegin() {
   motorStop(); queue=xQueueCreate(16,sizeof(Queued));
   if(!queue) { locked.store(true); text(published.fault,sizeof(published.fault),"command_queue_failed"); return; }
-  if(xTaskCreatePinnedToCore(run,"motion",8192,nullptr,3,nullptr,1)!=pdPASS) {
+  if(xTaskCreatePinnedToCore(run,"motion",24576,nullptr,3,nullptr,1)!=pdPASS) {
     locked.store(true); text(published.fault,sizeof(published.fault),"control_task_failed");
   }
 }
 bool controllerEnqueue(const Command& source) {
   // 停止绕过队列容量：先增加代次，旧命令即失效；再登记控制任务待处理标志。
   // 返回 true 只表示请求已登记，PWM 由控制任务响应后撤去。
-  if(source.type==CommandType::Stop || source.type==CommandType::Estop) {
+  if(source.type==CommandType::Stop || source.type==CommandType::Estop || source.type==CommandType::Takeover) {
     if(source.type==CommandType::Estop) locked.store(true);
     generation.fetch_add(1); pendingStop.fetch_or(source.type==CommandType::Estop?3:1);
     owner.store(0); busy.store(false); continuous.store(false); return true;
@@ -461,6 +556,7 @@ bool controllerEnqueue(const Command& source) {
   if(!queue) return false;
   if(admission.load()==2) return false;
   Command cmd=source; cmd.receivedMs=millis();
+  if(cmd.expires && static_cast<int32_t>(cmd.receivedMs-cmd.expiresAt)>=0) return false;
   // 心跳不排队，且只刷新当前占用者的失联计时。
   if(cmd.type==CommandType::Heartbeat) {
     if(cmd.client && cmd.client==owner.load()) { heartbeat.store(cmd.receivedMs); return true; }

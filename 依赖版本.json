@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "libraries": [
+    {"name": "ArduinoJson", "version": "7.3.1", "license": "LICENSE.txt"},
+    {"name": "AsyncTCP", "version": "3.3.2", "license": "LICENSE"},
+    {"name": "ESPAsyncWebServer", "version": "3.6.0", "license": "LICENSE"},
+    {"name": "WebSockets", "version": "2.7.2", "license": "LICENSE", "upstreamCommit": "8d0744eb5e916ec646d83bd1ffed5f643aab04d8",
+      "modifiedBy": "CombatBot maintainers", "modifiedOn": "2026-10-06",
+      "patch": {
+        "src/WebSocketsClient.cpp": {"original": "81c6900bf87414bdd63dee8ef5954af960b2fed70a162d48d4e99eefa959ae82", "patched": "29b96e2d3d5adf6726574233d9d033c76f470a1ed07adfddb579e25518cc4a42"},
+        "src/WebSockets.h": {"original": "99447004878caf123010eb7e4453f0f7c35ecaac1d5ebfc6b0a875f8103af665", "patched": "aa6819f9c83611aef63135fca830bc567a129be302a73c393436eae44e84162a"}
+      }
+    }
+  ]
+}
