@@ -1,0 +1,8 @@
+# Local build and IDE files
+.pio/
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+*.log
+_preview/

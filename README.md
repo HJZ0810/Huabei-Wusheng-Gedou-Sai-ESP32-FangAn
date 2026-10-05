@@ -21,6 +21,69 @@ V3.0 重点修正 V2.0 的运动方向、闭环输出、配置保存及多客户
 
 比较基线为 [V2.0 公开提交 fd650ac](https://github.com/HJZ0810/Huabei-Wusheng-Gedou-Sai-ESP32-FangAn/commit/fd650ac14d98aebc9779bf88365e23ad4cc5305f)。V2 的 200Hz 与 V3 的 100Hz 是周期设计变化，不能据此声称响应或精度提升；本版未上板。
 
+## 完整版本更新记录
+
+项目按 **V1.0 完整功能基础 → V2.0 安全与并发加固 → V3.0 控制正确性与可复核交付** 演进。以下各版本全部展开；历史源码、原说明和扩写说明一并保留，方便查看功能来源与升级取舍。
+
+| 版本 | 对应源码 | 原版说明 | 扩写版本说明 | 发布与下载 |
+|---|---|---|---|---|
+| V3.0 | [Arduino 工程](CombatBotArduino/) / [维护工程](combatbot/) | [V3.0 发布时 README](https://github.com/HJZ0810/Huabei-Wusheng-Gedou-Sai-ESP32-FangAn/blob/3fa1f7e/README.md) | [V3.0 发布与迁移](docs/releases/V3.0.md) | [V3.0 Release](https://github.com/HJZ0810/Huabei-Wusheng-Gedou-Sai-ESP32-FangAn/releases/tag/v3.0) |
+| V2.0 | [CombatBot_Fusion](versions/v2.0/CombatBot_Fusion/) | [V2.0 原 README](versions/v2.0/CombatBot_Fusion/README.md) | [V2.0 详细说明](docs/releases/V2.0.md) | [V2.0 历史 Release](https://github.com/HJZ0810/Huabei-Wusheng-Gedou-Sai-ESP32-FangAn/releases/tag/v2.0) |
+| V1.0 | [CombatBot_ESP32S3](versions/v1.0/CombatBot_ESP32S3/) | [V1.0 原 README](versions/v1.0/CombatBot_ESP32S3/README.md) | [V1.0 详细说明](docs/releases/V1.0.md) | [V1.0 历史 Release](https://github.com/HJZ0810/Huabei-Wusheng-Gedou-Sai-ESP32-FangAn/releases/tag/v1.0) |
+
+### V3.0 · 修正控制边界，补齐交付证据 · 2026-10-05
+
+**本版定位：** 在继承 V2 安全机制的基础上，处理运动方向、闭环输出、保存失败和页面生命周期之间的边界，并让发布包能够对应到实际检查的源码。
+
+- **运动语义统一。** 连续驾驶的 0% 表示零目标速度；电机电气反转与逻辑反馈方向分开；航向修正使用负反馈。累计偏航保留整圈和多圈转角，避免目标被折回 ±180°。
+- **闭环与标定完善。** 使用实际位置环和转向角加减速；转向系数通过独立轮行程标定。抗积分饱和覆盖前馈、补偿后的最终 PWM，换向等待期间清理积分，减少受限输出与控制器历史不一致的情况。
+- **会话行为明确。** HTTP 请求通过随机令牌绑定 WebSocket 连接；全部运动模式有控制者心跳保护，并修正时间戳边界。旁观者失焦、切页、离页不自动停止驾驶者，驾驶者离页及重连后的旧输入事件分别处理。
+- **配置保存有成功边界。** 先校验候选配置，NVS 写入成功后才发布运行快照；保存与命令消费共享仲裁，等输出撤除再应用。页面能识别 HTTP 失败，标定结果按一次性应用机制处理。
+- **传感器与执行器边界更清楚。** IR 采用渐进限速和可配置无效策略，换向时检查尚未消退的旧运动方向；增加独立保护开关、加速度来源及饱和显示。舵机改用 S3 支持的 14 位 PWM，并处理绑定失败。
+- **交付可复核。** 提供分文件 Arduino 草图、可编辑 HTML、固定依赖、离线迁移工具和中文资料；Arduino-ESP32 2.0.17、3.3.12 实际编译及 12 项软件检查通过，源码与日志哈希绑定到交付凭据。
+
+**相对 V2 的进步与优势：** 不仅拒绝非法输入，也检查合法输入经过运动规划、补偿、保存和页面事件后是否仍保持正确含义；发布资料能够沿“维护源 → Arduino 导出 → 验证日志 → ZIP”追溯。急停旁路、CAS 控制权、PCNT 回退及换向双条件是继承机制，不算 V3 新增。
+
+**取舍与边界：** 控制目标从 200Hz 调整为 100Hz，不代表实测性能提升；本版没有上板验收。首启保护总开关默认关闭，须核对接线后启用；保留有效低压 50% 限速，不迁移 V2 的 `batCrit` 停机阈值。NVS、协议、PID 单位、IR 通道和安装角度有变化，升级须按 [迁移说明](docs/releases/V3.0.md#升级与回退) 操作。撤 PWM 不保证主动制动，连接令牌不等于账户认证。
+
+### V2.0 · 从功能可用走向安全与并发加固 · 2026-10-05
+
+**本版定位：** 基于 [V1.0 公开提交 1b04fd7](https://github.com/HJZ0810/Huabei-Wusheng-Gedou-Sai-ESP32-FangAn/commit/1b04fd7485a531d5d85fe769732636cfa675b90e) 完善停止优先级、控制权、数据校验和反馈采集。历史快照对应 [V2.0 最终提交 fd650ac](https://github.com/HJZ0810/Huabei-Wusheng-Gedou-Sai-ESP32-FangAn/commit/fd650ac14d98aebc9779bf88365e23ad4cc5305f)。
+
+- **停止绕过普通队列。** 停止和急停递增命令代次并设置原子标志，让旧队列指令失效；处理停止不再依赖普通队列是否还有空间。
+- **多客户端有单一控制者。** 用 CAS 抢占控制权，心跳与服务端断开事件按连接编号识别控制者，减少多页面同时发动作造成的冲突；动作结束或申请入队失败时释放占用。
+- **入口校验更完整。** 拒绝 NaN、Inf 和超出允许范围的动作参数，配置保存前按物理边界收口，减少异常输入进入控制状态机的机会。
+- **FG 优先硬件计数。** PCNT 配合毛刺滤波读取电机反馈，不可用时回退 GPIO 中断。换向同时要求距最近 FG 边沿至少 120ms、滤波速度不高于 0.8cm/s，避免仅凭一个信号判断已经停稳。
+- **PID 与 IMU 增加约束。** 条件积分抗饱和、首拍微分保护；零偏标定增加方差判据，在线偏置限定在标定值 ±0.1°/s 且不回写 NVS。
+- **感知状态显式化。** 逐通道有效性及时效检查，无效红外下发 JSON `null`、页面显示 `--`；按行进方向筛选障碍，原地转向全向检查。
+- **资料更易上手。** 保留连续/精准控制、在线标定、离线网页、AP+STA 和 NVS 配置，补充 Arduino 环境搭建指南及针对急停、占用、传感器异常的自检项。
+
+**相对 V1 的进步与优势：** 从“命令能执行”进一步考虑“队列满、有人旁观、反馈异常、输入失真时如何处理”。核心收益在失效处理和可维护性；目标控制周期仍为 5ms，传感器约 20Hz，并保留可直接编辑的内嵌网页源码。
+
+**历史边界与后续改进：** V2 服务端对旁观者断开有仲裁，但页面自动发送全局停止的边界仍由 V3 修正；该公开快照的心跳保护主要覆盖连续模式，最终 PWM 抗饱和、多圈偏航和保存成功发布也在 V3 完善。无效 IR 被排除限速不等于确认通行安全。原 README 记录的编译结果是历史记录，本次没有重编 V2，也没有补做实车验收；“控制核独占 Core 0”等原描述不能作为时延保证。
+
+### V1.0 · 建立可操作、可标定的完整工程 · 2026-10-05
+
+**本版定位：** 首个公开工程快照 [1b04fd7](https://github.com/HJZ0810/Huabei-Wusheng-Gedou-Sai-ESP32-FangAn/commit/1b04fd7485a531d5d85fe769732636cfa675b90e)，先把电机、传感器、网络、页面、参数和标定串成完整控制流程。源码注释中的内部 V1.1 标号随原文件保留，不另行推定为一个公开发布版本。
+
+- **四轮驱动与反馈。** 四路 PWM、方向输出、FG 中断计数和舵机控制分模块实现；运动学模块负责脉冲、距离和角度换算，为连续差速与精准动作提供基础。
+- **两种控制模式。** 连续页处理实时驾驶输入；精准页接受距离和转角目标。直线包含速度规划、四轮速度 PID 和航向修正，转向采用轮脉冲主转与 IMU 精修流程，并回传进度和结果。
+- **传感器集中接入。** MPU6050、ADXL345 提供惯性数据，CD74HC4067 扫描六路 IR 与电池，MCP23017 接入灰度及 E18 信号，网页集中显示运动与传感器遥测。
+- **无线操作闭环。** 常驻 AP、可选 STA、mDNS 和强制门户配合内嵌四页网页；HTTP、WebSocket、REST 接口覆盖动作、配置、标定、状态和重启，无须外部网页服务器。
+- **在线参数与三步标定。** NVS 持久化和 JSON 导入导出贯通设置流程；提供 IMU 零偏、行程系数 `K_odo`、转向系数 `K_turn` 的测量与回填入口。
+- **基础停车与装机资料。** 上电零 PWM、急停锁定、连续模式心跳看门狗、低压限速/严重低压停机、堵转与边缘保护形成初始安全功能；模块平铺与 `.ino` 同级，配套接线、设计、参数和自检文档。
+
+**本版优势与后续关系：** V1 建立了从“接线 → 参数 → 标定 → 驾驶 → 遥测”的完整使用链，分文件工程能在 Arduino IDE 直接阅读，是 V2/V3 继续迭代的功能与文档基础。
+
+**历史边界：** 停止仍走普通命令流程，缺少跨客户端控制权仲裁；输入范围、计数、换向、零偏和传感器有效性约束尚不完整。原资料的工具链校验记录没有在本次重新执行，源码中的目标频率及到位阈值不等于实测时延或机械精度；这些边界分别推动了 V2 加固与 V3 修正。
+
+### 版本记录维护约定
+
+1. 发布新版本时，在本节与 [CHANGELOG](CHANGELOG.md) 的版本记录顶部追加完整条目，按新到旧排列，保留已有版本内容。
+2. 历史记录只补充说明或明确标注纠错，不覆盖删除；继承的功能标注来源，不写成新版本新增。
+3. `versions/` 中的旧版本快照作为只读历史保留。当前安装、接口、接线与验证以对应版本说明为准，不能混用不同版本资料。
+4. 每版说明分别写明功能变化、进步与优势、验证证据和边界，避免用目标频率或旧编译记录推断新版本实测性能。
+
 ## 准备编译
 
 1. 解压完整包，打开 [CombatBotArduino/CombatBotArduino.ino](CombatBotArduino/CombatBotArduino.ino)。保留全部同级 `.cpp/.h`，草图目录名应为 `CombatBotArduino`。
@@ -69,14 +132,15 @@ python scripts/convert_workbuddy_config.py "V2参数.json" "V3候选.json"
 | [combatbot/src/](combatbot/src/) / [combatbot/include/](combatbot/include/) | 固件维护源 |
 | [combatbot/web/index.html](combatbot/web/index.html) | 可读可改的完整离线网页 |
 | [combatbot/scripts/](combatbot/scripts/) | 导出、验证、迁移、打包工具 |
-| [docs/README.md](docs/README.md) | V3 资料与 V2 历史归档索引 |
+| [docs/README.md](docs/README.md) | 当前资料与各版本历史说明索引 |
+| [versions/](versions/) | V1.0 / V2.0 完整历史工程及原版文档，只读保留 |
 
 修改维护源或网页后，在 `combatbot/` 执行以下命令同步导出并重新验证；不要只改导出副本后继续打包。
 
 ```powershell
 python scripts/export_arduino.py
 python scripts/verify_release.py --pio "已有platformio.exe路径" --compiler "已有g++.exe路径" --node "已有node.exe路径"
-python scripts/package_delivery.py
+python ../tools/package_history.py
 python scripts/verify_delivery.py
 ```
 

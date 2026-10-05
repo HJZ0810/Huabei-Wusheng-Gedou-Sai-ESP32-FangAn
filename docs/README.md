@@ -15,6 +15,18 @@
 
 Arduino 入口：[CombatBotArduino.ino](../CombatBotArduino/CombatBotArduino.ino)。维护源码：[combatbot](../combatbot/)。
 
+## 全部版本与演进资料
+
+根 [README 的完整版本更新记录](../README.md#完整版本更新记录) 全部展开 V3、V2、V1。新增版本从顶部追加，旧版本的完整源码、原始说明、扩写资料和发布入口持续保留。
+
+| 版本 | 扩写说明 | 完整旧工程 / 当前工程 | 原始说明 | 发布入口 |
+|---|---|---|---|---|
+| V3.0 | [控制正确性与可验证交付](releases/V3.0.md) | [当前 Arduino 草图](../CombatBotArduino/) | [固定发布提交](https://github.com/HJZ0810/Huabei-Wusheng-Gedou-Sai-ESP32-FangAn/tree/v3.0) | [V3.0](https://github.com/HJZ0810/Huabei-Wusheng-Gedou-Sai-ESP32-FangAn/releases/tag/v3.0) |
+| V2.0 | [并发、安全与异常处理加固](releases/V2.0.md) | [CombatBot_Fusion](../versions/v2.0/CombatBot_Fusion/) | [V2 原始 README](../versions/v2.0/CombatBot_Fusion/README.md) | [V2.0 历史归档](https://github.com/HJZ0810/Huabei-Wusheng-Gedou-Sai-ESP32-FangAn/releases/tag/v2.0) |
+| V1.0 | [完整控制与标定链路](releases/V1.0.md) | [CombatBot_ESP32S3](../versions/v1.0/CombatBot_ESP32S3/) | [V1 原始 README](../versions/v1.0/CombatBot_ESP32S3/README.md) | [V1.0 历史归档](https://github.com/HJZ0810/Huabei-Wusheng-Gedou-Sai-ESP32-FangAn/releases/tag/v1.0) |
+
+来源提交与逐文件校验见 [历代工程索引](../versions/README.md) 和 [历史清单](../versions/SOURCE_MANIFEST.json)。完整包使用 [历史资料打包入口](../tools/package_history.py)，同时保留当前软件验证门控和旧工程完整性检查。
+
 ## V2 历史归档
 
 以下资料保留作历史对照，其中草图、依赖、PWM 位数、协议、默认保护及参数可能属于 V2，**请勿据此安装或配置 V3**。当前接线和运行说明以上方 V3 资料为准。
