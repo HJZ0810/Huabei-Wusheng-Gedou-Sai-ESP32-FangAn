@@ -5,13 +5,15 @@
  *
  * @details 控制任务每个周期（5ms / 200Hz）的执行顺序是固定的：
  *          @verbatim
- *            ① 取指令（网络核投递）        —— 队列，非阻塞
- *            ② 传感器扫描（20Hz 降频）     —— 4067 + MCP23017
- *            ③ 里程与测速结算              —— FG 增量 → 转速 / 里程计偏航
- *            ④ IMU 更新（互补融合）        —— 得到可靠偏航角
- *            ⑤ 安全仲裁                    —— 触发即清零 PWM
- *            ⑥ 模式机 + 三环运算           —— 位置环 → 速度环 → 航向环
- *            ⑦ 遥测快照（50Hz 降频）       —— 供网络核读取
+ *            ① 停止门控（原子标志位）    —— 先于取指令，保证停止不被旧指令顶掉
+ *            ② 取指令（带代次校验）      —— 队列，非阻塞
+ *            ③ 传感器扫描（20Hz 降频）   —— 4067 + MCP23017
+ *            ④ 里程与测速结算            —— FG 增量 → 转速 / 里程计偏航
+ *            ⑤ IMU 更新（互补融合）      —— 得到可靠偏航角
+ *            ⑥ 安全仲裁（含方向性障碍）  —— 触发即清零 PWM
+ *            ⑦ 模式机 + 三环运算         —— 位置环 → 速度环 → 航向环
+ *            ⑧ 占用状态结算              —— 动作结束即释放控制权
+ *            ⑨ 遥测快照（50Hz 降频）     —— 供网络核读取
  *          @endverbatim
  *
  *          三级闭环结构：
@@ -20,8 +22,8 @@
  *                                          ↘ 航向环（角度误差 → 左右轮速差）
  *          @endverbatim
  *
- * @author  CombatBot 电控组
- * @version V1.1.0
+ * @author  HJZ
+ * @version V2.0.0
  * @date    2026-10-05
  *
  * @par     修改记录
@@ -29,6 +31,9 @@
  *          <tr><th>日期       <th>版本  <th>作者   <th>说明
  *          <tr><td>2026-10-04 <td>V1.0  <td>电控组 <td>首次创建
  *          <tr><td>2026-10-05 <td>V1.1  <td>电控组 <td>统一企业级注释规范
+ *          <tr><td>2026-10-05 <td>V2.0  <td>电控组 <td>融合版：停止绕过队列 +
+ *                                                    代次失效 + 控制权 CAS +
+ *                                                    输入校验 + 方向性避障
  *          </table>
  *
  * Copyright (c) 2026 HJZ. Licensed under the MIT License.
@@ -45,6 +50,8 @@
 #include "imu.h"
 #include "sensors.h"
 #include "safety.h"
+#include <atomic>
+#include <cmath>
 
 /* ==========================================================================
  *                          私有常量
@@ -52,18 +59,67 @@
 #define CTRL_PERIOD_MS   5          /**< 控制周期 5ms → 200Hz                  */
 #define CTRL_DT          0.005f     /**< 控制周期（秒）                        */
 #define SENSOR_PERIOD_MS 50         /**< 传感器扫描周期 → 20Hz                 */
+/** @brief 传感器数据判陈旧阈值 ms（约 10 个扫描周期的余量）             */
+#define SENSOR_STALE_MS  500
 #define TM_PERIOD_MS     20         /**< 遥测快照刷新周期 → 50Hz               */
 #define ACTION_TIMEOUT_MS 30000     /**< 单次动作超时保护                      */
 #define TRIM_TIMEOUT_MS  4000       /**< 转向 IMU 精修超时保护                 */
 #define CAL_IMU_MS       3000       /**< IMU 零偏采样时长                      */
+
+/**
+ * @brief 零偏标定的方差上限 (rad/s)²
+ * @details 与 imu.cpp 的 QUIET_VAR_MAX 取同一量级（标准差 ≈0.57°/s）。
+ *          超限说明采样窗口内车辆并不静止，本次标定结果作废。
+ */
+#define CAL_IMU_VAR_MAX  1.0e-4
+
+/** @brief 停止标志位 0：待处理普通停止 */
+#define STOP_BIT_PENDING  0x01u
+/** @brief 停止标志位 1：需要保持急停锁定 */
+#define STOP_BIT_LATCH    0x02u
+
+/** @brief 单拍最多消费的指令条数（防止网络侧洪水饿死控制周期） */
+#define CMD_PER_TICK      16
+
+/** @brief 合法的指令类型上限（@ref CmdType 中的最大值），用于拒绝未知类型 */
+#define CMD_TYPE_MAX      C_HB
 
 /* ==========================================================================
  *                          私有状态（模块内静态）
  * ========================================================================== */
 static RMode   s_mode  = R_IDLE;    /**< 当前控制模式                          */
 static RState  s_state = RS_IDLE;   /**< 当前动作状态                          */
-static bool    s_estop = false;     /**< 急停锁定标志                          */
-static uint32_t s_lastHb = 0;       /**< 最近一次心跳时间戳                    */
+static bool    s_estop = false;     /**< 急停锁定标志（仅控制核读写）          */
+static bool    s_safetyBlock = false; /**< 存在物理危险（边缘/严重低压），禁止解锁 */
+
+/* ---- 跨核门控（★ 融合版新增，全部走原子操作，不持锁） ------------------ */
+/**
+ * @brief 指令代次：每次停止请求都会 +1，队列里携带旧代次的指令会被直接丢弃
+ * @details 这样「停止」就具有了追溯效力：即使队列里还压着 16 条移动指令，
+ *          一次停止也能让它们全部失效，无需等待它们被逐条消费完。
+ */
+static std::atomic<uint32_t> s_generation{0};
+/** @brief 当前控制者（WebSocket 连接编号）；0 表示无人占用 */
+static std::atomic<uint32_t> s_owner{0};
+/** @brief 待处理停止标志：位 0 = 普通停止，位 1 = 急停锁定（见 STOP_BIT_*） */
+static std::atomic<unsigned> s_pendingStop{0};
+/** @brief 是否有动作在执行或有停止请求待处理（供 Web 层保存配置前判断） */
+static std::atomic<bool>     s_busy{false};
+/** @brief 急停锁定门：在指令入口即刻生效，早于控制核下一拍的响应 */
+static std::atomic<bool>     s_locked{false};
+/** @brief 外部占用保持（Web 层写配置期间置位），不被控制周期结算覆盖 */
+static std::atomic<bool>     s_hold{false};
+/** @brief 连续模式允许同一占用者反复刷新摇杆，无需重新抢占 */
+static std::atomic<bool>     s_continuous{false};
+
+/** @brief 最近一次有效心跳时间戳（仅当前占用者能刷新） */
+static std::atomic<uint32_t> s_lastHb{0};
+
+/** @brief 队列元素：指令 + 入队时的代次快照 */
+struct Queued {
+    Cmd      cmd;
+    uint32_t gen;
+};
 
 static QueueHandle_t     s_cmdQ  = NULL;    /**< 指令队列（网络核 → 控制核）   */
 static QueueHandle_t     s_doneQ = NULL;    /**< 回传队列（控制核 → 网络核）   */
@@ -100,6 +156,7 @@ static float    s_calMeasDeg   = 0;         /**< 转向标定实测到的角度 
 static float    s_calTargetDeg = 0;         /**< 转向标定的命令角度           */
 static uint32_t s_calT0 = 0;                /**< 零偏采样起始时间戳           */
 static double   s_calSum = 0;               /**< 零偏采样累加值               */
+static double   s_calSumSq = 0;             /**< 零偏采样平方和（方差判据用） */
 static uint32_t s_calN = 0;                 /**< 零偏采样计数                 */
 
 /* ---- 里程计 ---- */
@@ -214,9 +271,28 @@ static void startTurn(float deg, const Cfg& c) {
  * @param[in] cmd  指令包
  * @param[in] c    当前配置
  * @return   无
- * @note     急停锁定期间，除「解锁」外的所有驱动类指令都会被丢弃。
+ * @details 受理门控（★ 融合版新增）：
+ *          @verbatim
+ *            - 新动作（MOVE / TURN / CAL）只在 R_IDLE 态受理；
+ *            - 连续模式（R_MANUAL）只接受**当前占用者**的摇杆刷新；
+ *            - 舵机与标定回填要求「无人占用 或 本人操作」；
+ *            - 急停锁定期间，除「解锁」外的所有指令由入口层直接拦下。
+ *          @endverbatim
+ *
+ * @warning 本函数只在控制任务上下文调用；所有跨核状态已由
+ *          @ref robotPushCmd 完成仲裁，此处不再重复加锁。
  */
 static void handleCmd(const Cmd& cmd, const Cfg& c) {
+    /* ---- 受理门控：防止两个动作叠在一起互相打架 ---- */
+    if (cmd.t == C_DRV) {
+        /* 连续模式允许持续刷新，但只认当前占用者 */
+        if (s_mode == R_MANUAL && cmd.client != s_owner.load()) return;
+    } else if (cmd.t != C_STOP && cmd.t != C_UNLOCK &&
+               cmd.t != C_SERVO && cmd.t != C_CAL_FIN) {
+        /* 其余动作类指令：必须处于空闲态才受理 */
+        if (s_mode != R_IDLE) return;
+    }
+
     switch (cmd.t) {
         case C_STOP:
             allStop();
@@ -225,28 +301,25 @@ static void handleCmd(const Cmd& cmd, const Cfg& c) {
             break;
 
         case C_HB:
-            /* 纯心跳：只刷新看门狗，不改变当前输入 */
-            s_lastHb = millis();
+            /* 纯心跳：只刷新看门狗，不改变当前输入（入口层已校验占用者） */
+            s_lastHb.store(millis());
             break;
 
         case C_DRV:
-            if (s_estop) break;
             s_mx   = constrain(cmd.a, -1.0f, 1.0f);
             s_my   = constrain(cmd.b, -1.0f, 1.0f);
             s_mspd = cmd.u;
-            s_lastHb = millis();
+            s_lastHb.store(millis());
             if (s_mode != R_MANUAL) { s_trap.reset(); s_mode = R_MANUAL; }
             s_state = RS_RUN;
             break;
 
         case C_MOVE:
-            if (s_estop) break;
             if (s_mode == R_MANUAL) allStop();
             startMove(cmd.a, cmd.u, c);
             break;
 
         case C_TURN:
-            if (s_estop) break;
             if (s_mode == R_MANUAL) allStop();
             startTurn(cmd.a, c);
             break;
@@ -264,6 +337,13 @@ static void handleCmd(const Cmd& cmd, const Cfg& c) {
             break;
 
         case C_UNLOCK:
+            /* ★ 融合版：解锁前复核物理危险。若仍处于擂台边缘或电池严重亏电，
+             *   解锁等于把车直接送出危险区，因此拒绝解锁并保留急停。 */
+            if (s_safetyBlock) {
+                pushDone(D_ALERT, 6, 0, 0);         /* 告警码 6：解锁被拒绝 */
+                break;
+            }
+            s_locked.store(false);
             s_estop = false;
             allStop();
             s_mode  = R_IDLE;
@@ -359,7 +439,7 @@ static void driveWheels(float vL, float vR, const Cfg& c, float dt, float scale)
  * @return  无
  */
 void robotInit() {
-    s_cmdQ  = xQueueCreate(16, sizeof(Cmd));
+    s_cmdQ  = xQueueCreate(16, sizeof(Queued));
     s_doneQ = xQueueCreate(8,  sizeof(DoneMsg));
     s_tmMtx = xSemaphoreCreateMutex();
 
@@ -393,9 +473,31 @@ void robotTask(void* arg) {
         CfgSnap cs;
         const Cfg& c = cs.c;
 
-        /* ---- ① 取指令 ---- */
-        Cmd cmd;
-        while (s_cmdQ && xQueueReceive(s_cmdQ, &cmd, 0)) handleCmd(cmd, c);
+        /* ---- ① 先处理停止门控，再取指令 ----------------------------
+           ★ 顺序至关重要：停止请求是通过原子标志位投递的（不排队），
+             必须先于队列消费处理，否则本拍仍会执行一条已经"被停止"的旧指令。 */
+        unsigned stopped = s_pendingStop.exchange(0);
+        if (stopped) {
+            allStop();
+            s_mode  = R_IDLE;
+            s_state = RS_IDLE;
+            if (stopped & STOP_BIT_LATCH) {
+                s_estop = true;
+                s_mode  = R_ESTOP;
+                pushDone(D_ALERT, 1, 0, 0);     /* 告警码 1：急停已触发 */
+            }
+            s_owner.store(0);
+            s_busy.store(false);
+            s_continuous.store(false);
+        }
+
+        /* ---- ② 取指令：丢弃代次已失效的旧指令 ---- */
+        Queued q;
+        for (int n = 0; n < CMD_PER_TICK && xQueueReceive(s_cmdQ, &q, 0) == pdTRUE; ++n) {
+            if (q.gen == s_generation.load() && s_pendingStop.load() == 0) {
+                handleCmd(q.cmd, c);
+            }
+        }
 
         /* ---- ② 传感器扫描（20Hz） ---- */
         if (now - lastSen >= SENSOR_PERIOD_MS) {
@@ -434,8 +536,32 @@ void robotTask(void* arg) {
         bool anyStall = false;
         for (int i = 0; i < 4; i++) if (motorIsStalled(i)) anyStall = true;
 
+        /* 行进方向 / 转向标志：供红外做方向性障碍过滤（见 safety.cpp） */
+        float moveDirDeg = 0.0f;                    /* 0° = 车头方向        */
+        bool  turning    = false;
+        switch (s_mode) {
+            case R_MANUAL:
+                /* 摇杆 y 定前后，x 为转向分量；有转向分量时整车在扫掠，
+                   必须全向检测，因此 turning 只看 x 的幅值。 */
+                moveDirDeg = (s_my >= 0.0f) ? 0.0f : 180.0f;
+                turning    = (fabsf(s_mx) > 0.15f);
+                break;
+            case R_MOVE:
+                moveDirDeg = (s_targetPulses >= 0.0f) ? 0.0f : 180.0f;
+                break;
+            case R_TURN:
+                turning = true;                     /* 原地转向：全向扫掠   */
+                break;
+            default:
+                break;
+        }
+
         SafetyOut sf;
-        safetyUpdate(c, now, s_lastHb, s_mode == R_MANUAL, anyStall, sf);
+        safetyUpdate(c, now, s_lastHb.load(), s_mode == R_MANUAL, anyStall,
+                     moveDirDeg, turning, sf);
+
+        /* 物理危险标志：边缘 / 严重低压期间禁止解锁（见 C_UNLOCK 分支） */
+        s_safetyBlock = (sf.edge || sf.critBat);
 
         if (sf.forceStop && s_mode != R_ESTOP) {
             allStop();
@@ -591,15 +717,30 @@ void robotTask(void* arg) {
             case R_CAL_IMU: {
                 /* 零偏采样期间必须保持静止 */
                 allStop();
-                s_calSum += gImu.gz;
+                s_calSum   += gImu.gz;
+                s_calSumSq += (double)gImu.gz * (double)gImu.gz;
                 s_calN++;
 
                 if (now - s_calT0 >= CAL_IMU_MS && s_calN > 10) {
-                    float b = (float)(s_calSum / s_calN);
+                    double mean = s_calSum / s_calN;
+                    double var  = s_calSumSq / s_calN - mean * mean;
+
+                    /* ★ 融合版：先做方差检验再决定是否落盘。
+                       采样期间被撞一下、被推一下，均值就会被污染；
+                       只靠均值看不出来，方差却会立刻爆掉。
+                       不静止就拒绝写入，避免把一次坏标定固化进 NVS。 */
+                    if (!(var >= 0.0) || var >= CAL_IMU_VAR_MAX) {
+                        pushDone(D_ALERT, 7, 0, 0);     /* 告警码 7：标定失败 */
+                        s_mode = R_IDLE; s_state = RS_ERR;
+                        break;
+                    }
+
+                    float b = (float)mean;
                     if (gCfgMutex) xSemaphoreTake(gCfgMutex, portMAX_DELAY);
                     gCfg.gzBias = b;
                     if (gCfgMutex) xSemaphoreGive(gCfgMutex);
                     cfgSave();
+                    imuResetAdaptive();                 /* 新基准：清掉旧漂移 */
                     pushDone(D_CAL_IMU, CAL_IMU, 0, b);
                     s_mode  = R_IDLE;
                     s_state = RS_DONE;
@@ -611,7 +752,19 @@ void robotTask(void* arg) {
                 break;
         }
 
-        /* ---- ⑦ 遥测快照（50Hz） ---- */
+        /* ---- ⑦ 占用状态结算 ----
+           ★ 动作结束立即释放控制权，避免某个连接"占着位置不干活"，
+             导致其它连接（尤其是网页重连后）永远抢不到车。 */
+        const bool busyNow = s_hold.load() || (s_pendingStop.load() != 0) ||
+                             (s_mode == R_MANUAL || s_mode == R_MOVE ||
+                              s_mode == R_TURN   || s_mode == R_CAL_IMU);
+        s_busy.store(busyNow);
+        if (!busyNow && s_owner.load() != 0) {
+            s_owner.store(0);
+            s_continuous.store(false);
+        }
+
+        /* ---- ⑧ 遥测快照（50Hz） ---- */
         if (now - lastTm >= TM_PERIOD_MS) {
             lastTm = now;
             if (s_tmMtx && xSemaphoreTake(s_tmMtx, pdMS_TO_TICKS(2)) == pdTRUE) {
@@ -627,9 +780,15 @@ void robotTask(void* arg) {
                 s_tm.odoCm   = s_odoCm;
                 s_tm.bat     = gSen.bat;
 
-                for (int i = 0; i < 6; i++) s_tm.ir[i]   = gSen.ir[i];
+                for (int i = 0; i < 6; i++) {
+                    s_tm.ir[i]      = gSen.ir[i];
+                    s_tm.irValid[i] = gSen.irValid[i];
+                }
                 for (int i = 0; i < 4; i++) s_tm.gray[i] = gSen.gray[i];
                 for (int i = 0; i < 3; i++) s_tm.e18[i]  = gSen.e18[i];
+                s_tm.batValid = gSen.batValid;
+                s_tm.ioOk     = gSen.ioOk;
+                s_tm.senStale = !sensorsFresh(now, SENSOR_STALE_MS);
 
                 s_tm.acc[0] = gImu.ax;
                 s_tm.acc[1] = gImu.ay;
@@ -644,6 +803,7 @@ void robotTask(void* arg) {
                 if (s_mode != R_MOVE && s_mode != R_TURN) s_tm.progress = 0;
 
                 s_tm.estop      = s_estop;
+                s_tm.owner      = s_owner.load();
                 s_tm.lowBat     = sf.lowBat || sf.critBat;
                 s_tm.edge       = sf.edge;
                 s_tm.irLimit    = sf.irLimit;
@@ -658,12 +818,176 @@ void robotTask(void* arg) {
 }
 
 /**
- * @brief   投递指令到控制核
- * @param[in] c  指令包
- * @return  true 投递成功
+ * @brief   向控制核投递一条指令（含控制权仲裁与输入校验）
+ * @param[in] c  指令包；@ref Cmd::client 必须填发起方的连接编号
+ * @return  true 指令已受理；false 被拒绝（队列满 / 已被占用 / 急停锁定 / 参数非法）
+ *
+ * @details 处理顺序（顺序本身即安全语义，不可调换）：
+ *          @verbatim
+ *            ① 类型合法性      未知类型直接拒绝
+ *            ② Stop / Estop    不排队：递增代次 + 置位原子标志 → 永不被丢弃
+ *            ③ 心跳            不排队，只认当前占用者
+ *            ④ 数值校验        NaN / Inf / 越界一律拒绝
+ *            ⑤ 解锁            唯一在锁定态仍可通行的指令
+ *            ⑥ 舵机            不得越权操作他人占用的车
+ *            ⑦ 动作类          原子 CAS 抢占控制权，抢占失败即拒绝
+ *          @endverbatim
+ *
+ * @warning 返回 true 只表示「已受理」，不代表动作已经执行完成；
+ *          完成状态请读取 @ref robotPopDone 的回传事件。
  */
 bool robotPushCmd(const Cmd& c) {
-    return s_cmdQ && (xQueueSend(s_cmdQ, &c, 0) == pdTRUE);
+    /* ---- ① 类型合法性 ---- */
+    if (c.t > CMD_TYPE_MAX) return false;
+
+    /* ---- ② 停止类：绕过队列容量上限 ----
+       先 +1 代次让队列里尚未执行的旧指令整体失效，再置位待处理标志；
+       控制核下一拍必定消费该标志，因此急停不会因为队列满而被吞掉。 */
+    if (c.t == C_STOP || c.t == C_ESTOP) {
+        if (c.t == C_ESTOP) s_locked.store(true);
+        s_generation.fetch_add(1);
+        s_pendingStop.fetch_or(c.t == C_ESTOP
+                               ? (STOP_BIT_PENDING | STOP_BIT_LATCH)
+                               :  STOP_BIT_PENDING);
+        s_owner.store(0);
+        s_busy.store(false);
+        s_continuous.store(false);
+        return true;
+    }
+
+    if (!s_cmdQ) return false;
+
+    /* ---- ③ 心跳：不排队，且只对当前占用者有效 ---- */
+    if (c.t == C_HB) {
+        if (c.client && c.client == s_owner.load()) {
+            s_lastHb.store(millis());
+            return true;
+        }
+        return false;
+    }
+
+    /* ---- ④ 数值校验：非有限数与越界参数一律拒绝 ---- */
+    if (!cfgFinite(c.a) || !cfgFinite(c.b)) return false;
+    switch (c.t) {
+        case C_DRV:
+            if (c.a < -1.0f || c.a > 1.0f || c.b < -1.0f || c.b > 1.0f) return false;
+            if (c.u > 100) return false;                    /* 速度百分比    */
+            break;
+        case C_MOVE:
+            if (fabsf(c.a) > 1000.0f) return false;         /* ±10 m         */
+            if (c.u > 100) return false;
+            break;
+        case C_TURN:
+            if (fabsf(c.a) > 720.0f) return false;          /* ±2 圈         */
+            break;
+        case C_SERVO:
+            if (c.u > 1) return false;
+            break;
+        case C_CAL:
+            if (c.u != CAL_IMU && c.u != CAL_ODO && c.u != CAL_TURN) return false;
+            break;
+        case C_CAL_FIN:
+            if (c.u != CAL_ODO && c.u != CAL_TURN) return false;
+            if (fabsf(c.a) > 10000.0f) return false;
+            break;
+        default:
+            break;
+    }
+
+    /* ---- ⑤ 解锁：唯一在锁定态仍可通行的指令 ---- */
+    if (c.t == C_UNLOCK) {
+        const Queued q{c, s_generation.load()};
+        return xQueueSend(s_cmdQ, &q, 0) == pdTRUE;
+    }
+    if (s_locked.load()) return false;                /* 急停锁定中         */
+
+    /* ---- ⑥ 舵机：要求无人占用或本人操作 ---- */
+    if (c.t == C_SERVO) {
+        const uint32_t own = s_owner.load();
+        if (own && own != c.client) return false;
+        const Queued q{c, s_generation.load()};
+        return xQueueSend(s_cmdQ, &q, 0) == pdTRUE;
+    }
+
+    /* ---- ⑦ 动作类：必须携带发起方编号，否则无法做占用仲裁 ---- */
+    if (!c.client) return false;
+
+    /* 外部保持占用期间（Web 层正在写配置）不接受新动作抢占 */
+    if (s_busy.load() && s_owner.load() == 0) return false;
+
+    /* 原子申请控制权：0 → client 的 CAS 保证同一时刻只有一个赢家 */
+    uint32_t expected = 0;
+    const bool claimed = s_owner.compare_exchange_strong(expected, c.client);
+
+    /* 已有占用者时，只允许**同一占用者**继续刷新连续模式的摇杆 */
+    if (!claimed &&
+        (expected != c.client || !s_continuous.load() || c.t != C_DRV)) {
+        return false;
+    }
+    if (claimed) {
+        s_busy.store(true);
+        s_continuous.store(c.t == C_DRV);
+    }
+    /* 占用者的任何动作指令都顺带刷新一次心跳：
+       连续模式下摇杆是持续下发的，若只有"首次抢占"才记心跳，
+       1 秒后就会被看门狗判失联而停车 —— 那样根本没法连续驾驶。 */
+    s_lastHb.store(millis());
+
+    const Queued q{c, s_generation.load()};
+    if (xQueueSend(s_cmdQ, &q, 0) == pdTRUE) return true;
+
+    /* 入队失败时撤回本次新申请，避免出现"占着位置却没有指令"的僵局 */
+    if (claimed) {
+        s_owner.store(0);
+        s_busy.store(false);
+        s_continuous.store(false);
+    }
+    return false;
+}
+
+/**
+ * @brief   通知控制核：某个连接已断开
+ * @param[in] client  断开的连接编号
+ * @return   无
+ */
+void robotDisconnect(uint32_t client) {
+    if (!client || client != s_owner.load()) return;
+    Cmd c;
+    c.t      = C_STOP;          /* 走绕过队列的通道，保证一定生效 */
+    c.a = c.b = 0;
+    c.u      = 0;
+    c.client = client;
+    robotPushCmd(c);
+}
+
+/**
+ * @brief   查询控制核是否正忙
+ * @param   无
+ * @return  true 有动作在执行、或有停止请求待处理、或外部占用保持中
+ */
+bool robotBusy() {
+    return s_busy.load() || (s_pendingStop.load() != 0) || s_hold.load();
+}
+
+/**
+ * @brief   查询当前控制者
+ * @param   无
+ * @return  当前占用者的连接编号；0 表示无人占用
+ */
+uint32_t robotOwner() { return s_owner.load(); }
+
+/**
+ * @brief   置位 / 清除「外部占用保持」
+ * @param[in] on  true 进入占用保持，false 解除
+ * @return   无
+ */
+void robotHold(bool on) {
+    if (on) {                       /* 保持期间先释放控制权，避免占位不动 */
+        s_owner.store(0);
+        s_continuous.store(false);
+    }
+    s_hold.store(on);
+    s_busy.store(on);
 }
 
 /**
@@ -693,4 +1017,4 @@ void robotCopyTelemetry(Telemetry& out) {
  * @param   无
  * @return  最近心跳时间戳 ms
  */
-uint32_t robotLastHbMs() { return s_lastHb; }
+uint32_t robotLastHbMs() { return s_lastHb.load(); }

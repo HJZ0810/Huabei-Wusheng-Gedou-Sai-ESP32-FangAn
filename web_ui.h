@@ -23,7 +23,7 @@
  *            - 下行 t="alert" 安全告警
  *            - 上行 t="drv"/"hb"/"stop"/"move"/"turn"/"servo"/"estop"/"unlock"/"cal"
  *
- * @author  CombatBot 电控组
+ * @author  HJZ
  * @version V1.1.0
  * @date    2026-10-05
  *
@@ -205,6 +205,7 @@ nav button.on{color:var(--cyan)}
   <span class="addr" id="addr">--</span>
   <span class="badge" id="bat">-- V</span>
   <span class="badge" id="rssi" style="display:none">--</span>
+  <span class="badge" id="owner" style="display:none">被占用</span>
   <button class="iconbtn" id="qrbtn" title="二维码">▣</button>
   <button class="estop" id="estop">急停</button>
 </header>
@@ -367,10 +368,11 @@ function clamp(v,a,b){ return v<a?a:(v>b?b:v); }
 /* =======================================================================
  * 1. WebSocket
  * ======================================================================= */
-let ws=null, connected=false, retryT=null;
+let ws=null, connected=false, retryT=null, myId=0;
 const T = {rpm:[0,0,0,0],spd:0,yaw:0,bat:0,ir:[200,200,200,200,200,200],
            gray:[0,0,0,0],e18:[0,0,0],acc:[0,0,1],pg:0,st:0,es:0,lb:0,sv:1500,
-           pit:0,rol:0,net:'AP',rssi:0,cal:0,imu:1};
+           pit:0,rol:0,net:'AP',rssi:0,cal:0,imu:1,sl:0,own:0};
+let lastSl=0;   /* 上一次的「传感器陈旧」标志，用于只提示一次 */
 function send(o){ if(ws && ws.readyState===1) ws.send(JSON.stringify(o)); }
 function connect(){
   clearTimeout(retryT);
@@ -386,6 +388,9 @@ function onMsg(m){
     T.rpm=m.rpm; T.spd=m.spd; T.yaw=m.yaw; T.bat=m.bat; T.ir=m.ir; T.gray=m.gr;
     T.e18=m.e18; T.acc=m.acc; T.pg=m.pg; T.st=m.st; T.es=m.es; T.lb=m.lb;
     T.sv=m.sv; T.pit=m.pit; T.rol=m.rol; T.net=m.net; T.rssi=m.rssi; T.cal=m.cal; T.imu=m.imu;
+    T.sl=m.sl; T.own=(m.own===undefined?0:m.own);
+    if(T.sl&&!lastSl) toast('传感器数据超时或 IO 扩展未连接，相关读数不可用','warn');
+    lastSl=T.sl;
     paint();
   } else if(m.t==='done'){
     $('#rT').textContent = m.target.toFixed(2)+(m.type==='move'?' cm':' °');
@@ -399,7 +404,10 @@ function onMsg(m){
     else if(m.mode==='imu'){ toast('零偏已写入：'+m.bias.toFixed(6),'ok'); loadCfg(); }
   } else if(m.t==='alert'){
     toast(m.msg,'bad');
-  } else if(m.t==='hello'){ }
+  } else if(m.t==='hello'){
+    /* 服务端在握手帧里带回本连接的编号；用于判断"车是不是被我占着" */
+    if(m.id) myId=m.id;
+  }
 }
 
 /* =======================================================================
@@ -544,18 +552,22 @@ function drawRadar(){
   });
   /* 扇区 */
   for(let i=0;i<6;i++){
-    const d=clamp(T.ir[i],0,150), r=R*d/150;
+    /* ★ 融合版：无效通道不画假的距离条，改为灰色扇区 + "--"，
+       避免"传感器掉了"被误读成"障碍物贴脸"。 */
+    const ok=(T.ir[i]!=null);
+    const d=ok?clamp(T.ir[i],0,150):150, r=R*d/150;
     const a0=(-90-IR_ANG[i]-15)*Math.PI/180, a1=(-90-IR_ANG[i]+15)*Math.PI/180;
-    const t=clamp(1-d/150,0,1);
-    const col='rgb('+Math.round(255*(1-t))+','+Math.round(211*t+60*(1-t))+','+Math.round(238*t+70*(1-t))+')';
+    const t=ok?clamp(1-d/150,0,1):0;
+    const col=ok?('rgb('+Math.round(255*(1-t))+','+Math.round(211*t+60*(1-t))+','+Math.round(238*t+70*(1-t))+')')
+                :'rgb(148,163,184)';
     rx.fillStyle=col.replace('rgb','rgba').replace(')',',0.28)');
     rx.beginPath(); rx.moveTo(cx,cy); rx.arc(cx,cy,R,a0,a1); rx.closePath(); rx.fill();
     rx.strokeStyle=col; rx.lineWidth=2;
     rx.beginPath(); rx.moveTo(cx,cy); rx.lineTo(cx+Math.cos(a0)*r,cy+Math.sin(a0)*r); rx.stroke();
     rx.beginPath(); rx.moveTo(cx,cy); rx.lineTo(cx+Math.cos(a1)*r,cy+Math.sin(a1)*r); rx.stroke();
     const am=(a0+a1)/2;
-    rx.fillStyle='#E6EDF3'; rx.font='11px ui-monospace,monospace';
-    rx.fillText(IR_NAME[i]+' '+d.toFixed(0),cx+Math.cos(am)*(R+14),cy+Math.sin(am)*(R+14));
+    rx.fillStyle=ok?'#E6EDF3':'#94A3B8'; rx.font='11px ui-monospace,monospace';
+    rx.fillText(IR_NAME[i]+' '+(ok?d.toFixed(0):'--'),cx+Math.cos(am)*(R+14),cy+Math.sin(am)*(R+14));
   }
   /* 车体 */
   rx.fillStyle='#22D3EE';
@@ -606,10 +618,18 @@ function paint(){
   $('#net').textContent = connected?T.net:'离线';
   $('#net').className = 'badge'+(T.net==='AP+STA'?' sta':'');
   $('#addr').innerHTML = '<b>'+location.host+'</b>';
-  const b=$('#bat'); b.textContent=T.bat.toFixed(1)+' V';
-  b.className='badge'+(T.lb?' warn':'');
+    const b=$('#bat');
+    /* ★ 融合版：电池分压未接 / 读数无效时显示 "--"，不要编一个电压出来 */
+    b.textContent=(T.bat==null?'--':T.bat.toFixed(1)+' V');
+    b.className='badge'+(T.lb?' warn':'');
   const r=$('#rssi');
   if(T.net==='AP+STA'){ r.style.display=''; r.textContent=T.rssi+' dBm'; } else r.style.display='none';
+  /* 控制权提示：车已被别的终端接管时给出明确反馈，避免"点了没反应" */
+  const ow=$('#owner');
+  if(T.own && myId && T.own!==myId){
+    ow.style.display=''; ow.className='badge warn';
+    ow.textContent = (T.own===0xFFFFFFFF)?'REST 占用':'被占用('+T.own+')';
+  } else ow.style.display='none';
   $('#yawv').textContent=T.yaw.toFixed(1)+'°';
   $('#spdv2').textContent=T.spd.toFixed(1)+' cm/s';
   $$('#wheels .wheel').forEach((w,i)=>{
@@ -617,7 +637,9 @@ function paint(){
     w.querySelector('.bar i').style.width=clamp(Math.abs(T.rpm[i])/600*100,0,100)+'%';
   });
   $('#pgbar').style.width=(T.pg*100).toFixed(1)+'%';
-  $('#irmin').textContent=Math.min.apply(null,T.ir).toFixed(0)+' cm';
+  /* 只对"有效"的通道取最小值；一路都没接时显示 "--" */
+  const irv=T.ir.filter(v=>v!=null);
+  $('#irmin').textContent = irv.length ? Math.min.apply(null,irv).toFixed(0)+' cm' : '--';
   $$('#gray .dot').forEach((d,i)=>{ d.className='dot'+(T.gray[i]?' on':''); });
   $$('#e18 .dot').forEach((d,i)=>{ d.className='dot'+(T.e18[i]?' hot':''); });
   if(now-lastPaint>60){

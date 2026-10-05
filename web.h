@@ -29,7 +29,7 @@
  *              因此手机锁屏、切后台、走出 Wi-Fi、网页崩溃都会让车立刻停下；
  *            - 不依赖「心跳超时」这一种兜底，而是「连接断开 + 心跳超时」双保险。
  *
- * @author  CombatBot 电控组
+ * @author  HJZ
  * @version V1.1.0
  * @date    2026-10-05
  *
@@ -43,6 +43,13 @@
  *
  * @note    遥测推送频率由 @ref Cfg::telemetryHz 决定（默认 15Hz），
  *          推送前会判断 WS 客户端数量，无客户端时不占用 CPU 与带宽。
+ *
+ * @note    异步 Web 服务有两代主流实现，本项目**同时兼容**，靠编译期宏自动切换：
+ *            - **ESP32Async 版 v3.x**（mathieucarbou 维护）—— Arduino core **3.x 必须用这一版**；
+ *            - me-no-dev 版 v1.2.x —— 仅适用于 Arduino core 2.x。
+ *          切换点：整页下发用 `#if defined(ASYNCWEBSERVER_FORK_ESP32Async)` 分流，
+ *          重定向统一传 `const char*`（两代重载的交集）。
+ *
  * @warning 所有 API 均无鉴权，仅限局域网使用；禁止将设备直接暴露到公网。
  *
  * Copyright (c) 2026 HJZ. Licensed under the MIT License.

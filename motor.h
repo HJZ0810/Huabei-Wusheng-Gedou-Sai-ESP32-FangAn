@@ -14,7 +14,7 @@
  *            1. FG 无方向 → 方向由 MCU 下发的指令决定，ISR 内带符号累加（@ref s_dir）；
  *            2. 静摩擦大 → 占空比必须跨过死区，否则低速段 PID 输出转不动轮子。
  *
- * @author  CombatBot 电控组
+ * @author  HJZ
  * @version V1.1.0
  * @date    2026-10-05
  *
@@ -168,6 +168,15 @@ uint16_t motorDuty(uint8_t i);
  * @note    判定条件由 motorUpdate() 维护，阈值见配置 @ref Cfg::stallTime。
  */
 bool motorIsStalled(uint8_t i);
+
+/**
+ * @brief   查询某电机距最近一次 FG 边沿的时间
+ * @param[in] i  电机索引
+ * @return  无脉冲持续时长，单位 ms
+ * @note    本值由 motorUpdate() 维护，可用于「余转是否已停」的上层判据。
+ *          融合版新增接口：配合 motor.cpp 内部的换向保护使用同一套时间基准。
+ */
+uint32_t motorIdleMs(uint8_t i);
 
 /* ==========================================================================
  *                              对外接口 · 舵机

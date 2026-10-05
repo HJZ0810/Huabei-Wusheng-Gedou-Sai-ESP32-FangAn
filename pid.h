@@ -19,7 +19,7 @@
  *          减速点由剩余距离反推：@c s_brake = v² / (2·a_dec)，
  *          当「剩余距离 ≤ s_brake」时切入减速段。
  *
- * @author  CombatBot 电控组
+ * @author  HJZ
  * @version V1.1.0
  * @date    2026-10-05
  *
@@ -41,6 +41,7 @@
  *                              头文件引用
  * ========================================================================== */
 #include <Arduino.h>
+#include "cfg.h"        /**< 依赖 cfgFinite() 做输入有限性判定              */
 
 /**
  * @brief   位置式 PID 控制器
@@ -85,35 +86,56 @@ public:
     }
 
     /**
-     * @brief   复位控制器历史状态（积分项与上一次误差）
+     * @brief   复位控制器历史状态（积分项、上一次误差与首拍标志）
      * @param   无
      * @return  无
      * @note    切换控制模式、或目标发生跳变时必须调用，否则积分项会造成巨大超调。
      */
-    void reset() { iTerm = 0; prev = 0; }
+    void reset() { iTerm = 0; prev = 0; primed = false; }
 
     /**
-     * @brief   执行一次 PID 运算
+     * @brief   执行一次 PID 运算（带条件积分抗饱和）
      * @param[in] err  当前误差（目标 − 反馈）
      * @param[in] dt   采样间隔，单位 s
      * @return  限幅后的控制输出
+     *
+     * @details 融合版相比初版的两处强化：
+     *          ① **首拍微分保护**：reset() 后的第一拍不做误差差分，
+     *             否则 (err − 0)/dt 会产生一个巨大的微分冲击（derivative kick），
+     *             表现为每次启动动作时电机"抽搐"一下。
+     *          ② **条件积分（conditional integration）**：
+     *             初版只把积分项硬截断在 [iMin, iMax]，输出一旦饱和，
+     *             积分仍会在原地继续累积，等误差反向时要先"泄掉"这段积分才响应，
+     *             这就是经典的积分饱和（windup）滞后。
+     *             这里改为：仅当「输出未饱和」或「误差方向有助于退出饱和」时才接受新积分。
+     *
+     * @note    NaN / Inf 输入一律返回 0，防止污染扩散到 PWM 输出。
      */
     float update(float err, float dt) {
-        if (dt <= 0) return 0;
+        if (!(dt > 0)) return 0;                    /* 同时拦截 dt=0 与 dt=NaN */
+        if (!cfgFinite(err)) return 0;               /* 坏输入 = 零输出          */
 
-        iTerm += ki * err * dt;                 /* 积分累积（含抗饱和截断） */
-        iTerm  = constrain(iTerm, iMin, iMax);
+        const float dTerm = primed ? (err - prev) / dt : 0.0f;   /* ① 首拍不差分 */
+        const float proposed = iTerm + ki * err * dt;            /* 候选积分项   */
+        const float raw = kp * err + proposed + kd * dTerm;      /* 未限幅输出   */
 
-        float dTerm = (err - prev) / dt;        /* 微分项                   */
-        prev = err;
+        /* ② 条件积分：未饱和 或 误差正在把输出拉回区间内 → 接受新积分 */
+        const bool unsaturated = (raw >= outMin && raw <= outMax);
+        const bool unwinding   = (raw > outMax && err < 0) || (raw < outMin && err > 0);
+        if (unsaturated || unwinding) {
+            iTerm = constrain(proposed, iMin, iMax);
+        }
 
-        float out = kp * err + iTerm + kd * dTerm;
-        return constrain(out, outMin, outMax);
+        prev   = err;
+        primed = true;
+
+        return constrain(kp * err + iTerm + kd * dTerm, outMin, outMax);
     }
 
 private:
-    float iTerm = 0;    /**< 积分累积值                                      */
-    float prev  = 0;    /**< 上一次误差（用于微分）                          */
+    float iTerm  = 0;       /**< 积分累积值                                  */
+    float prev   = 0;       /**< 上一次误差（用于微分）                      */
+    bool  primed = false;   /**< 是否已完成首拍（用于抑制微分冲击）          */
 };
 
 /**

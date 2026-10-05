@@ -14,7 +14,7 @@
  *            网络核占用，进而挤压 WiFi 协议栈的时间片。因此这里统一做了定点数截断
  *            （转速/速度 1 位小数、电压 2 位小数、角度 1 位小数），既够用又省带宽。
  *
- * @author  CombatBot 电控组
+ * @author  HJZ
  * @version V1.1.0
  * @date    2026-10-05
  *
@@ -61,6 +61,15 @@
 
 /** @brief REST 请求体上限，超出直接丢弃，防止恶意大包打爆堆内存         */
 #define WEB_BODY_MAX            4096
+
+/**
+ * @brief REST 通道的「虚拟连接编号」
+ * @details AsyncWebSocket 的真实客户端编号从 1 开始递增，因此 0 天然表示
+ *          "无连接"。REST/HTTP 是无状态通道，拿不到连接号，这里给它分配一个
+ *          固定的合成编号，使其同样能参与控制权仲裁（而不是被判为无主指令）。
+ *          取 0xFFFFFFFF 是刻意避开真实编号区间，便于网页侧区分来源。
+ */
+#define WEB_CLIENT_REST         0xFFFFFFFFu
 
 /* ==========================================================================
  *                          私有变量（文件内静态）
@@ -111,6 +120,8 @@ static const char* alertText(uint8_t sub) {
         case 3:  return "电池严重低压，已停机";
         case 4:  return "检测到台面边缘，已刹车";
         case 5:  return "心跳超时（控制端失联），已停车";
+        case 6:  return "仍处于危险状态（边缘/严重低压），拒绝解锁";
+        case 7:  return "零偏标定失败：采样期间车辆未静止，请重试";
         default: return "安全告警";
     }
 }
@@ -139,9 +150,14 @@ static String buildTelemetry() {
     doc["yr"]  = roundTo(t.yawRate, 10.0f);   /* 偏航角速度 °/s           */
     doc["odo"] = roundTo(t.odoCm, 10.0f);     /* 累计里程 cm              */
 
-    /* ---- 六路红外测距（cm，超出量程会返回上限值） ---- */
+    /* ---- 六路红外测距（cm，超出量程会返回上限值） ----
+       ★ 融合版：无效通道下发 JSON null，网页显示 "--"。
+       宁可显示"无数据"，也不要把一个坏掉的传感器伪装成 18cm。 ---- */
     JsonArray ir = doc["ir"].to<JsonArray>();
-    for (int i = 0; i < 6; i++) ir.add(roundTo(t.ir[i], 10.0f));
+    for (int i = 0; i < 6; i++) {
+        if (t.irValid[i]) ir.add(roundTo(t.ir[i], 10.0f));
+        else              ir.add(nullptr);
+    }
 
     /* ---- 开关量：灰度 4 路 + 光电 3 路（统一 0/1，网页直接当布尔用） ---- */
     JsonArray gr = doc["gr"].to<JsonArray>();
@@ -157,10 +173,14 @@ static String buildTelemetry() {
     doc["imu"] = (t.mpuOK || t.adxlOK) ? 1 : 0;   /* 顶栏 IMU 在线指示灯 */
 
     /* ---- 电源与安全标志 ---- */
-    doc["bat"] = roundTo(t.bat, 100.0f);           /* 电池电压 V           */
+    if (t.batValid) doc["bat"] = roundTo(t.bat, 100.0f);   /* 电池电压 V */
+    else            doc["bat"] = nullptr;                  /* 分压未接   */
     doc["es"]  = t.estop  ? 1 : 0;                 /* 急停锁定             */
     doc["lb"]  = t.lowBat ? 1 : 0;                 /* 低压告警             */
     doc["ed"]  = t.edge   ? 1 : 0;                 /* 边缘触发             */
+    doc["sl"]  = (t.senStale || !t.ioOk) ? 1 : 0;  /* 传感器陈旧 / IO 离线 */
+    /* 控制权归属：0=空闲；0xFFFFFFFF=REST 通道占用；其余=WS 连接编号 */
+    doc["own"] = t.owner;
 
     /* ---- 动作状态：模式 / 状态 / 进度 ---- */
     doc["md"] = t.mode;
@@ -249,15 +269,17 @@ static void pumpDone() {
  * @param[in] act  动作名：stop / move / turn / servo / estop / unlock / cal
  * @param[in] a    参数 A（距离 cm 或角度 °）
  * @param[in] u    参数 U（速度百分比 / 舵机位置 / 标定模式）
+ * @param[in] client 发起方连接编号（WS 为真实编号，REST 为 WEB_CLIENT_REST）
  * @return  true 指令合法且已投递；false 动作名无法识别
  * @note    本函数是 REST /api/action 与 /api/calibrate 的公共出口。
  */
-static bool dispatchAction(const String& act, float a, uint8_t u) {
+static bool dispatchAction(const String& act, float a, uint8_t u, uint32_t client) {
     Cmd c;
     c.t = C_NOP;
     c.a = 0;
     c.b = 0;
     c.u = 0;
+    c.client = client;
 
     if      (act == "stop")   { c.t = C_STOP;                    }
     else if (act == "move")   { c.t = C_MOVE;  c.a = a; c.u = u; }
@@ -273,7 +295,8 @@ static bool dispatchAction(const String& act, float a, uint8_t u) {
 
 /**
  * @brief   解析一条上行指令 JSON 并投递到控制核
- * @param[in] doc  已反序列化的指令文档
+ * @param[in] doc     已反序列化的指令文档
+ * @param[in] client  发起方连接编号（用于控制权仲裁）
  * @return  true 识别成功；false 未知指令（调用方应回复 400）
  * @note    支持的报文（与 web_ui.h 的 send() 一一对应）：
  *          @verbatim
@@ -288,7 +311,7 @@ static bool dispatchAction(const String& act, float a, uint8_t u) {
  *              {"t":"ping"}
  *          @endverbatim
  */
-static bool handleCmdJson(JsonDocument& doc) {
+static bool handleCmdJson(JsonDocument& doc, uint32_t client) {
     String t = doc["t"] | "";
     if (t.length() == 0) t = doc["act"] | "";   /* REST 通道用 act 字段 */
 
@@ -299,6 +322,7 @@ static bool handleCmdJson(JsonDocument& doc) {
         c.a = doc["x"]   | 0.0f;
         c.b = doc["y"]   | 0.0f;
         c.u = (uint8_t)(doc["spd"] | 60);
+        c.client = client;
         return robotPushCmd(c);
     }
 
@@ -307,6 +331,7 @@ static bool handleCmdJson(JsonDocument& doc) {
         Cmd c;
         c.t = C_HB;
         c.a = 0; c.b = 0; c.u = 0;
+        c.client = client;
         return robotPushCmd(c);
     }
 
@@ -317,8 +342,11 @@ static bool handleCmdJson(JsonDocument& doc) {
 
         Cmd c;
         c.b = 0;
+        c.client = client;
 
-        if (doc.containsKey("actual")) {          /* 第二步：解算系数     */
+        /* ArduinoJson 7 已废弃 containsKey()，改用 isNull() 判存在性：
+           键不存在时 operator[] 返回的是 null 值，isNull() 为 true。 */
+        if (!doc["actual"].isNull()) {            /* 第二步：解算系数     */
             c.t = C_CAL_FIN;
             c.a = doc["actual"] | 0.0f;
             c.u = mode;
@@ -339,7 +367,7 @@ static bool handleCmdJson(JsonDocument& doc) {
 
     if (t == "ping") return true;                 /* ping 不产生任何副作用 */
 
-    return dispatchAction(t, a, u);
+    return dispatchAction(t, a, u, client);
 }
 
 /**
@@ -360,9 +388,12 @@ static void onWsEvent(AsyncWebSocket* server, AsyncWebSocketClient* client,
     switch (type) {
         case WS_EVT_CONNECT: {
             /* 新连接立刻补一帧遥测：否则页面要等到下一个推送周期才有数据，
-               用户会误以为设备离线（15Hz 下最多 66ms，观感仍然明显）。 */
+               用户会误以为设备离线（15Hz 下最多 66ms，观感仍然明显）。
+               ★ 融合版：握手帧带上本连接的编号，网页据此判断
+                 「控制权是不是在自己手上」（见 web_ui.h 的 #owner 徽章）。 */
             JsonDocument doc;
-            doc["t"] = "hello";
+            doc["t"]  = "hello";
+            doc["id"] = client->id();
             String hello;
             serializeJson(doc, hello);
             client->text(hello);
@@ -371,10 +402,10 @@ static void onWsEvent(AsyncWebSocket* server, AsyncWebSocketClient* client,
         }
 
         case WS_EVT_DISCONNECT: {
-            Cmd c;
-            c.t = C_STOP;
-            c.a = 0; c.b = 0; c.u = 0;
-            robotPushCmd(c);
+            /* ★ 融合版：只有"当前控制者"断开才需要停车。
+               旁观者的页面关掉不应打断正在进行的控制，否则多开一个页面
+               就会把车停死——这是早期版本最容易踩的坑。 */
+            robotDisconnect(client->id());
             break;
         }
 
@@ -395,7 +426,7 @@ static void onWsEvent(AsyncWebSocket* server, AsyncWebSocketClient* client,
             JsonDocument doc;
             if (deserializeJson(doc, msg)) return;               /* 非法 JSON 静默丢弃 */
 
-            if (!handleCmdJson(doc)) {
+            if (!handleCmdJson(doc, client->id())) {
                 String err = "{\"t\":\"alert\",\"msg\":\"未知指令\"}";
                 client->text(err);
             }
@@ -462,10 +493,27 @@ static void handleCfgPost(AsyncWebServerRequest* request, const String& body) {
         }
     }
 
-    /* ---- 普通配置更新 ---- */
-    if (cfgFromJson(body)) {
+    /* ---- 普通配置更新 ----
+       ★ 融合版：车辆正在动作时拒绝改参数。理由很实际——
+         改 PID / 最大速度会让正在执行的动作突然换一套闭环参数，
+         轻则超调，重则直接冲出去。 */
+    if (robotBusy()) {
+        request->send(409, "application/json",
+                      "{\"ok\":false,\"err\":\"busy: 动作执行中，请先停车\"}");
+        return;
+    }
+
+    /* 写 NVS 期间进入「占用保持」：这期间新动作抢不到控制权，
+       保证保存过程不会被并发指令打断。 */
+    robotHold(true);
+    const bool ok = cfgFromJson(body);
+    if (ok) {
         cfgSave();                                /* 落盘 NVS，掉电不丢   */
         wifiApplySta();                           /* STA 凭据可能已变更   */
+    }
+    robotHold(false);
+
+    if (ok) {
         request->send(200, "application/json", "{\"ok\":true}");
     } else {
         request->send(400, "application/json", "{\"ok\":false,\"err\":\"bad json\"}");
@@ -485,7 +533,7 @@ static void handleActionPost(AsyncWebServerRequest* request, const String& body)
         return;
     }
 
-    if (handleCmdJson(doc)) {
+    if (handleCmdJson(doc, WEB_CLIENT_REST)) {
         request->send(200, "application/json", "{\"ok\":true}");
     } else {
         request->send(400, "application/json", "{\"ok\":false,\"err\":\"unknown action\"}");
@@ -508,7 +556,7 @@ static void handleCalPost(AsyncWebServerRequest* request, const String& body) {
 
     doc["t"] = "cal";                             /* 统一成内部指令格式   */
 
-    if (handleCmdJson(doc)) {
+    if (handleCmdJson(doc, WEB_CLIENT_REST)) {
         request->send(200, "application/json", "{\"ok\":true}");
     } else {
         request->send(400, "application/json", "{\"ok\":false,\"err\":\"bad mode\"}");
@@ -542,9 +590,20 @@ void webInit() {
 
     /* ---- 页面通道：整页由 PROGMEM 直出，不占用堆内存 ---- */
     s_server.on("/", HTTP_GET, [](AsyncWebServerRequest* request) {
+        /* 两代异步 Web 库的整页下发方式不同，这里按编译期宏自动切换：
+             - ESP32Async v3.x（core 3.x 必须用这一版）：send_P 已被标记 deprecated，
+               改用 send() 的「指针 + 显式长度」重载；
+             - me-no-dev v1.2.x（core 2.x）：只有 send_P 能零拷贝直发 Flash。
+           两条分支都不经过 String，避免 47KB 网页在堆上再复制一份。 */
+#if defined(ASYNCWEBSERVER_FORK_ESP32Async)
+        request->send(200, "text/html",
+                      reinterpret_cast<const uint8_t*>(WEB_UI_HTML),
+                      sizeof(WEB_UI_HTML) - 1);
+#else
         request->send_P(200, "text/html",
                         reinterpret_cast<const uint8_t*>(WEB_UI_HTML),
                         sizeof(WEB_UI_HTML) - 1);
+#endif
     });
 
     /* ---- 配置通道：读 ---- */
@@ -607,7 +666,10 @@ void webInit() {
     /* ---- 404：强制门户开启时统一重定向到首页（手机连 AP 自动弹页面） ---- */
     s_server.onNotFound([](AsyncWebServerRequest* request) {
         if (wifiCaptive()) {
-            request->redirect("http://" + wifiActiveIP() + "/");
+            /* 用 c_str() 而不是直接传 String：两代库的 redirect 重载不一致，
+               传 const char* 是唯一在 v1.2.x 与 v3.x 都成立的形式。 */
+            String url = "http://" + wifiActiveIP() + "/";
+            request->redirect(url.c_str());
         } else {
             request->send(404, "text/plain", "Not Found");
         }

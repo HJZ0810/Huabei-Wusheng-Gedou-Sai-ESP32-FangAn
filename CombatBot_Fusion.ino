@@ -1,6 +1,6 @@
 /**
  ******************************************************************************
- * @file    CombatBot_ESP32S3.ino
+ * @file    CombatBot_Fusion.ino
  * @brief   ESP32-S3 四驱格斗车无线控制系统 · 工程入口（Arduino 主程序）
  *
  * @details 本文件只做三件事：装配、调度、喂狗。所有业务逻辑都在同目录的功能模块中，
@@ -22,8 +22,8 @@
  *            - Core 1：Arduino loopTask，负责 WiFi 协议栈、WebSocket、REST、DNS。
  *          两者通过「命令队列 + 遥测互斥量 + 完成消息队列」解耦，互不阻塞。
  *
- * @author  CombatBot 电控组
- * @version V1.1.0
+ * @author  HJZ
+ * @version V2.0.0（融合版）
  * @date    2026-10-05
  *
  * @par     修改记录
@@ -32,6 +32,23 @@
  *          <tr><td>2026-10-04 <td>V1.0  <td>电控组 <td>首次创建，完成固件与内嵌网页
  *          <tr><td>2026-10-05 <td>V1.1  <td>电控组 <td>源文件由 src/ 平铺至根目录以适配 Arduino IDE；
  *                                                    统一企业级注释规范
+ *          <tr><td>2026-10-05 <td>V2.0  <td>电控组 <td>融合版：吸收两版实现的长处，
+ *                                                    重点加固并发安全与失效模式
+ *          </table>
+ *
+ * @par     融合版相对 V1.1 的关键变化
+ *          <table>
+ *          <tr><th>模块     <th>变化                       <th>解决的问题
+ *          <tr><td>motor   <td>FG 计数改用 PCNT 硬件计数  <td>高转速下丢脉冲、ISR 占用 CPU
+ *          <tr><td>motor   <td>换向保护（静止 120ms 才允许）<td>齿轮冲击、电流尖峰、误判堵转
+ *          <tr><td>pid     <td>条件积分抗饱和 + 首采样保护 <td>积分windup 超调、微分冲击
+ *          <tr><td>robot   <td>停止/急停绕过队列 + 代次失效<td>队列满时急停被丢弃
+ *          <tr><td>robot   <td>客户端控制权 CAS 抢占      <td>多开页面互相打架、旁观者断连误停车
+ *          <tr><td>robot   <td>指令输入校验（NaN/越界）   <td>非法报文直接打死闭环
+ *          <tr><td>imu     <td>零偏方差判据 + 自适应限幅  <td>被推着走时把运动当成零偏
+ *          <tr><td>sensors <td>逐通道有效性 + 时效戳      <td>传感器掉线被当成"障碍贴脸"
+ *          <tr><td>safety  <td>红外限速按行进方向过滤     <td>车尾贴墙时前进也被限速
+ *          <tr><td>cfg     <td>配置物理边界收口           <td>手输错参数导致上电就冲出去
  *          </table>
  *
  * @note    上电默认 PWM=0、舵机回中，禁止任何自启动动作（安全设计基线）。
@@ -66,7 +83,7 @@
 void setup() {
     Serial.begin(115200);
     delay(200);                                     /* 等待 USB CDC 枚举完成 */
-    Serial.println("\n=== CombatBot ESP32-S3 启动 ===");
+    Serial.println("\n=== CombatBot Fusion V2.0 (ESP32-S3) 启动 ===");
 
     cfgInit();                                      /* ① 配置加载           */
     wifiInit();                                     /* ② 网络（AP 常驻）    */

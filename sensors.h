@@ -11,7 +11,7 @@
  *          开启 WiFi 后 **ADC2 完全不可用**，而 ESP32-S3 的 ADC1 引脚有限，
  *          用一路 ADC + 4 个地址脚换取 16 路模拟量是最省引脚的方案。
  *
- * @author  CombatBot 电控组
+ * @author  HJZ
  * @version V1.1.0
  * @date    2026-10-05
  *
@@ -42,10 +42,28 @@
 #define MUX_S1    6         /**< 4067 地址位 B                                */
 #define MUX_S2    7         /**< 4067 地址位 C                                */
 #define MUX_S3    8         /**< 4067 地址位 D                                */
+/** @brief 红外路数 */
 #define IR_COUNT  6         /**< 红外测距路数（先装 6 路，可扩展至 12）       */
 
 /**
+ * @brief 六路红外的车体坐标安装角，单位 °（0 = 正车头，正 = 逆时针）
+ * @details 顺序：前 / 后 / 左前 / 右前 / 左后 / 右后。
+ *          安全仲裁依据这张表判断「哪几路朝着行进方向」，
+ *          因此**改安装位置必须同步改这张表**（以及网页雷达图里的同名数组）。
+ */
+extern const int16_t kIrAngle[IR_COUNT];
+
+/**
  * @brief   传感器采集结果（由控制核独占更新）
+ *
+ * @note    ★ 融合版新增「逐通道有效性」：
+ *          竞赛现场最常见的故障不是算法错，而是**某一路传感器掉线**——
+ *          接插件被撞松、排线被轮子磨断、分压电阻虚焊。
+ *          旧实现会把故障通道的读数当成真值：
+ *          红外通道对 VCC 短路 → 电压 3.3V → 换算距离 18cm → 全程误判"贴近"→
+ *          车被自己的故障锁死在限速状态。
+ *          现在每一路都带 @c irValid 标志，无效通道既不参与限速仲裁，
+ *          也不会在网页上假装成一个读数（下发为 JSON null）。
  */
 struct SensorData {
     float ir[IR_COUNT];     /**< 六路红外测距，单位 cm（超量程返回 200）      */
@@ -55,6 +73,12 @@ struct SensorData {
     bool  edgeDrop;         /**< 任一 E18 判定为悬空（边缘保护用）            */
     bool  irNear;           /**< 任一红外小于报警距离（限速用）               */
     float irMin;            /**< 最近的一路距离，单位 cm                      */
+
+    /* ---- 有效性 / 时效性（★ 融合版新增） ---- */
+    bool     irValid[IR_COUNT]; /**< 各路红外读数是否有效（未断线、未饱和）   */
+    bool     batValid;          /**< 电池分压检测是否有效                     */
+    bool     ioOk;              /**< MCP23017 在线 → 灰度 / E18 有意义        */
+    uint32_t stamp;             /**< 本轮扫描完成时间戳 ms（判陈旧用）        */
 };
 
 /** @brief 全局传感器数据实例 */
@@ -83,5 +107,16 @@ void sensorsUpdate();
  * @return  电压值，单位 V
  */
 float irRawVoltage(uint8_t ch);
+
+/**
+ * @brief   判断传感器数据是否新鲜（未超时未掉线）
+ * @param[in] now        当前时间戳 ms
+ * @param[in] maxAgeMs   允许的最大数据年龄 ms
+ * @return  true 数据在有效期内
+ * @details 传感器扫描是 20Hz 降频执行的；一旦 I²C 总线挂死或控制核被长时间
+ *          阻塞，@c stamp 就会停止更新。用它做时效判断，可以让上层在
+ *          "数据其实是几分钟前的"情况下不要拿去做安全决策。
+ */
+bool sensorsFresh(uint32_t now, uint32_t maxAgeMs);
 
 #endif /* __SENSORS_H */

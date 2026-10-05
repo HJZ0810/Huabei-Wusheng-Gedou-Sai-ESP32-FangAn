@@ -11,13 +11,13 @@
  *          并发模型：配置由网络核（Core 1）写入、控制核（Core 0）读取，
  *          因此所有访问都必须经过 @ref gCfgMutex，或使用局部快照类 @ref CfgSnap。
  *
- * @author  CombatBot 电控组
+ * @author  HJZ
  * @version V1.1.0
  * @date    2026-10-05
  *
  * @par     修改记录
  *          <table>
- *          <tr><th>日期2026-10-05       <th>版本  <th>作者：HJZ   <th>说明
+ *          <tr><th>日期       <th>版本  <th>作者   <th>说明
  *          <tr><td>2026-10-04 <td>V1.0  <td>电控组 <td>首次创建
  *          <tr><td>2026-10-05 <td>V1.1  <td>电控组 <td>统一企业级注释规范
  *          </table>
@@ -122,6 +122,18 @@ struct Cfg {
  * ========================================================================== */
 extern Cfg               gCfg;       /**< 全局唯一配置实例                     */
 extern SemaphoreHandle_t gCfgMutex;  /**< 配置跨核互斥量                       */
+
+/**
+ * @brief   浮点数有限性判定（NaN / ±Inf 一律判为非法）
+ * @param[in] v  待判定的值
+ * @return  true 为有限数
+ *
+ * @details 统一走编译器内建函数，而不是直接写 @c isfinite：
+ *          不同 C 库 / 不同 core 版本下，@c isfinite 有时是宏、有时只有
+ *          @c std::isfinite，移植时容易变成莫名其妙的编译错误。
+ *          这里是全工程唯一的"数值是否可信"判据，所有入口校验都应走它。
+ */
+inline bool cfgFinite(float v) { return __builtin_isfinite(v); }
 
 /* ==========================================================================
  *                              对外接口

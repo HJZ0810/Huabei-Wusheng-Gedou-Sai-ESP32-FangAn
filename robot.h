@@ -18,8 +18,8 @@
  *            - R_CAL_IMU IMU 零偏采样
  *            - R_ESTOP   急停锁定
  *
- * @author  CombatBot 电控组
- * @version V1.1.0
+ * @author  HJZ
+ * @version V2.0.0
  * @date    2026-10-05
  *
  * @par     修改记录
@@ -27,6 +27,9 @@
  *          <tr><th>日期       <th>版本  <th>作者   <th>说明
  *          <tr><td>2026-10-04 <td>V1.0  <td>电控组 <td>首次创建
  *          <tr><td>2026-10-05 <td>V1.1  <td>电控组 <td>统一企业级注释规范
+ *          <tr><td>2026-10-05 <td>V2.0  <td>电控组 <td>融合版：停止绕过队列 +
+ *                                                    代次失效 + 控制权 CAS +
+ *                                                    输入校验 + 占用保持
  *          </table>
  *
  * Copyright (c) 2026 HJZ. Licensed under the MIT License.
@@ -97,12 +100,15 @@ enum CalMode : uint8_t {
 
 /**
  * @brief   指令包（通过队列跨核传递，定长、无指针，天然线程安全）
+ * @note    @c client 是发起指令的 WebSocket 连接编号，用于**控制权协调**，
+ *          不承担任何身份认证职责（本项目为局域网设备，无鉴权设计）。
  */
 struct Cmd {
-    uint8_t t;          /**< 指令类型 @ref CmdType                           */
-    float   a;          /**< 参数 A（距离 / 角度 / x）                       */
-    float   b;          /**< 参数 B（y）                                     */
-    uint8_t u;          /**< 参数 U（速度百分比 / 标定模式 / 舵机位置）      */
+    uint8_t  t;          /**< 指令类型 @ref CmdType                           */
+    float    a;          /**< 参数 A（距离 / 角度 / x）                       */
+    float    b;          /**< 参数 B（y）                                     */
+    uint8_t  u;          /**< 参数 U（速度百分比 / 标定模式 / 舵机位置）      */
+    uint32_t client;     /**< 发起方连接编号，0 表示未知 / REST 通道          */
 };
 
 /**
@@ -141,8 +147,12 @@ struct Telemetry {
     float   odoCm;          /**< 累计里程 cm                                 */
     float   bat;            /**< 电池电压 V                                  */
     float   ir[6];          /**< 六路红外测距 cm                             */
+    bool    irValid[6];     /**< 各路红外是否有效（无效时网页显示 "--"）     */
+    bool    batValid;       /**< 电池电压检测是否有效                        */
     bool    gray[4];        /**< 四路灰度                                    */
     bool    e18[3];         /**< 三路光电开关                                */
+    bool    ioOk;           /**< MCP23017 在线 → gray/e18 有意义             */
+    bool    senStale;       /**< 传感器数据已超时（>500ms 未刷新）           */
     float   acc[3];         /**< 三轴加速度 g                                */
     float   pitch, roll;    /**< 俯仰 / 横滚 °                               */
     bool    mpuOK, adxlOK;  /**< IMU 在线标志                                */
@@ -150,6 +160,7 @@ struct Telemetry {
     uint8_t state;          /**< 动作状态 @ref RState                        */
     float   progress;       /**< 当前动作进度 0.0 ~ 1.0                      */
     bool    estop, lowBat;  /**< 急停 / 低压标志                             */
+    uint32_t owner;         /**< 当前控制者连接编号，0 表示无人占用          */
     bool    stall[4];       /**< 四轮堵转标志                                */
     bool    edge, irLimit;  /**< 边缘触发 / 红外限速                         */
     uint8_t calPending;     /**< 等待用户输入实测值的标定项                  */
@@ -177,12 +188,64 @@ void robotInit();
 void robotTask(void* arg);
 
 /**
- * @brief   向控制核投递一条指令
- * @param[in] c  指令包
- * @return  true 投递成功；false 队列已满（此时应稍后重试）
- * @note    可从网络核（WebSocket / REST 回调）安全调用。
+ * @brief   向控制核投递一条指令（含控制权仲裁与输入校验）
+ * @param[in] c  指令包；@ref Cmd::client 必须填发起方的连接编号
+ * @return  true 指令已受理；false 被拒绝（队列满 / 已被占用 / 急停锁定 / 参数非法）
+ *
+ * @details 融合版相对初版的三处强化：
+ *          ① **Stop / Estop 绕过队列**：
+ *             初版把所有指令一视同仁地塞进队列，队列一旦满了，
+ *             **急停指令会被直接丢弃**——这是最危险的一种失效模式。
+ *             本版改为：停止类指令不排队，而是递增「代次」并置起原子标志位，
+ *             控制核下一拍必定处理，同时让队列里尚未执行的旧指令自动作废。
+ *          ② **客户端控制权（owner）**：
+ *             同一时刻只允许一个连接操控小车，用原子 CAS 抢占；
+ *             心跳只对当前占用者有效，避免别的连接"续命"。
+ *          ③ **输入校验**：非有限数（NaN/Inf）与越界参数一律拒绝。
+ *
+ * @warning 返回 true 只表示「已受理」，不代表动作已经执行完成；
+ *          完成状态请读取 @ref robotPopDone 的回传事件。
  */
 bool robotPushCmd(const Cmd& c);
+
+/**
+ * @brief   通知控制核：某个连接已断开
+ * @param[in] client  断开的连接编号
+ * @return   无
+ * @note     若断开的正是当前控制者，则自动登记一次普通停止。
+ *          这是「失联即停」安全链的第一道闸门（第二道是心跳超时）。
+ */
+void robotDisconnect(uint32_t client);
+
+/**
+ * @brief   查询控制核是否正忙
+ * @param   无
+ * @return  true 有动作在执行、或有停止请求待处理
+ * @note    供 Web 层在保存配置前判断「能否安全改参数」。
+ */
+bool robotBusy();
+
+/**
+ * @brief   查询当前控制者
+ * @param   无
+ * @return  当前占用者的连接编号；0 表示无人占用
+ */
+uint32_t robotOwner();
+
+/**
+ * @brief   置位 / 清除「外部占用保持」
+ * @param[in] on  true 进入占用保持，false 解除
+ * @return   无
+ *
+ * @details Web 层在**写 NVS 配置**期间调用本接口加保持位：
+ *          此时 @ref robotBusy 恒为 true，新动作无法抢占控制权，
+ *          避免在保存过程中被一条移动指令改写同一份配置。
+ *          保持位置位时会同步释放当前控制者，防止"占着位置不干活"。
+ *
+ * @note    保持位是**独立于控制周期**的，不会被控制任务每拍的
+ *          忙闲结算覆盖掉。
+ */
+void robotHold(bool on);
 
 /**
  * @brief   取回一条回传事件

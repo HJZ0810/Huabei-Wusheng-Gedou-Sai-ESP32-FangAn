@@ -14,7 +14,7 @@
  *          其中 @c K_odo 由行程标定实测得到，@c K_turn 由转向标定解算，
  *          这样即使 FG 脉冲数批次有差异、驼峰轮打滑严重，精度也能保证。
  *
- * @author  CombatBot 电控组
+ * @author  HJZ
  * @version V1.1.0
  * @date    2026-10-05
  *

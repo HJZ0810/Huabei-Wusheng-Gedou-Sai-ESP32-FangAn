@@ -6,7 +6,7 @@
  * @details 所有换算都实时读取配置，因此网页里改了轮径 / K_odo / K_turn 立即生效，
  *          无需重启。单位约定：对外距离一律用 **cm**，角度一律用 **度**。
  *
- * @author  CombatBot 电控组
+ * @author  HJZ
  * @version V1.1.0
  * @date    2026-10-05
  *

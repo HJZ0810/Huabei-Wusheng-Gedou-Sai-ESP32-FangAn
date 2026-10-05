@@ -17,7 +17,7 @@
  *            2. 固定 IP：AP 模式 192.168.4.1 / STA 模式由路由器分配
  *            3. 二维码：网页右上角生成，手机扫码直达
  *
- * @author  CombatBot 电控组
+ * @author  HJZ
  * @version V1.1.0
  * @date    2026-10-05
  *

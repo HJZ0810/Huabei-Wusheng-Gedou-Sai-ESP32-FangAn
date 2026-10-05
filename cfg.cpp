@@ -8,15 +8,15 @@
  *              新增字段无需迁移旧数据（缺失键自动回落默认值）。
  *            - **部分更新语义**：cfgFromJson 只覆盖 JSON 中出现的键，
  *              使网页可以只提交某个分组而不影响其它分组。
- *            - **默认值可追溯**：参数依据见 docs/design/模型核实与实测参数.md。
+ *            - **默认值可追溯**：所有默认数值均来自 docs/design/模型核实与实测参数.md。
  *
- * @author  CombatBot 电控组
+ * @author  HJZ
  * @version V1.1.0
  * @date    2026-10-05
  *
  * @par     修改记录
  *          <table>
- *          <tr><th>日期2026-10-05       <th>版本  <th>作者：HJZ   <th>说明
+ *          <tr><th>日期       <th>版本  <th>作者   <th>说明
  *          <tr><td>2026-10-04 <td>V1.0  <td>电控组 <td>首次创建
  *          <tr><td>2026-10-05 <td>V1.1  <td>电控组 <td>统一企业级注释规范
  *          </table>
@@ -258,11 +258,126 @@ String cfgToJson() {
 }
 
 /**
+ * @brief   把浮点数夹紧到 [lo, hi]，非有限数退回兜底值
+ * @param[in] v     待夹紧的值
+ * @param[in] lo    下界
+ * @param[in] hi    上界
+ * @param[in] def   兜底值（v 为 NaN / Inf 时使用）
+ * @return  夹紧后的合法值
+ */
+static float clampF(float v, float lo, float hi, float def) {
+    if (!cfgFinite(v)) return def;
+    if (v < lo) return lo;
+    if (v > hi) return hi;
+    return v;
+}
+
+/**
+ * @brief   把整型量夹紧到 [lo, hi]
+ * @param[in] v  待夹紧的值
+ * @param[in] lo 下界
+ * @param[in] hi 上界
+ * @return  夹紧后的合法值
+ */
+static int clampI(int v, int lo, int hi) {
+    if (v < lo) return lo;
+    if (v > hi) return hi;
+    return v;
+}
+
+/**
+ * @brief   配置合法性收口（★ 融合版新增）
+ * @param[in,out] c  待整理的配置结构体，原地修正
+ * @return   无
+ *
+ * @details 为什么必须有这一层：
+ *          配置来自三个可信度完全不同的入口 —— NVS（可能被写坏）、
+ *          REST/网页（手输，可能打错小数点）、标定解算（可能算出荒谬系数）。
+ *          任何一路漏掉校验，都可能让 PID 输出直接饱和、舵机打到机械极限、
+ *          或者把「最大速度」设成 100000 导致一上电就冲出擂台。
+ *          这里统一做**物理边界收口**，保证任何来源的配置都落在可执行区间内。
+ *
+ * @warning 上下界是「能安全运行」的边界，不是「调得最好」的边界；
+ *          调参仍应在合理区间内自行摸索。
+ */
+static void sanitize(Cfg& c) {
+    /* ---- 机械：轮径 / 轴距 / 轮距 / 脉冲每转 ---- */
+    c.wheelDia  = clampF(c.wheelDia,  20.0f,  200.0f,  72.0f);
+    c.wheelBase = clampF(c.wheelBase, 50.0f,  400.0f, 154.0f);
+    c.track     = clampF(c.track,     50.0f,  400.0f, 170.0f);
+    c.ppr       = clampF(c.ppr,        1.0f, 5000.0f,  90.0f);
+    c.kOdo      = clampF(c.kOdo,       0.05f, 200.0f,   3.978f);
+    c.kTurn     = clampF(c.kTurn,      0.20f,   4.0f,   1.0f);
+
+    /* ---- 运动：速度 / 加减速 ---- */
+    c.maxSpeed  = clampF(c.maxSpeed,   5.0f,  300.0f, 100.0f);
+    c.defSpeed  = clampF(c.defSpeed,   1.0f,  c.maxSpeed, 40.0f);
+    c.accel     = clampF(c.accel,      5.0f, 2000.0f,  80.0f);
+    c.decel     = clampF(c.decel,      5.0f, 2000.0f, 100.0f);
+    c.maxOmega  = clampF(c.maxOmega,   5.0f,  720.0f, 180.0f);
+    c.turnAccel = clampF(c.turnAccel, 10.0f, 5000.0f, 200.0f);
+    c.turnDecel = clampF(c.turnDecel, 10.0f, 5000.0f, 200.0f);
+
+    /* ---- 三环 PID：增益非负，互补系数 ∈ [0,1] ---- */
+    c.vKp = clampF(c.vKp, 0.0f, 50.0f, 0.0f);
+    c.vKi = clampF(c.vKi, 0.0f, 50.0f, 0.0f);
+    c.vKd = clampF(c.vKd, 0.0f, 50.0f, 0.0f);
+    c.pKp = clampF(c.pKp, 0.0f, 50.0f, 0.0f);
+    c.pKi = clampF(c.pKi, 0.0f, 50.0f, 0.0f);
+    c.pKd = clampF(c.pKd, 0.0f, 50.0f, 0.0f);
+    c.hKp = clampF(c.hKp, 0.0f, 50.0f, 0.0f);
+    c.hKi = clampF(c.hKi, 0.0f, 50.0f, 0.0f);
+    c.hKd = clampF(c.hKd, 0.0f, 50.0f, 0.0f);
+    c.alpha = clampF(c.alpha, 0.0f, 1.0f, 0.85f);
+
+    /* ---- 电机：死区不得盖过上限，缩放系数限幅 ---- */
+    c.pwmDead = clampF(c.pwmDead,   0.0f, 300.0f,   0.0f);
+    c.pwmMax  = clampF(c.pwmMax,   50.0f, 1023.0f, 800.0f);
+    if (c.pwmDead >= c.pwmMax) c.pwmDead = c.pwmMax * 0.5f;
+    c.balLR  = clampF(c.balLR,  -0.5f,  0.5f, 0.0f);
+    c.scaleL = clampF(c.scaleL,  0.2f,  2.0f, 1.0f);
+    c.scaleR = clampF(c.scaleR,  0.2f,  2.0f, 1.0f);
+
+    /* ---- 传感器 ---- */
+    c.irAlarm = clampF(c.irAlarm, 1.0f, 200.0f, 20.0f);
+    c.irScale = clampF(c.irScale, 0.2f,   5.0f,  1.0f);
+
+    /* ---- 舵机：脉宽必须落在 500~2500µs 的通用 servo 区间，
+             且上限必须大于下限，否则 constrain() 的行为会反转 ---- */
+    c.servoMin = clampI(c.servoMin, 500, 2500);
+    c.servoMax = clampI(c.servoMax, 500, 2500);
+    if (c.servoMin >= c.servoMax) { c.servoMin = 1000; c.servoMax = 2000; }
+    c.servoCenter = clampI(c.servoCenter, c.servoMin, c.servoMax);
+    c.servoUp     = clampI(c.servoUp,     c.servoMin, c.servoMax);
+    c.servoDown   = clampI(c.servoDown,   c.servoMin, c.servoMax);
+
+    /* ---- 安全：低压告警阈值必须高于停机阈值，否则逻辑自相矛盾 ---- */
+    c.hbTimeout = (uint32_t)clampF((float)c.hbTimeout, 200.0f, 10000.0f, 1000.0f);
+    c.stallTime = (uint32_t)clampF((float)c.stallTime,  50.0f,  5000.0f,  500.0f);
+    c.batLow    = clampF(c.batLow,   5.0f, 60.0f, 22.0f);
+    c.batCrit   = clampF(c.batCrit,  5.0f, 60.0f, 21.0f);
+    if (c.batCrit > c.batLow) c.batCrit = c.batLow - 0.5f;
+
+    /* ---- 标定辅助 ---- */
+    c.calDist    = clampF(c.calDist,    5.0f,  500.0f, 100.0f);
+    c.calTurnDeg = clampF(c.calTurnDeg, 10.0f, 1080.0f, 360.0f);
+
+    /* ---- IMU ---- */
+    c.gzBias       = clampF(c.gzBias,       -2.0f,  2.0f, 0.0f);
+    c.impactThresh = clampF(c.impactThresh,  0.1f, 16.0f, 2.0f);
+
+    /* ---- 系统：遥测频率过高会挤垮网络核，上限 30Hz ---- */
+    c.telemetryHz = (uint8_t)clampF((float)c.telemetryHz, 1.0f, 30.0f, 15.0f);
+}
+
+/**
  * @brief   从 JSON 字符串合并配置
  * @param[in] json  JSON 字符串
  * @return  true 解析成功；false JSON 非法
  * @note    采用 ArduinoJson 的 `|` 默认值运算符：键缺失时保持原值，
  *          因此网页可以只提交单个分组。
+ * @warning 合并完成后会立即执行 @ref sanitize 做物理边界收口，
+ *          因此「提交了非法值」不会让配置结构被破坏，只会得到夹紧后的结果。
  */
 bool cfgFromJson(const String& json) {
     JsonDocument doc;
@@ -337,6 +452,9 @@ bool cfgFromJson(const String& json) {
     gCfg.impactThresh = doc["impactThresh"] | gCfg.impactThresh;
 
     gCfg.telemetryHz = doc["telemetryHz"] | gCfg.telemetryHz;
+
+    /* ---- 收口：任何来源（网页 / REST / 标定 / 被写坏的 NVS）到此一律夹紧 ---- */
+    sanitize(gCfg);
 
     if (gCfgMutex) xSemaphoreGive(gCfgMutex);
     return true;

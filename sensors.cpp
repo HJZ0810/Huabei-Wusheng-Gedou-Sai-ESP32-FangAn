@@ -9,7 +9,7 @@
  *              因为 GP2Y0A02YK0F 的输出与距离成强非线性反比；
  *            - 电池电压用一阶滤波平滑，避免电机启停时的尖刺误触发低压保护。
  *
- * @author  CombatBot 电控组
+ * @author  HJZ
  * @version V1.1.0
  * @date    2026-10-05
  *
@@ -43,6 +43,26 @@
  */
 #define BAT_DIVIDER  11.0f
 
+/* ---- 有效性判据（★ 融合版新增） -------------------------------------- */
+/**
+ * @brief 红外通道电压下限 V：低于此值判为「断路 / 未接」
+ * @details GP2Y0A02YK0F 在 150cm 处仍有约 0.42V 输出，
+ *          真正断线时 ADC 读到的是 0V 附近（下拉到地）。
+ */
+#define IR_V_MIN      0.20f
+
+/**
+ * @brief 红外通道电压上限 V：高于此值判为「对 VCC 短路 / 异常」
+ * @details 该传感器最近距离（约 18cm）输出也只有 2.6V；
+ *          接近 3.3V 只可能是线路故障，若不排除会一直误判"前方极近"。
+ */
+#define IR_V_MAX      3.20f
+
+/** @brief 电池电压有效区间 V（低于下限视为分压未接） */
+#define BAT_V_MIN     3.0f
+/** @brief 电池电压有效上限 V（高于此值只可能是分压/ADC 故障） */
+#define BAT_V_MAX     60.0f
+
 /**
  * @brief GP2Y0A02YK0F（20~150cm）电压—距离曲线（数据手册典型值）
  * @note  表格按电压降序排列，查询时线性插值；数值仅供换算参考。
@@ -58,6 +78,9 @@ static const float IR_CURVE[][2] = {
 static Adafruit_MCP23X17 s_mcp;         /**< MCP23017 驱动对象 */
 static bool              s_mcpOK = false;   /**< MCP23017 在线标志 */
 SensorData               gSen;          /**< 全局传感器数据     */
+
+/** @brief 六路红外的车体坐标安装角（与 web_ui.h 的 IR_ANG 必须保持一致） */
+const int16_t kIrAngle[IR_COUNT] = { 0, 180, 45, -45, 135, -135 };
 
 /* ==========================================================================
  *                          私有函数（文件内静态）
@@ -125,7 +148,10 @@ bool sensorsInit() {
         for (uint8_t p = 0; p < 7; p++) s_mcp.pinMode(p, INPUT_PULLUP);
     }
 
-    for (int i = 0; i < IR_COUNT; i++) gSen.ir[i] = 200.0f;
+    for (int i = 0; i < IR_COUNT; i++) { gSen.ir[i] = 200.0f; gSen.irValid[i] = false; }
+    gSen.batValid = false;
+    gSen.ioOk     = s_mcpOK;
+    gSen.stamp    = 0;
     return s_mcpOK;
 }
 
@@ -155,6 +181,17 @@ void sensorsUpdate() {
     bool  near = false;
     for (int i = 0; i < IR_COUNT; i++) {
         float v = irRawVoltage(i);
+
+        /* ★ 逐通道有效性：断路 / 对 VCC 短路的通道一律判为无效，
+           既不参与限速仲裁，也不在网页上伪装成真实读数。 */
+        const bool valid = (v >= IR_V_MIN) && (v <= IR_V_MAX);
+        gSen.irValid[i] = valid;
+
+        if (!valid) {
+            gSen.ir[i] = 200.0f;                    /* 无效 → 视为"无目标"  */
+            continue;                               /* 关键：不参与 near 判定 */
+        }
+
         float d = irVoltageToCm(v) * c.irScale;     /* 比例修正（可网页校准） */
         if (d < 0) d = 0;
         gSen.ir[i] = d;
@@ -168,6 +205,7 @@ void sensorsUpdate() {
     float vbat = irRawVoltage(6) * BAT_DIVIDER;
     /* 一阶滤波：平滑电机启停造成的电压尖刺，避免误触发低压保护 */
     gSen.bat = (gSen.bat == 0) ? vbat : (gSen.bat * 0.8f + vbat * 0.2f);
+    gSen.batValid = (gSen.bat >= BAT_V_MIN) && (gSen.bat <= BAT_V_MAX);
 
     /* ---- 3. MCP23017：灰度 ×4 + E18 ×3 ---- */
     if (s_mcpOK) {
@@ -187,4 +225,18 @@ void sensorsUpdate() {
         }
         gSen.edgeDrop = drop;
     }
+
+    /* ---- 4. 打时间戳：上层据此判断数据是否新鲜 ---- */
+    gSen.stamp = millis();
+}
+
+/**
+ * @brief   判断传感器数据是否新鲜
+ * @param[in] now      当前时间戳 ms
+ * @param[in] maxAgeMs 允许的最大数据年龄 ms
+ * @return  true 数据在有效期内
+ */
+bool sensorsFresh(uint32_t now, uint32_t maxAgeMs) {
+    if (gSen.stamp == 0) return false;              /* 从未成功扫描过        */
+    return (now - gSen.stamp) <= maxAgeMs;          /* 无符号差天然抗回绕    */
 }

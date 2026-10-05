@@ -8,7 +8,7 @@
  *            - STA 重连每 15s 一次，且重连过程不影响已建立的 WebSocket 连接；
  *            - mDNS 只需注册一次，AP 与 STA 两个网口都能解析到同一主机名。
  *
- * @author  CombatBot 电控组
+ * @author  HJZ
  * @version V1.1.0
  * @date    2026-10-05
  *
