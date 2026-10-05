@@ -6,7 +6,7 @@
 
 V3.0 重点修正 V2.0 的运动方向、闭环输出、配置保存及多客户端边界，完善安装、迁移和复现资料。保留 V2.0 已有的急停旁路、控制权仲裁、PCNT、换向等待和输入校验。
 
-**[下载 V3.0 Arduino 完整工程](https://github.com/HJZ0810/Huabei-Wusheng-Gedou-Sai-ESP32-FangAn/releases/download/v3.0/CombatBot_V3.0_Arduino完整工程.zip)** · [版本差异与迁移](docs/releases/V3.0.md) · [安装与接线](新手安装与接线.md) · [验证记录](验收与验证.md)
+**[下载 V3.0 Arduino 完整工程](https://github.com/HJZ0810/Huabei-Wusheng-Gedou-Sai-ESP32-FangAn/releases/download/v3.0/CombatBot_V3.0_Arduino.zip)** · [版本差异与迁移](docs/releases/V3.0.md) · [安装与接线](新手安装与接线.md) · [验证记录](验收与验证.md)
 
 ## V3.0 带来什么
 
