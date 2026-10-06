@@ -1,8 +1,8 @@
 # CombatBot · ESP32-S3 四驱格斗车控制系统
 
-**正式版 V4.0 已发布；V5.0 本地预备交付已完成，软件验证通过，尚未公开发布。**
+**正式版 V5.0 已发布并部署；Arduino 双版本编译与软件门控通过，实车验证待装机。**
 
-## V5.0 开发预备：融合工作台与实测调校
+## V5.0：融合工作台与实测调校
 
 当前预备分支已实现融合工作台：手动左摇杆/右传感器，自动左传感器/右地图；显式横屏按钮直接旋转布局，按旋转后的实际高度完整显示雷达与地图。无车辆连接时也保留场地、640×640雷达未知扇区和全量默认参数草稿；摇杆可预览外观，操作不会排队或自动发送。
 
@@ -10,7 +10,7 @@
 
 新增 developmentMode 默认关闭。本地明确启用后，缺失模块可进行受限人工开环调试：最终PWM≤180/1023，单次最长15秒，保留急停、驱动故障、控制权、换向和心跳停车；实际车速未知，缺失探头不提供完整防掉能力。自动与闭环动作继续核对各自反馈条件。没有新增直行偏差自动修正、舵机限位自标定或登台参数自动建议；公网配置与标定仍走本地车辆Wi-Fi。
 
-19条软件门控全部通过，Arduino-ESP32 2.0.17与3.3.12 Huge APP实际编译链接成功；82项默认配置、离线交互、标定、路线及手机横屏视觉均完成检查。 本地完整包包含V1～V4只读快照；正式公网与GitHub下载仍为V4。设计见 [V5 工作台与调试设计](docs/design/V5融合工作台与调试设计.md)，已实现能力及边界见 [V5 预备记录](docs/releases/V5.0.md)。正式安装与下载仍使用 [V4.0 Release](https://github.com/HJZ0810/Huabei-Wusheng-Gedou-Sai-ESP32-FangAn/releases/tag/v4.0)，V1～V4源码、资料和展开更新记录继续保留。
+19条软件门控全部通过，Arduino-ESP32 2.0.17与3.3.12 Huge APP实际编译链接成功；82项默认配置、离线交互、标定、路线及手机横屏视觉均完成检查。V5完整工程包已发布，公网单车入口也已同步至V5网页与服务端版本合同。本地完整包包含V1～V4只读快照；烧录、实车和防跌验证待装机。设计见 [V5 工作台与调试设计](docs/design/V5融合工作台与调试设计.md)，发布与服务部署证据见 [V5 发布记录](docs/releases/V5.0.md) 和 [服务器部署记录](docs/setup/V5服务器部署.md)。V1～V4源码、资料和展开更新记录继续保留。
 
 ## 已发布的 V4.0：云端控制与自主格斗
 
@@ -62,17 +62,17 @@ V3.0 重点修正 V2.0 的运动方向、闭环输出、配置保存及多客户
 
 ## 完整版本更新记录
 
-项目按 **V1.0 完整功能基础 → V2.0 安全与并发加固 → V3.0 控制正确性与可复核交付 → V4.0 云端访问与车端自主 → V5.0 融合操作与实测调校（本地预备交付）** 演进。以下各版本全部展开；历史源码、原说明和扩写说明一并保留，方便查看功能来源与升级取舍。
+项目按 **V1.0 完整功能基础 → V2.0 安全与并发加固 → V3.0 控制正确性与可复核交付 → V4.0 云端访问与车端自主 → V5.0 融合操作与实测调校** 演进。以下各版本全部展开；历史源码、原说明和扩写说明一并保留，方便查看功能来源与升级取舍。
 
 | 版本 | 对应源码 | 原版说明 | 扩写版本说明 | 发布与下载 |
 |---|---|---|---|---|
-| V5.0 | [当前维护分支](combatbot/)（本地预备交付） | [V5 预备记录](docs/releases/V5.0.md) | [V5 工作台与调试设计](docs/design/V5融合工作台与调试设计.md) | 本地完整包已校验，未公开发布 |
+| V5.0 | [当前维护工程](combatbot/) | [V5 发布记录](docs/releases/V5.0.md) | [V5 工作台与调试设计](docs/design/V5融合工作台与调试设计.md) | [V5.0 Release](https://github.com/HJZ0810/Huabei-Wusheng-Gedou-Sai-ESP32-FangAn/releases/tag/v5.0) |
 | V4.0 | [固定 Arduino 工程](https://github.com/HJZ0810/Huabei-Wusheng-Gedou-Sai-ESP32-FangAn/tree/v4.0/CombatBotArduino) / [固定维护工程](https://github.com/HJZ0810/Huabei-Wusheng-Gedou-Sai-ESP32-FangAn/tree/v4.0/combatbot) | [V4 发布时 README](https://github.com/HJZ0810/Huabei-Wusheng-Gedou-Sai-ESP32-FangAn/blob/v4.0/README.md) | [V4.0 发布记录](docs/releases/V4.0.md) | [已发布：完整 Arduino 工程包](https://github.com/HJZ0810/Huabei-Wusheng-Gedou-Sai-ESP32-FangAn/releases/tag/v4.0) |
 | V3.0 | [固定 Arduino 源码](https://github.com/HJZ0810/Huabei-Wusheng-Gedou-Sai-ESP32-FangAn/tree/v3.0/CombatBotArduino) / [固定维护工程](https://github.com/HJZ0810/Huabei-Wusheng-Gedou-Sai-ESP32-FangAn/tree/v3.0/combatbot) | [V3.0 发布时 README](https://github.com/HJZ0810/Huabei-Wusheng-Gedou-Sai-ESP32-FangAn/blob/3fa1f7e/README.md) | [V3.0 发布与迁移](docs/releases/V3.0.md) | [V3.0 Release](https://github.com/HJZ0810/Huabei-Wusheng-Gedou-Sai-ESP32-FangAn/releases/tag/v3.0) |
 | V2.0 | [CombatBot_Fusion](versions/v2.0/CombatBot_Fusion/) | [V2.0 原 README](versions/v2.0/CombatBot_Fusion/README.md) | [V2.0 详细说明](docs/releases/V2.0.md) | [V2.0 历史 Release](https://github.com/HJZ0810/Huabei-Wusheng-Gedou-Sai-ESP32-FangAn/releases/tag/v2.0) |
 | V1.0 | [CombatBot_ESP32S3](versions/v1.0/CombatBot_ESP32S3/) | [V1.0 原 README](versions/v1.0/CombatBot_ESP32S3/README.md) | [V1.0 详细说明](docs/releases/V1.0.md) | [V1.0 历史 Release](https://github.com/HJZ0810/Huabei-Wusheng-Gedou-Sai-ESP32-FangAn/releases/tag/v1.0) |
 
-### V5.0 · 融合操作、离线准备与实测调校 · 2026-10-06（本地验证通过，未公开发布）
+### V5.0 · 融合操作、离线准备与实测调校 · 2026-10-06（已发布）
 
 **本版定位：** 在V4单车云控与车端自主基础上，把驾驶和感知整合，支持未装机时完整准备界面与参数，并用真实外测修正设备系数。本节描述当前预备分支实现，不代表正式发布或实车验收。
 
@@ -87,7 +87,7 @@ V3.0 重点修正 V2.0 的运动方向、闭环输出、配置保存及多客户
 
 **进步与优势：** 同页操作与观察降低切页负担；装车前可完整查看默认参数及未知探头；外测修正可以先看候选，旧结果不会跨会话、跨配置或重复保存。完整当前阶段路线与草稿预览有不同样式，既能查看计划也能辨别来源。V4已有控制权、PID、急停、AP/STA与自主断网继续均为继承。
 
-**当前证据与边界：** 19条软件门控全部通过，Arduino-ESP32 2.0.17与3.3.12 Huge APP实际编译链接成功；82项默认配置、离线交互、标定、路线及手机横屏视觉均完成检查。 本地完整包与CRC/SHA256核验完成，V1～V4共378个原始文件保留。尚未公开发布或升级公网，未上板。未新增自动直行偏差修正、独立后退标定、舵机限位自标定或试验历史库；公网管理仍只在本地Wi-Fi进行，真实爬阶、防掉、滑移和停止距离待实装。详细状态见 [V5记录](docs/releases/V5.0.md)。
+**当前证据与边界：** 19条软件门控全部通过，Arduino-ESP32 2.0.17与3.3.12 Huge APP实际编译链接成功；82项默认配置、离线交互、标定、路线及手机横屏视觉均完成检查。GitHub完整工程包和SHA256附件已核验，公网页面与服务端版本合同已同步至V5；V1～V4共378个原始文件保留。未上板。未新增自动直行偏差修正、独立后退标定、舵机限位自标定或试验历史库；公网管理仍只在本地Wi-Fi进行，真实爬阶、防掉、滑移和停止距离待实装。详细证据见 [V5发布记录](docs/releases/V5.0.md)。
 
 ### V4.0 · 云端访问、估计地图与车端自主 · 2026-10-06（已发布）
 

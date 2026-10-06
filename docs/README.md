@@ -4,10 +4,11 @@
 
 V5预备分支已联通融合工作台、显式横屏、640×640未知态雷达、全量离线默认草稿、当前阶段完整剩余路线及点选即前往。开发人工调试默认关闭，启用后最终PWM≤180/1023、单次最长15秒；标定包含IMU、100cm前进行程、左右转独立修正与零PWM登台观测，应用绑定结果、会话与配置代次。
 
-两份UI合同和file离线初始化已通过。19条软件门控全部通过，Arduino-ESP32 2.0.17与3.3.12 Huge APP实际编译链接成功；82项默认配置、离线交互、标定、路线及手机横屏视觉均完成检查。当前V5仅本地交付，GitHub与公网仍使用V4。没有新增舵机限位自标定、直行偏差自动修正或登台参数自动建议；公网配置与标定仍连接本地车辆Wi-Fi。未上板，V4的成功凭据不作为V5验证。
+两份UI合同和file离线初始化已通过。19条软件门控全部通过，Arduino-ESP32 2.0.17与3.3.12 Huge APP实际编译链接成功；82项默认配置、离线交互、标定、路线及手机横屏视觉均完成检查。V5完整工程包已在GitHub发布，公网网页与中继版本合同已同步至V5。没有新增舵机限位自标定、直行偏差自动修正或登台参数自动建议；公网配置与标定仍连接本地车辆Wi-Fi。未上板，V4的成功凭据不作为V5验证。
 
 - [V5工作台与调试设计](design/V5融合工作台与调试设计.md)：当前布局、旋转输入、草稿、调试限幅、路线和标定绑定。
-- [V5预备记录](releases/V5.0.md)：V4→V5实际进步、尚未实现能力及验证/发布状态。
+- [V5发布记录](releases/V5.0.md)：V4→V5实际进步、尚未实现能力及验证/发布状态。
+- [V5服务器部署](setup/V5服务器部署.md)：线上网页、版本接口、私有配置复用和回退证据。
 
 ## V4.0 已发布资料
 
@@ -35,11 +36,11 @@ Arduino 入口：[CombatBotArduino.ino](../CombatBotArduino/CombatBotArduino.ino
 
 ## 全部版本与演进资料
 
-根 [README 的完整版本更新记录](../README.md#完整版本更新记录) 全部展开 V5（本地预备交付）、V4、V3、V2、V1。新增版本从顶部追加，旧版本的完整源码、原始说明、扩写资料和发布入口持续保留。
+根 [README 的完整版本更新记录](../README.md#完整版本更新记录) 全部展开 V5、V4、V3、V2、V1。新增版本从顶部追加，旧版本的完整源码、原始说明、扩写资料和发布入口持续保留。
 
 | 版本 | 扩写说明 | 完整旧工程 / 当前工程 | 原始说明 | 发布入口 |
 |---|---|---|---|---|
-| V5.0 | [开发预备记录](releases/V5.0.md) | [当前维护分支](../combatbot/)（本地验证通过） | [V5 设计](design/V5融合工作台与调试设计.md) | 尚未发布 |
+| V5.0 | [发布记录](releases/V5.0.md) | [当前维护工程](../combatbot/) | [V5 设计](design/V5融合工作台与调试设计.md) | [V5.0 Release](https://github.com/HJZ0810/Huabei-Wusheng-Gedou-Sai-ESP32-FangAn/releases/tag/v5.0) |
 | V4.0 | [云端与自主扩展](releases/V4.0.md) | [固定 V4 Arduino 草图](https://github.com/HJZ0810/Huabei-Wusheng-Gedou-Sai-ESP32-FangAn/tree/v4.0/CombatBotArduino) | [V4 发布 README](https://github.com/HJZ0810/Huabei-Wusheng-Gedou-Sai-ESP32-FangAn/blob/v4.0/README.md) | [V4.0 Release](https://github.com/HJZ0810/Huabei-Wusheng-Gedou-Sai-ESP32-FangAn/releases/tag/v4.0) |
 | V3.0 | [控制正确性与可验证交付](releases/V3.0.md) | [固定V3 Arduino源码](https://github.com/HJZ0810/Huabei-Wusheng-Gedou-Sai-ESP32-FangAn/tree/v3.0/CombatBotArduino) | [固定发布提交](https://github.com/HJZ0810/Huabei-Wusheng-Gedou-Sai-ESP32-FangAn/tree/v3.0) | [V3.0](https://github.com/HJZ0810/Huabei-Wusheng-Gedou-Sai-ESP32-FangAn/releases/tag/v3.0) |
 | V2.0 | [并发、安全与异常处理加固](releases/V2.0.md) | [CombatBot_Fusion](../versions/v2.0/CombatBot_Fusion/) | [V2 原始 README](../versions/v2.0/CombatBot_Fusion/README.md) | [V2.0 历史归档](https://github.com/HJZ0810/Huabei-Wusheng-Gedou-Sai-ESP32-FangAn/releases/tag/v2.0) |

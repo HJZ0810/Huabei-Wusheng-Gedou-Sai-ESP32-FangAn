@@ -58,7 +58,7 @@ try {
   const info = await request('/api/info');
   assert.equal(info.status, 200);
   const description = await info.json();
-  assert.equal(description.version, '4.0.0'); assert.equal(description.singleDevice, true);
+  assert.equal(description.version, '5.0.0'); assert.equal(description.singleDevice, true);
   assert.equal(description.deviceId, credentials.deviceId);
   const page = await request('/'); assert.equal(page.status, 200);
   const html = await page.text();

@@ -1,7 +1,7 @@
 /** PM2 示例：替换工程路径与公开入口，不在文件内放真实口令或设备密钥。 */
 module.exports = {
   apps: [{
-    name: 'combatbot-v4-relay',
+    name: 'combatbot-v5-relay',
     cwd: '/opt/combatbot/server',
     script: 'src/main.mjs',
     interpreter: '/usr/bin/node',

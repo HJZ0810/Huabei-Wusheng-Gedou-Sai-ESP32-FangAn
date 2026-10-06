@@ -21,7 +21,7 @@ const relay = createRelay({ config, tls, basePath: env.COMBATBOT_BASE_PATH || ''
   publicOrigin: env.COMBATBOT_PUBLIC_ORIGIN,
   webFile: fileURLToPath(new URL('../../combatbot/web/index.html', import.meta.url)),
 });
-relay.server.listen(port, host, () => console.log(`CombatBot V4 relay listening ${host}:${port}${relay.basePath}/`));
+relay.server.listen(port, host, () => console.log(`CombatBot V5 relay listening ${host}:${port}${relay.basePath}/`));
 let shuttingDown = false;
 for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, async () => {
   if (shuttingDown) return;

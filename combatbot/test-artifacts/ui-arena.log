@@ -1,4 +1,4 @@
-Command: "C:\Program Files\nodejs\node.exe" test/ui_arena_contract.mjs
+Command: "C:\Program Files\nodejs\node.EXE" test/ui_arena_contract.mjs
 PASS: AP / map selection / explicit navigation / autonomous lifecycle / takeover / manual loss-stop / pose / unclamped estimate / credential edit semantics
 PASS: V5 one-point device route / remaining waypoints / stale or missing pose / graph detour / explicit click-go / ownership and offline gating / layout isolation
 PASS: single vehicle / capability fragment removal / HttpOnly session exchange / explicit claim / lease seq permit / heartbeat / sole device binding / local-only admin / release / reconnect / stale socket / unauthorized entry

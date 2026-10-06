@@ -1,19 +1,19 @@
-Command: "C:\Program Files\nodejs\node.exe" --test test/relay.test.mjs
-✔ 路径与配置必须明确，拒绝不安全公网入口 (1.3415ms)
+Command: "C:\Program Files\nodejs\node.EXE" --test test/relay.test.mjs
+✔ 路径与配置必须明确，拒绝不安全公网入口 (1.1999ms)
 ▶ 真实 TLS / HTTP / WebSocket 中继集成
-  ✔ HTTPS证书正常校验，未信任测试CA的客户端失败 (8.3407ms)
-  ✔ 控制链接换Secure Cookie，缺失/错误密钥、Origin及设备凭据拒绝 (33.1521ms)
-  ✔ 唯一车辆自动订阅；未持租约不能停止或急停，错误编号无原型越权 (2.1939ms)
-  ✔ 唯一操作者租约，动作不在服务器生成，设备ACK绑定租约 (2.8188ms)
-  ✔ 重复序号、旧permit、伪lease和云端本地专用指令全部拒绝 (1.3836ms)
-  ✔ 应用心跳停止即结束租约，设备仍在线不能服务器伪续 (360.2059ms)
-  ✔ 有真实hb可以续租，实际过期旧permit仍拒绝，其他动作不会代替hb (905.6802ms)
-  ✔ 急停使用现有租约，新租约序号归零；断线不发送stop/auto恢复 (3.4315ms)
-  ✔ 设备断线时释放租约，离线动作不缓存，重连产生新link (57.3506ms)
-  ✔ 超大operator帧关闭连接，主动断开撤销cookie与WS (1238.4759ms)
-  ✔ 发送限速超限关闭操作者并撤租，不留下占用 (6.908ms)
-  ✔ 设备停止签发许可，仍有TCP连接也会标离线 (2011.5937ms)
-✔ 真实 TLS / HTTP / WebSocket 中继集成 (4931.0528ms)
+  ✔ HTTPS证书正常校验，未信任测试CA的客户端失败 (7.5967ms)
+  ✔ 控制链接换Secure Cookie，缺失/错误密钥、Origin及设备凭据拒绝 (30.7971ms)
+  ✔ 唯一车辆自动订阅；未持租约不能停止或急停，错误编号无原型越权 (1.8538ms)
+  ✔ 唯一操作者租约，动作不在服务器生成，设备ACK绑定租约 (2.3598ms)
+  ✔ 重复序号、旧permit、伪lease和云端本地专用指令全部拒绝 (1.9128ms)
+  ✔ 应用心跳停止即结束租约，设备仍在线不能服务器伪续 (304.812ms)
+  ✔ 有真实hb可以续租，实际过期旧permit仍拒绝，其他动作不会代替hb (934.7855ms)
+  ✔ 急停使用现有租约，新租约序号归零；断线不发送stop/auto恢复 (5.6142ms)
+  ✔ 设备断线时释放租约，离线动作不缓存，重连产生新link (65.2342ms)
+  ✔ 超大operator帧关闭连接，主动断开撤销cookie与WS (1248.6452ms)
+  ✔ 发送限速超限关闭操作者并撤租，不留下占用 (6.226ms)
+  ✔ 设备停止签发许可，仍有TCP连接也会标离线 (2034.0665ms)
+✔ 真实 TLS / HTTP / WebSocket 中继集成 (4923.9737ms)
 ℹ tests 14
 ℹ suites 0
 ℹ pass 14
@@ -21,6 +21,6 @@ Command: "C:\Program Files\nodejs\node.exe" --test test/relay.test.mjs
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 5035.0677
+ℹ duration_ms 5016.2524
 
 [exit code: 0]

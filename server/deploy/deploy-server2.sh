@@ -5,11 +5,15 @@
 set -eu
 staging=${1:?staging directory required}
 release_id=${2:?release id required}
-case "$staging" in /tmp/combatbot-v4-*) ;; *) exit 1;; esac
+case "$staging" in /tmp/combatbot-v5-*) ;; *) exit 1;; esac
 case "$release_id" in *[!A-Za-z0-9._-]*|'') exit 1;; esac
 release=/opt/combatbot/releases/$release_id
 backup=/var/backups/combatbot/$release_id
-for file in "$staging/release.tar.gz" "$staging/config.private.json" /etc/letsencrypt/live/combatbot.luo-jin-ai.com/fullchain.pem; do test -f "$file"; done
+for file in "$staging/release.tar.gz" /etc/letsencrypt/live/combatbot.luo-jin-ai.com/fullchain.pem; do test -f "$file"; done
+if test ! -f "$staging/config.private.json" && test ! -f /etc/combatbot/config.private.json; then
+    echo "Missing existing or staged private single-device config; refusing deployment" >&2
+    exit 1
+fi
 test ! -e "$release"
 test ! -e "$backup"
 id combatbot >/dev/null 2>&1 || useradd --system --home-dir /nonexistent --shell /usr/sbin/nologin combatbot
@@ -46,7 +50,11 @@ rollback() {
 }
 trap rollback EXIT
 install -d -o root -g combatbot -m 0750 /etc/combatbot
-install -o root -g combatbot -m 0640 "$staging/config.private.json" /etc/combatbot/config.private.json
+if test -f "$staging/config.private.json"; then
+    install -o root -g combatbot -m 0640 "$staging/config.private.json" /etc/combatbot/config.private.json
+else
+    echo "Preserving existing private single-device config"
+fi
 cat > /etc/combatbot/relay.env <<'ENV'
 COMBATBOT_CONFIG=/etc/combatbot/config.private.json
 COMBATBOT_PUBLIC_ORIGIN=https://combatbot.luo-jin-ai.com

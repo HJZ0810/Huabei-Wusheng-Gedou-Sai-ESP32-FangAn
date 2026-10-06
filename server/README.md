@@ -58,7 +58,7 @@ Linux 创建权限为0600；Windows 应用 ACL 限制读取。所有文件保存
 
 | 路径 | 请求与结果 |
 | --- | --- |
-| `GET /api/info` | 公共描述 `{ok,mode:"cloud",version:"4.0.0",basePath:"",wsOperator:"/ws/operator",singleDevice:true,deviceId}` |
+| `GET /api/info` | 公共描述 `{ok,mode:"cloud",version:"5.0.0",basePath:"",wsOperator:"/ws/operator",singleDevice:true,deviceId}` |
 | `POST /api/connect` | JSON `{controlKey}`；成功返回 `{ok:true,device}` 并设置会话 Cookie |
 | `GET /api/me` | 有效会话返回 `{ok:true,device}`；缺失或过期返回401 |
 | `POST /api/disconnect` | 撤销当前会话、关闭该会话 WS、撤销其人工控制租约并清 Cookie |

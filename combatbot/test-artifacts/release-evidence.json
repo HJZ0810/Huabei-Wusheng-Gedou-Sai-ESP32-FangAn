@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "firmwareVersion": "5.0.0",
-  "verifiedAtUtc": "2026-10-06T01:46:22.172140+00:00",
+  "verifiedAtUtc": "2026-10-06T02:18:01.537812+00:00",
   "sources": {
     ".gitattributes": "bccfacac5eaa8a7b6fdcb64c3f49ffc97bd35d2f50803c9482433aa2ea0680cf",
     ".gitignore": "b81dc1b3656a067b42d0476e1cc2d201a4284a3905d302d9bff1d7171098028d",
@@ -87,17 +87,17 @@
     "server/.gitignore": "0ee0754721dff1f791975af11245de8583cd908500f67839cca994f61fec9150",
     "server/deploy/combatbot-domain.conf": "1e78f02ab04ba7cf1f453edd5b61fcaec1c51d3effb43d117e8b42dff16cbec8",
     "server/deploy/combatbot.service": "5dbbe8913a7c59ef07e40d07f518b64e0fd68a83348041e210deec79d692a5d5",
-    "server/deploy/deploy-server2.sh": "3e54f8b1e6beb730afe66054830624a852a1e27e8baaf4b03f25d1207785842a",
-    "server/deploy/ecosystem.example.cjs": "9bb0f9953b95314ed5e2f86ea4edbe9e80c696ddf5400f132f9582186e9ade72",
+    "server/deploy/deploy-server2.sh": "567676a97a0b94c69ceb7b6ce0580fa9623001219f2c373e456e5bf9bc114e34",
+    "server/deploy/ecosystem.example.cjs": "2bde49068084638ab3e6090b2ea2a2573178a5e5a472258b3f3fc7642b4eefbc",
     "server/deploy/isrg-root-x1.crt": "22b557a27055b33606b6559f37703928d3e4ad79f110b407d04986e1843543d1",
     "server/deploy/nginx.example.conf": "709d991b388d4d39efe9b2e0efa7dd7310903d8217e063e30a8a6d48fa352baa",
-    "server/package-lock.json": "b780bd10e0fc4c4b0606341ccf5f61f691c26efe4b99147d219207297c9d1ea3",
-    "server/package.json": "821a77995c189419453c0cd33192462d0c7110cf8849ef9c6477d0cdb1bcf87f",
+    "server/package-lock.json": "00ab0874e61cd8f55181f2012f0562238cba292d3248a53d220606a9597c2360",
+    "server/package.json": "2f21a05ce850b00179a6cf8b1da0db3539e0b55cc0206df153ef3dbb5290a766",
     "server/scripts/create-config.mjs": "07ccf9c4e4306ea006216660698c165ab440507f93af1b0da1d08cf55d5295cb",
-    "server/scripts/public-smoke.mjs": "57f8fcb26803a98d152e54ea5eff914656549bd96f272bd8b18f1677aedbc204",
+    "server/scripts/public-smoke.mjs": "8933e8f4633dce7882f8661a9ddd44201050d7359e82e434e3985db7436fb323",
     "server/src/auth.mjs": "94067f3ee84443d30e2bc7617b853cd2d2817f2b54eae7a5292ceff444974b2b",
-    "server/src/main.mjs": "81e73b4630c3af519cd2a93deac04edb2d42a9b87122501991e8c2fe0d85867d",
-    "server/src/relay.mjs": "7115ed8538705ea87fe2db8c3ddae2ab0db70981fa5eee49bf6b5cee85e4eba7",
+    "server/src/main.mjs": "e9b889059d7b4993613a55ac36f7c0e6e2123c1681a93bed02b32322eb651d55",
+    "server/src/relay.mjs": "ce96143f6eba644ec0c7203e97bdb3ebd38340515eb288ded53bab624e726613",
     "server/test/relay.test.mjs": "cfd8dfde5d6f2993b23129c1f676a8ebf0f9406129db6658ba15dc0543de5985",
     "tools/package_history.py": "8fd5abd6cc82395f85caf263952d90cf67d3a9e3a56cd9ea3570900093ccfd6c",
     "VERSION": "1cc3d76ac7c21a664e79848fd481e9791016451b244e7de5feeeb9bea5fd2184",
@@ -469,32 +469,32 @@
     "ui": {
       "exitCode": 0,
       "log": "test-artifacts/ui.log",
-      "sha256": "8d8ec3d55237bc71177b5291bf31524313b023ace5ca16f54ed8ed5ad9a12c7d"
+      "sha256": "e12c93217f5c91202e07c16d94e5308411aa36304d9c3621a554486c924de6bd"
     },
     "ui-offline": {
       "exitCode": 0,
       "log": "test-artifacts/ui-offline.log",
-      "sha256": "7b77bad6cf8407c04207bbf8fb4a605744d5e05d940396523531f465974775f9"
+      "sha256": "6f8ec3b26dfc0aa0afe21e316f7aadc27f649625bbff6a83e12892864abb5193"
     },
     "ui-arena": {
       "exitCode": 0,
       "log": "test-artifacts/ui-arena.log",
-      "sha256": "584ac846d2efc5cd856a4b81e326543eb1432741ce065c42c04336fc78a5d6b5"
+      "sha256": "c3a5fee4faa4cab829ce47f8d3a3024842eadb2646d151fdd02412b16ffebf7a"
     },
     "server": {
       "exitCode": 0,
       "log": "test-artifacts/server.log",
-      "sha256": "445e4c27e53f83087c262d0f920cad9c8dd76ef8a19f27c70296e6084ae0c939"
+      "sha256": "2bfad71776769e381e4d9a6cfb77b3944bb3cc98be82af85040572cda63171e1"
     },
     "migration": {
       "exitCode": 0,
       "log": "test-artifacts/migration.log",
-      "sha256": "0f871d49d3fa31b8bc448471c8cab71c8b3b3eacdce4605ce8ce9189168e266a"
+      "sha256": "be9c3b6be6207b0f9987a72645e168f8ff72223e10bfb56e1d33d97865e78efb"
     },
     "core2": {
       "exitCode": 0,
       "log": "test-artifacts/core2-compatibility.log",
-      "sha256": "e52b10255e318986beee3e48911a15424114136ff6582eb018f9ce80324f9810"
+      "sha256": "6392e8cfdcee0402aedfc0d8773cad71def16a1dfd16afb551f0352a9ed80232"
     },
     "core3": {
       "exitCode": 0,

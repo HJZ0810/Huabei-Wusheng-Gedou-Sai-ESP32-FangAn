@@ -135,7 +135,7 @@ export function createRelay(options) {
   async function handler(req, res) {
     const path = requestPath(req);
     if (req.method === 'GET' && path === basePath + '/api/info') {
-      return response(res, 200, { ok: true, mode: 'cloud', version: '4.0.0', basePath,
+      return response(res, 200, { ok: true, mode: 'cloud', version: '5.0.0', basePath,
         wsOperator: basePath + '/ws/operator', singleDevice: true, deviceId: device.deviceId });
     }
     if (req.method === 'GET' && path === basePath + '/api/me') {
