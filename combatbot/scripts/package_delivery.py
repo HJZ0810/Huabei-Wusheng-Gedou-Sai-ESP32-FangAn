@@ -43,10 +43,15 @@ if not native.read_text(encoding="utf-8").rstrip().endswith("[exit code: 0]"):
 fqbn = evidence["builds"]["core3"]["fqbn"]
 if "FQBN: " + fqbn + "\n" not in native.read_text(encoding="utf-8"):
     raise RuntimeError("core3实际FQBN与发布凭据不一致")
-files["验证日志/ArduinoESP32-2.0.17.log"] = DELIVERY / "验证日志" / "ArduinoESP32-2.0.17.log"
-files["验证日志/ArduinoESP32-3.3.12-" + evidence["builds"]["core3"]["buildName"] + ".log"] = (
-    DELIVERY / "验证日志" / f"ArduinoESP32-3.3.12-{evidence['builds']['core3']['buildName']}.log"
-)
+# 别名每次从本次凭据绑定的原始日志生成；只规范化换行，不能沿用旧版本日志。
+for name, source in (
+    ("验证日志/ArduinoESP32-2.0.17.log", core2),
+    (f"验证日志/ArduinoESP32-3.3.12-{evidence['builds']['core3']['buildName']}.log", native),
+):
+    alias = DELIVERY / name
+    alias.parent.mkdir(exist_ok=True)
+    alias.write_bytes(source.read_text(encoding="utf-8-sig").encode("utf-8"))
+    files[name] = alias
 for name, path in files.items():
     if not path.resolve().is_relative_to(DELIVERY.resolve()):
         raise RuntimeError(f"交付路径越界：{name}")

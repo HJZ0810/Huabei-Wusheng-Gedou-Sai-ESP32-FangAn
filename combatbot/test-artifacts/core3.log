@@ -6,8 +6,8 @@ Arduino CLI：arduino-cli  Version: 1.5.1 Commit: 01f3d4f2b Date: 2026-06-05T10:
 ID          Installed Latest Name
 arduino:avr 1.8.8     1.8.8  Arduino AVR Boards
 esp32:esp32 3.3.12    3.3.12 esp32
-Sketch uses 1381752 bytes (43%) of program storage space. Maximum is 3145728 bytes.
-Global variables use 64688 bytes (19%) of dynamic memory, leaving 262992 bytes for local variables. Maximum is 327680 bytes.
+Sketch uses 1399132 bytes (44%) of program storage space. Maximum is 3145728 bytes.
+Global variables use 64960 bytes (19%) of dynamic memory, leaving 262720 bytes for local variables. Maximum is 327680 bytes.
 
 编译成功；完整日志：D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\test-artifacts\ide-core3-huge-app.log
 

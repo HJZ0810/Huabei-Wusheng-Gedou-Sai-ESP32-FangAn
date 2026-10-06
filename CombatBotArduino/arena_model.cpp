@@ -39,7 +39,9 @@ bool blocked(float ax,float ay,float bx,float by,float half) {
   return lo<hi && hi>0 && lo<1;
 }
 /** @brief 六节点可见图：起点、终点与台面四角；无堆内存和搜索循环等待。 */
-bool route(float sx,float sy,float gx,float gy,float obstacle,float outer,float& nx,float& ny) {
+bool route(float sx,float sy,float gx,float gy,float obstacle,float outer,
+    float& nx,float& ny,RoutePoint* points,uint8_t& pointCount) {
+  pointCount=0;
   const float corner=obstacle+5;
   if(corner>=outer || !inside(sx,sy,outer) || !inside(gx,gy,outer) ||
       inside(sx,sy,obstacle-0.02f) || inside(gx,gy,obstacle-0.02f)) return false;
@@ -57,12 +59,18 @@ bool route(float sx,float sy,float gx,float gy,float obstacle,float outer,float&
     }
   }
   if(previous[1]<0) return false;
-  int next=1;
-  for(int count=0;previous[next]!=0 && count<6;++count) {
-    next=previous[next]; if(next<0) return false;
+  int reverse[6],length=0,next=1;
+  while(next!=0 && length<6) {
+    reverse[length++]=next; next=previous[next];
+    if(next<0) return false;
   }
-  if(previous[next]!=0) return false;
-  nx=x[next]; ny=y[next]; return true;
+  if(next!=0 || length==0) return false;
+  // Dijkstra 的 predecessor 从终点回溯；输出时翻转为车辆前方的完整剩余路线。
+  pointCount=static_cast<uint8_t>(length);
+  for(int i=0;i<length;++i) {
+    const int node=reverse[length-1-i]; points[i].xCm=x[node]; points[i].yCm=y[node];
+  }
+  nx=points[0].xCm; ny=points[0].yCm; return true;
 }
 }
 
@@ -125,6 +133,7 @@ void ArenaModel::halt(StopReason reason) {
       result_.phase<=Phase::ClimbSettle) result_.pose.layer=Layer::TransitionUnknown;
   result_.mode=Mode::Halted; result_.reason=reason;
   result_.forwardCmS=result_.yawDegS=0;
+  result_.routeValid=false; result_.routeCount=0;
 }
 void ArenaModel::cancel(StopReason reason) {
   if(result_.mode==Mode::Climb && result_.phase>=Phase::ClimbContact &&
@@ -132,6 +141,7 @@ void ArenaModel::cancel(StopReason reason) {
   result_.mode=Mode::Idle; result_.phase=Phase::None; result_.reason=reason;
   result_.forwardCmS=result_.yawDegS=0; result_.target=Target(); candidate_=Target();
   result_.hasGoal=false;
+  result_.routeValid=false; result_.routeCount=0;
   resumeMode_=postClimbMode_=Mode::Idle; clearTiming_=false; consistentTargetFrames_=0;
 }
 bool ArenaModel::setPoseAnchor(float x,float y,float heading,Layer layer,uint32_t now) {
@@ -231,13 +241,17 @@ bool ArenaModel::poseSafe(bool transition) const {
 }
 bool ArenaModel::navigationDemand(float x,float y,bool lowerRoute) {
   const Pose& p=result_.pose;
+  result_.routeValid=false; result_.routeCount=0;
   const float goalDistance=distance(x-p.xCm,y-p.yCm);
   if(goalDistance<=config_.goalToleranceCm) return true;
   float nx=x,ny=y;
   if(lowerRoute) {
     const float margin=config_.bodyRadiusCm+config_.safetyMarginCm+p.uncertaintyCm;
     if(!route(p.xCm,p.yCm,x,y,config_.platformSizeCm/2+margin,
-      config_.outerSizeCm/2-margin,nx,ny)) { halt(StopReason::InvalidGoal); return false; }
+      config_.outerSizeCm/2-margin,nx,ny,result_.route,result_.routeCount)) { halt(StopReason::InvalidGoal); return false; }
+    result_.routeValid=true;
+  } else {
+    result_.route[0].xCm=x; result_.route[0].yCm=y; result_.routeCount=1; result_.routeValid=true;
   }
   const float error=wrapDegrees(angle(nx-p.xCm,ny-p.yCm)-p.headingDeg);
   result_.yawDegS=limit(error*2,-config_.maxYawDegS,config_.maxYawDegS);
@@ -450,6 +464,8 @@ Decision ArenaModel::tick(const Frame& f) {
     result_.pose.valid=false; halt(StopReason::InvalidFrame); return result_;
   }
   if(frameSeen_ && f.nowMs==lastFrameMs_) { return result_; } // 增量不得重复消费。
+  // 每份新采样重新规划；避边、搜敌和登台冲刺不沿用上一周期的导航路线。
+  result_.routeValid=false; result_.routeCount=0;
   const bool stale=frameSeen_ && elapsed(f.nowMs,lastFrameMs_,251);
   frameSeen_=true; lastFrameMs_=f.nowMs;
   integrate(f);

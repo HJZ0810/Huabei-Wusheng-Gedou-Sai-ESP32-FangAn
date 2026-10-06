@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="300" viewBox="0 0 1080 300">
+<rect width="1080" height="300" rx="20" fill="#101b2e"/>
+<g font-family="Microsoft YaHei, sans-serif" fill="#eef4ff">
+<text x="38" y="47" font-size="24" font-weight="700">CombatBot Fusion · Arduino 安装顺序</text>
+<text x="38" y="78" font-size="14" fill="#a9bbd6">流程示意 · 无需网页构建工具 · 不执行上传</text>
+<g fill="#1c2c45" stroke="#3b5375"><rect x="38" y="108" width="236" height="142" rx="12"/><rect x="294" y="108" width="236" height="142" rx="12"/><rect x="550" y="108" width="236" height="142" rx="12"/><rect x="806" y="108" width="236" height="142" rx="12"/></g>
+<g font-size="17" font-weight="700" fill="#72dfc5"><text x="55" y="141">01 · 打开完整草图</text><text x="311" y="141">02 · 安装开发板包</text><text x="567" y="141">03 · 安装指定库</text><text x="823" y="141">04 · 点击验证</text></g>
+<g font-size="14"><text x="55" y="176">CombatBotArduino.ino</text><text x="55" y="204">cpp / h 保持同目录</text><text x="311" y="176">Espressif Systems · 3.3.12</text><text x="311" y="204">ESP32S3 Dev Module</text><text x="567" y="171">ArduinoJson 7.3.1</text><text x="567" y="197">AsyncTCP 3.3.2</text><text x="567" y="223">ESPAsyncWebServer 3.6.0</text><text x="823" y="176">核对 Flash / PSRAM</text><text x="823" y="204">编译成功后再考虑装机</text></g>
+</g></svg>

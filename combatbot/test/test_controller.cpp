@@ -47,9 +47,11 @@ Sensors sensorsRead(const Config&) {
     Command hb; hb.type=CommandType::Heartbeat; hb.client=11;
     controllerEnqueue(hb);
   }
-  sensors.sampledMs=hostMillis; return sensors;
+  sensors.sampledMs=sensors.imuMs=sensors.digitalMs=hostMillis; return sensors;
 }
 bool hardwareHealthy() { return healthy; }
+bool hardwareOutputsHealthy() { return healthy; }
+uint32_t hardwareBootId() { return 1234; }
 }
 // 直接包含生产实现；测试没有另写一份控制状态机。
 #include "../src/controller.cpp"
@@ -92,10 +94,11 @@ int main() {
   assert(!bot::controllerEnqueue(command(bot::CommandType::Heartbeat,22))); tick(400);
   assert(!bot::controllerBusy() && motorsZero());
   assert(std::strcmp(bot::controllerSnapshot().fault,"heartbeat_lost")==0);
-  // 同一占用者的驾驶更新也不替代独立心跳；持续发 Drive 仍应在心跳过期后停止。
+  // 受理同一占用者的驾驶更新刷新心跳；停止刷新后仍按失联门限撤驱动。
   fresh(); assert(bot::controllerEnqueue(command(bot::CommandType::Drive))); tick();
   tick(600); assert(bot::controllerEnqueue(command(bot::CommandType::Drive))); tick(500);
-  assert(!bot::controllerBusy() && motorsZero());
+  assert(bot::controllerBusy() && !motorsZero());
+  tick(600); assert(!bot::controllerBusy() && motorsZero());
   // ============================================================================
   // 场景二：普通停止代次、后续命令与断线停止
   // ============================================================================
@@ -172,7 +175,7 @@ int main() {
   assert(bot::controllerBusy() && !motorsZero());
   assert(bot::controllerSnapshot().yaw-bot::startYaw<360-1.5f);
   // 转向标定按轮目标到位，不用融合偏航作完成门控，以保留外部实测标定依据。
-  fresh(); cfg.turnFactor=1.3f;
+  fresh(); cfg.turnFactor=1.3f; cfg.turnFactorLeft=1.3f;
   assert(bot::controllerEnqueue(command(bot::CommandType::TurnCalStart))); tick();
   const auto calibrationPulses=int64_t(std::round(bot::wheelTurnDistance(360,cfg)*bot::pulsesPerCm(cfg)));
   wheelPulses[0]-=calibrationPulses; wheelPulses[2]-=calibrationPulses;

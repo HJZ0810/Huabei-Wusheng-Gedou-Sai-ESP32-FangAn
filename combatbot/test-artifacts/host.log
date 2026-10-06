@@ -1,6 +1,7 @@
 Command: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.EXE -NoProfile -ExecutionPolicy Bypass -File D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\test\run_host_tests.ps1 -Compiler D:\bin\g++.exe
 motion tests passed
 controller safety tests passed
+firmware default config JSON fixture generated
 config validation/persistence-path tests passed
 
 [exit code: 0]

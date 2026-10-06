@@ -13,6 +13,7 @@
 #include "hardware_internal.h"
 #include <Arduino.h>
 #include <esp_arduino_version.h>
+#include <esp_system.h>
 #include <Wire.h>
 #include <driver/pcnt.h>
 #include <math.h>
@@ -62,7 +63,7 @@ bool attachPwm(uint8_t channel,uint8_t pin,uint32_t frequency,uint8_t bits) {
 #endif
 }
 /**
- * @brief 按通道写入占空比；3.x 的 ledcWrite 首参为 GPIO，不能沿用旧调用。
+ * @brief 按通道写入占空比；3.x 使用 ledcWriteChannel(channel, duty)，避免误用 GPIO API。
  * @note 2.x 写入接口无返回值；此分支只能确认配置成功，不能检测运行时写入故障。
  */
 bool writePwm(uint8_t channel,uint32_t duty) {
@@ -72,6 +73,13 @@ bool writePwm(uint8_t channel,uint32_t duty) {
   ledcWrite(channel,duty);
   return true;
 #endif
+}
+/** @brief 写入运行输出；3.x 报告写入失败时关闭准入并尽力撤去所有驱动。 */
+void commitPwm(uint8_t channel,uint32_t duty) {
+  if(writePwm(channel,duty)) {
+    if(channel<4) wheels[channel].duty=static_cast<uint16_t>(duty);
+  } else { pwmReady=false; motorStop(); }
+  // 输出硬件本身已失效时，软件无法保证故障通道物理电平归零。
 }
 }
 // ============================================================================
@@ -93,7 +101,9 @@ void hardwareBegin(const Config& cfg) {
     pinMode(fgPins[i],INPUT);
     // 20 kHz、10 位占空比：上层 PWM 指令统一使用 0~1023 的计数范围。
     const bool attached=attachPwm(i,pwmPins[i],20000,10);
-    if(!attached || !writePwm(i,0)) outputsOk=false;
+    const bool zeroWritten=writePwm(i,0);
+    if(zeroWritten) wheels[i].duty=0;
+    if(!attached || !zeroWritten) outputsOk=false;
     pcnt_config_t c={};
     c.pulse_gpio_num=fgPins[i]; c.ctrl_gpio_num=PCNT_PIN_NOT_USED;
     c.channel=PCNT_CHANNEL_0; c.unit=(pcnt_unit_t)i;
@@ -186,28 +196,37 @@ void motorSample(float dt,const Config& cfg,int64_t pulses[4],float speed[4],flo
 void motorWrite(int index,float signedPwm,const Config& cfg) {
   if(index<0 || index>=4 || !pwmReady) return;
   Wheel& w=wheels[index];
-  if(!isfinite(signedPwm)) { w.duty=0; writePwm(index,0); return; }
-  if(fabsf(signedPwm)<0.5f) { w.duty=0; writePwm(index,0); return; }
+  if(!isfinite(signedPwm)) { commitPwm(index,0); return; }
+  if(fabsf(signedPwm)<0.5f) { commitPwm(index,0); return; }
   int desiredSign=signedPwm>0?1:-1;
   if(desiredSign!=w.sign || w.appliedInvert!=cfg.invert[index]) {
-    w.duty=0; writePwm(index,0);
+    commitPwm(index,0);
+    if(!pwmReady) return;
     // 先撤驱动，再观察静止条件；这里提前返回，将等待时间留给后续控制 tick。
     if(uint32_t(millis()-w.lastPulseMs)<120 || fabsf(w.filteredSpeed)>0.8f) return;
     w.sign=desiredSign;
     w.appliedInvert=cfg.invert[index];
   }
   digitalWrite(dirPins[index],((w.sign>0)!=cfg.invert[index])?HIGH:LOW);
-  w.duty=(uint16_t)constrain(fabsf(signedPwm),0.0f,1023.0f);
-  writePwm(index,w.duty);
+  const auto requestedDuty=static_cast<uint16_t>(constrain(fabsf(signedPwm),0.0f,1023.0f));
+  commitPwm(index,requestedDuty);
 }
-/** @brief 撤去四轮驱动，保留方向引脚和计数状态。 */
+/** @brief 尽力向四轮写入零 PWM；任一失败关闭准入，仍继续尝试其余通道。 */
 void motorStop() {
-  for(int i=0;i<4;++i) { wheels[i].duty=0; writePwm(i,0); }
+  bool stoppedOk=true;
+  for(int i=0;i<4;++i) {
+    // 直接调用底层写入，避免 commitPwm 的失败撤驱动路径递归调用 motorStop。
+    if(writePwm(i,0)) wheels[i].duty=0;
+    else stoppedOk=false; // 保留上次被 API 接受的软件请求值，不把失败的零写当成功。
+  }
+  if(!stoppedOk) pwmReady=false;
+  // 故障通道电平可能保持原输出；关闭准入和遥测值均不能证明物理 PWM 已停止。
   // 本接口没有独立 BRAKE 输出；PWM = 0 不能提供主动制动，车辆仍可能惯性滑行。
 }
 /**
- * @brief   读取最近一次已施加的四轮 PWM，占空比计数范围为 0~1023。
+ * @brief   读取最近被输出 API 接受的四轮软件请求，占空比计数范围为 0~1023。
  * @param pwm 输出数组，至少含 4 个元素。
+ * @note 写入失败保留上次确认请求，不代表物理 PWM 的测量或机械停止状态。
  */
 void motorOutputs(uint16_t pwm[4]) { for(int i=0;i<4;++i) pwm[i]=wheels[i].duty; }
 /**
@@ -220,8 +239,14 @@ void servoWrite(float pos,const Config& cfg) {
   if(!pwmReady || !isfinite(pos)) return;
   float degrees=cfg.servoDownDeg+(cfg.servoUpDeg-cfg.servoDownDeg)*constrain(pos,0.0f,1.0f);
   int us=cfg.servoMinUs+(cfg.servoMaxUs-cfg.servoMinUs)*constrain(degrees,0.0f,180.0f)/180.0f;
-  writePwm(servoChannel,uint32_t(constrain(us,cfg.servoMinUs,cfg.servoMaxUs))*servoDutySteps/servoPeriodUs);
+  commitPwm(servoChannel,uint32_t(constrain(us,cfg.servoMinUs,cfg.servoMaxUs))*servoDutySteps/servoPeriodUs);
 }
 /** @brief 返回初始化、PWM 输出和 MPU 探测均成功的标志；不代表全部外设健康。 */
 bool hardwareHealthy() { return initialized && pwmReady && imuAvailable(); }
+bool hardwareOutputsHealthy() { return initialized && pwmReady; }
+uint32_t hardwareBootId() {
+  // 首次访问生成一次；后续结果沿用同一上电会话，避免把随机数当成逐结果编号。
+  static const uint32_t bootId=esp_random() | 1u;
+  return bootId;
+}
 }

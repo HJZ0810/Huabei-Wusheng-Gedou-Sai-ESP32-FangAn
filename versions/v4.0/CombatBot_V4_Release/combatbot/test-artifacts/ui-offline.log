@@ -1,0 +1,4 @@
+Command: "C:\Program Files\nodejs\node.exe" test/ui_contract.mjs --file
+PASS: file:// 模式初始化无 JavaScript 异常，保持离线且生成真实 QR
+
+[exit code: 0]

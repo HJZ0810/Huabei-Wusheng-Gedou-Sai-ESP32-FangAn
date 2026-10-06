@@ -1,6 +1,9 @@
 Command: "C:\Program Files\nodejs\node.exe" test/ui_contract.mjs
+PASS: UI defaults match real configJson(Config()) for all 82 fields including PID and wheel arrays
 PASS: 双脚本语法 / 离线 QR / 无 CDN / 握手与遥测门控 / 控制权 / 精准心跳 / 失焦与 pointercancel 停车 / 急停 / 标定结果 / 配置字段
 PASS: spectator lifecycle / pending and confirmed owner Stop / repeated departure / takeover / manual Stop and estop / reconnect and stale pointer isolation
+PASS: V5 offline joystick / explicit rotation inverse / measured coefficient preview / bound apply / revision invalidation / incomplete result refusal / read-only climb observation
+PASS: development timeout clears AP/cloud manual input / keyboard repeat suppression / no periodic nonzero drv / pointer and keyboard release explicit Stop / cloud Stop rearm
 PASS: session headers / pre-telemetry config / HTTP failures / disconnect invalidation / stale responses / keyboard lifecycle / compatible legacy fields / IR mapping
 
 [exit code: 0]

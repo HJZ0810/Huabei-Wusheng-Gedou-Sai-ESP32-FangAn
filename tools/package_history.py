@@ -20,8 +20,11 @@ ROOT = Path(__file__).resolve().parents[1]
 def checked_history():
     """按清单校验每个历史文件，并限制读取范围为仓库内的 versions 目录。"""
     manifest = json.loads((ROOT / "versions/SOURCE_MANIFEST.json").read_text(encoding="utf-8"))
-    if not {"v1.0", "v2.0", "v3.0"}.issubset(manifest["versions"]):
-        raise ValueError("完整历史交付必须保留 V1.0、V2.0、V3.0")
+    required = {"v1.0", "v2.0", "v3.0"}
+    if int((ROOT / "VERSION").read_text(encoding="utf-8").split(".")[0]) >= 5:
+        required.add("v4.0")
+    if not required.issubset(manifest["versions"]):
+        raise ValueError("完整历史交付缺少已发布版本快照")
     histories = []
     for version, item in manifest["versions"].items():
         if not re.fullmatch(r"v\d+\.\d+(?:\.\d+)?", version):

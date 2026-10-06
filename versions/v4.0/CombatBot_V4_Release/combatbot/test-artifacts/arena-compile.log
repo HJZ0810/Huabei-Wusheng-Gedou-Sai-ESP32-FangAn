@@ -1,0 +1,3 @@
+Command: D:\bin\g++.exe -std=c++17 -static -Wall -Wextra -Werror -Iinclude test/test_arena_model.cpp src/arena_model.cpp -o D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\test-artifacts\test_arena_model.exe
+
+[exit code: 0]

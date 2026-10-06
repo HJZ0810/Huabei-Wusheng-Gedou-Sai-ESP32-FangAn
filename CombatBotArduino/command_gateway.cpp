@@ -69,6 +69,10 @@ bool commandDispatch(JsonVariantConst body,uint32_t client,String& error,bool cl
     if(!strcmp(mode,"imu")) cmd.type=CommandType::ImuCal;
     else if(!strcmp(mode,"odo")) { cmd.type=CommandType::OdoCalStart; cmd.value=100; }
     else if(!strcmp(mode,"turn")) { cmd.type=CommandType::TurnCalStart; cmd.value=360; }
+    else if(!strcmp(mode,"turn_left")) { cmd.type=CommandType::TurnCalStart; cmd.value=360; cmd.directionalCalibration=true; }
+    else if(!strcmp(mode,"turn_right")) { cmd.type=CommandType::TurnCalStart; cmd.value=-360; cmd.directionalCalibration=true; }
+    else if(!strcmp(mode,"climb_observe")) cmd.type=CommandType::ClimbObserveStart;
+    else if(!strcmp(mode,"climb_observe_end")) cmd.type=CommandType::ClimbObserveEnd;
     else { error="未知标定类型"; return false; }
   } else { error="未知指令"; return false; }
   if(!controllerEnqueue(cmd)) { error="控制忙、其他操作者占用或安全锁定"; return false; }

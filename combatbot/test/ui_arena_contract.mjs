@@ -17,19 +17,19 @@ class Element {
   append(...items){for(const item of items){if(item&&typeof item==='object')item.parent=this;this.children.push(item)}} prepend(item){item.parent=this;this.children.unshift(item)}
   replaceChildren(...items){this.children=[];this.append(...items)} remove(){if(this.parent)this.parent.children=this.parent.children.filter(e=>e!==this)}
   querySelector(selector){if(!this._query)this._query={};return this._query[selector]??=new Element(selector)}
-  addEventListener(type,fn){this.events[type]=fn} setAttribute(){} add(option){this.children.push(option)}
-  getContext(){return canvasContext} getBoundingClientRect(){return {left:0,top:0,width:270,height:270}}
+  addEventListener(type,fn){this.events[type]=fn} setAttribute(name,value){this.attributes??={};this.attributes[name]=value} add(option){this.children.push(option)}
+  getContext(){return canvasContext} getBoundingClientRect(){return {left:0,top:0,width:270,height:270,right:270,bottom:270}}
   setPointerCapture(){} reportValidity(){return true} click(){this.onclick?.({target:this})} closest(){return null}
 }
 for(const m of html.matchAll(/<([\w]+)([^>]*\bid="([^"]+)"[^>]*)>/g)){const el=new Element(m[1]);el.id=m[3];el.width=Number(m[2].match(/width="(\d+)"/)?.[1]||520);el.height=Number(m[2].match(/height="(\d+)"/)?.[1]||400);const value=m[2].match(/\bvalue="([^"]*)"/);if(value)el.value=value[1];const className=m[2].match(/\bclass="([^"]*)"/);if(className){el.className=className[1];className[1].split(' ').forEach(c=>el.classList.add(c))}}
-const tabs=['continuous','arena','precise','sensors','settings'].map(name=>{const el=new Element('button');el.dataset.tab=name;return el});
+const tabs=['workbench','precise','settings'].map(name=>{const el=new Element('button');el.dataset.tab=name;return el});
 const directionButtons=[...html.matchAll(/data-dir="([^"]+)"/g)].map(match=>{const el=new Element('button');el.dataset.dir=match[1];return el});
 const motion=[...elements.values()].filter(e=>e.classList.contains('motion'));
 const sent=[],fetchCalls=[];class WS {static OPEN=1;constructor(url){this.url=url;this.readyState=1}send(value){sent.push(JSON.parse(value))}close(){this.readyState=3;this.onclose?.()}}
 const context={console,Date,Math,Number,Array,Object,JSON,Error,TextEncoder,Blob,URL,URLSearchParams,Option:function(label,value){this.label=label;this.value=value},WebSocket:WS,
   location:{protocol:fileMode?'file:':'http:',host:'192.168.4.1',hostname:'192.168.4.1',origin:'http://192.168.4.1',pathname:'/',search:'',hash:''},
   history:{replaceState:(state,title,url)=>{context.location.hash=url.includes('#')?'#'+url.split('#')[1]:'';context.lastHistoryUrl=url}},
-  document:{hidden:false,getElementById:id=>elements.get(id),createElement:tag=>new Element(tag),createTextNode:text=>({textContent:text}),querySelectorAll:selector=>selector==='[data-tab]'?tabs:selector==='[data-dir]'?directionButtons:selector==='.tab'?['continuous','arena','precise','sensors','settings'].map(id=>elements.get(id)):selector==='.motion'?motion:[],addEventListener:(type,fn)=>documentEvents[type]=fn},
+  document:{hidden:false,body:new Element('body'),getElementById:id=>elements.get(id),createElement:tag=>new Element(tag),createTextNode:text=>({textContent:text}),querySelectorAll:selector=>selector==='[data-tab]'?tabs:selector==='[data-dir]'?directionButtons:selector==='.tab'?['workbench','precise','settings'].map(id=>elements.get(id)):selector==='.motion'?motion:[],addEventListener:(type,fn)=>documentEvents[type]=fn},
   window:{addEventListener:(type,fn)=>windowEvents[type]=fn},setInterval:fn=>intervals.push(fn),setTimeout:()=>1,clearTimeout:()=>{},confirm:()=>true,
   fetch:async(path,init)=>{fetchCalls.push({path,init});return {ok:true,json:async()=>({ok:true})}}};
 vm.createContext(context);blocks.forEach((b,i)=>vm.runInContext(b,context,{filename:'web-script-'+i+'.js'}));
@@ -72,12 +72,40 @@ count=sent.length;elements.get('poseX').value='NaN';elements.get('poseForm').ons
 assert.equal(run('selectArenaTarget(191,0)'),false,'围栏外目标不自动夹到边界');
 telemetry.arena.x=225;telemetry.arena.floor='upper_estimated';publish();assert.equal(elements.get('arenaPosition').textContent,'225.0 / -30.0','估计漂出场外必须如实显示');assert(elements.get('arenaMode').textContent.includes('仅推定'));
 const fields=run('allFields.map(f=>f[0])');for(const key of ['arenaClimbEnabled','arenaCalibrated','arenaEntryHeading','cloudEnabled','cloudCaPem','cloudDeviceKey'])assert(fields.includes(key));
-run('fillConfig({maxSpeed:100,defaultSpeed:40,cloudDeviceKey:"never-display",cloudCaPem:"CERT",arenaOuterCm:380,arenaPlatformCm:240})');
+run('fillConfig({maxSpeed:100,defaultSpeed:40,cloudDeviceKey:"never-display",cloudCaPem:"CERT",arenaOuterCm:380,arenaPlatformCm:240},true)');
 assert.equal(elements.get('cfg_cloudDeviceKey').value,'');assert.equal(run('config.cloudDeviceKey'),undefined);
 assert.equal(run('collectConfig().cloudDeviceKey'),undefined,'未编辑设备密钥不能把遮罩或空字符串写回设备');
 elements.get('cfg_cloudDeviceKey').value='';elements.get('cfg_cloudDeviceKey').oninput();assert.equal(run('collectConfig().cloudDeviceKey'),'','明确编辑后空字符串表示清除');
 assert.equal(elements.get('cfg_cloudCaPem').tagName,'TEXTAREA');
 console.log('PASS: AP / map selection / explicit navigation / autonomous lifecycle / takeover / manual loss-stop / pose / unclamped estimate / credential edit semantics');
+
+// V5：剩余航点从实时位置起连线；直达只含一个航点仍是有效的设备路线。
+context.routeCase={x:-160,y:0,routeValid:true,path:[{x:-155,y:30}]};
+assert.equal(run('arenaDevicePath(routeCase).length'),2);
+context.routeCase.path=[{x:-151,y:151},{x:151,y:151},{x:160,y:0}];
+assert.equal(run('arenaDevicePath(routeCase).length'),4);
+context.routeCase.x=null;assert.equal(run('arenaDevicePath(routeCase).length'),0,'无定位不能补造路径起点');
+context.routeCase.x=-160;run('lastTm=0');assert.equal(run('arenaDevicePath(routeCase).length'),0,'过期遥测不能显示为设备实时路线');publish();
+assert(run('planArenaPreview(-160,0,160,0,{uncertainty:0}).length')>2,'本地可见图应绕开高台');
+assert.equal(run('planArenaPreview(0,0,160,0,{uncertainty:0}).length'),0,'低层路线不能穿过高台');
+
+// 只有用户显式开启、自动布局且具备控制权时，地图点击才提交导航。
+telemetry.arena.active=false;telemetry.owner=0;telemetry.st='idle';publish();
+run('autonomousRequested=false;setWorkspaceMode("auto")');
+elements.get('mapClickGo').checked=true;count=sent.length;
+elements.get('arenaMap').onclick({clientX:135,clientY:135});
+assert.equal(sent.length,count+1);assert.equal(sent.at(-1).t,'goto');
+run('autonomousRequested=false');elements.get('mapClickGo').checked=false;count=sent.length;
+elements.get('arenaMap').onclick({clientX:145,clientY:135});assert.equal(sent.length,count,'关闭开关时地图只选择目标');
+elements.get('mapClickGo').checked=true;telemetry.owner=99;publish();
+elements.get('arenaMap').onclick({clientX:145,clientY:135});assert.equal(sent.length,count,'旁观者点图不能提交导航');
+telemetry.owner=0;publish();run('lastTm=0');
+elements.get('arenaMap').onclick({clientX:145,clientY:135});assert.equal(sent.length,count,'离线点图只预览');
+publish();run('setWorkspaceMode("manual");toggleLandscape();toggleLandscape()');
+assert.equal(sent.length,count,'模式和方向切换均不得自动启动任务');
+elements.get('arenaMap').onclick({clientX:145,clientY:135});assert.equal(sent.length,count,'手动布局点图不得提交导航');
+elements.get('mapClickGo').checked=false;
+console.log('PASS: V5 one-point device route / remaining waypoints / stale or missing pose / graph detour / explicit click-go / ownership and offline gating / layout isolation');
 
 // 单车入口：专用片段链接换 Cookie；页面没有账号、车辆选择或自动抢占。
 assert(!/id="cloudLogin"|id="cloudUsername"|id="cloudPassword"|id="cloudDevice"/.test(html));

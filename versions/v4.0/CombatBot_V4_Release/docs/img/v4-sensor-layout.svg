@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="740" viewBox="0 0 1100 740" role="img" aria-labelledby="title desc">
+  <title id="title">CombatBot V4 传感器安装设计</title>
+  <desc id="desc">原创示意，四角灰度向下，前左前右后中E18向下见地，六路红外水平向外。正常地面60毫米与6厘米落差后120毫米必须实测区分。</desc>
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0 0L8 4L0 8" fill="#537389"/></marker>
+    <marker id="irArrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0 0L8 4L0 8" fill="#cf8651"/></marker>
+  </defs>
+  <rect width="1100" height="740" fill="#f4f7fb"/>
+  <g font-family="Microsoft YaHei, Noto Sans CJK SC, sans-serif">
+    <text x="40" y="49" font-size="26" font-weight="700" fill="#19344b">CombatBot V4 · 传感器安装设计</text>
+    <text x="40" y="80" font-size="15" fill="#607285">先核对机械外包络，再做电平、反射与停车余量校准 · 原创示意 / 非加工图</text>
+    <rect x="30" y="105" width="550" height="555" rx="18" fill="#fff" stroke="#dce5ee"/>
+    <rect x="600" y="105" width="470" height="555" rx="18" fill="#fff" stroke="#dce5ee"/>
+    <text x="55" y="140" font-size="18" font-weight="700" fill="#19344b">01 / 俯视安装位置</text>
+    <text x="625" y="140" font-size="18" font-weight="700" fill="#19344b">02 / E18 支撑面校准</text>
+    <path d="M300 207V163" stroke="#537389" stroke-width="2" marker-end="url(#arrow)"/>
+    <text x="325" y="182" font-size="14" fill="#537389">+F 前</text>
+    <rect x="180" y="275" width="240" height="260" rx="20" fill="#ecf1f6" stroke="#70889e" stroke-width="2"/>
+    <rect x="180" y="316" width="23" height="54" rx="6" fill="#344c62"/>
+    <rect x="397" y="316" width="23" height="54" rx="6" fill="#344c62"/>
+    <rect x="180" y="440" width="23" height="54" rx="6" fill="#344c62"/>
+    <rect x="397" y="440" width="23" height="54" rx="6" fill="#344c62"/>
+    <path d="M260 405H222" stroke="#537389" stroke-width="2" marker-end="url(#arrow)"/>
+    <path d="M300 405V367" stroke="#537389" stroke-width="2" marker-end="url(#arrow)"/>
+    <circle cx="300" cy="405" r="4" fill="#537389"/>
+    <text x="223" y="427" font-size="13" fill="#537389">+L 左</text>
+    <text x="266" y="462" font-size="14" fill="#607285">26 × 24 cm</text>
+    <text x="275" y="483" font-size="13" fill="#607285">待实测</text>
+    <path d="M190 260L205 276M410 260L395 276M190 550L205 534M410 550L395 534" stroke="#268a73" stroke-width="2"/>
+    <g fill="#268a73" stroke="#fff" stroke-width="2">
+      <circle cx="190" cy="260" r="9"/><circle cx="410" cy="260" r="9"/>
+      <circle cx="190" cy="550" r="9"/><circle cx="410" cy="550" r="9"/>
+    </g>
+    <g font-size="13" fill="#268a73">
+      <text x="105" y="252">GPA0 左前</text><text x="431" y="252">GPA1 右前</text>
+      <text x="105" y="563">GPA2 左后</text><text x="431" y="563">GPA3 右后</text>
+    </g>
+    <path d="M205 225V275M395 225V275M300 585V535" stroke="#396db7" stroke-width="2"/>
+    <g fill="#396db7" stroke="#fff" stroke-width="2">
+      <rect x="195" y="215" width="20" height="20" rx="4"/><rect x="385" y="215" width="20" height="20" rx="4"/>
+      <rect x="290" y="575" width="20" height="20" rx="4"/>
+    </g>
+    <g font-size="13" fill="#396db7">
+      <text x="133" y="205">GPA4 前左见地</text><text x="365" y="205">GPA5 前右见地</text>
+      <text x="330" y="591">GPA6 后中见地</text>
+    </g>
+    <g stroke="#cf8651" stroke-width="2" marker-end="url(#irArrow)">
+      <path d="M300 272V239"/><path d="M420 335L453 315"/><path d="M420 475L453 495"/>
+      <path d="M300 537V564"/><path d="M180 475L147 495"/><path d="M180 335L147 315"/>
+    </g>
+    <text x="85" y="627" font-size="14" fill="#607285">灰度端面 8～12 mm · E18 约 60 mm · IR 约 80 mm</text>
+    <text x="625" y="178" font-size="15" fill="#396db7">端面向下；真表示见地，假表示缺地候选</text>
+    <text x="625" y="204" font-size="14" fill="#607285">常见低电平有效，以实际接线和校准结果为准。</text>
+    <rect x="638" y="237" width="414" height="183" rx="12" fill="#f1f6fc"/>
+    <path d="M653 375H826V405H1036" fill="none" stroke="#344c62" stroke-width="4"/>
+    <rect x="713" y="287" width="58" height="23" rx="5" fill="#396db7"/>
+    <rect x="922" y="287" width="58" height="23" rx="5" fill="#396db7"/>
+    <path d="M742 315V370M951 315V400" stroke="#396db7" stroke-width="2" stroke-dasharray="4 4"/>
+    <text x="670" y="344" font-size="14" fill="#396db7">正常约60 mm</text>
+    <text x="865" y="350" font-size="14" fill="#396db7">落差后约120 mm</text>
+    <text x="829" y="390" font-size="13" fill="#607285">6 cm</text>
+    <rect x="625" y="442" width="425" height="125" rx="12" fill="#fff5e9"/>
+    <text x="642" y="468" font-size="16" font-weight="700" fill="#8e5c22">反射开关 ≠ 测距仪</text>
+    <text x="642" y="496" font-size="14" fill="#795b38">黑 / 白 / 红 / 黄 / 蓝贴纸及实际灯光都要验证。</text>
+    <text x="642" y="521" font-size="14" fill="#795b38">正常与落差响应无法区分：保持自主关闭。</text>
+    <text x="642" y="546" font-size="14" fill="#795b38">不能把旋钮刻度当距离，也不能忽略危险输入。</text>
+    <text x="625" y="600" font-size="14" fill="#607285">短支架、可退让、避开铲 / 轮；测量撤 PWM 滑行距离。</text>
+    <text x="625" y="625" font-size="14" fill="#607285">几何、坐标、电平和提前量详见安装文档。</text>
+    <g font-size="14" fill="#607285">
+      <circle cx="52" cy="700" r="7" fill="#268a73"/><text x="68" y="705">灰度 · 亮暗候选</text>
+      <rect x="263" y="693" width="14" height="14" rx="3" fill="#396db7"/><text x="286" y="705">E18 · 支撑候选</text>
+      <path d="M470 700H495" stroke="#cf8651" stroke-width="2" marker-end="url(#irArrow)"/><text x="509" y="705">红外 · 水平周向</text>
+      <text x="825" y="705">HJZ / 原创工程示意 · 2026-10-05</text>
+    </g>
+  </g>
+</svg>

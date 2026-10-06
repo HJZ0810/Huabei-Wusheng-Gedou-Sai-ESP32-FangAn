@@ -46,7 +46,10 @@ int main(int argc,char** argv) {
   }
 
   bot::hardwareBegin(cfg);
+  const uint32_t session=bot::hardwareBootId();
+  check(session!=0 && session==bot::hardwareBootId(),"boot session must be nonzero and stable");
   check(bot::hardwareHealthy(),"successful initialization must be healthy");
+  check(bot::hardwareOutputsHealthy(),"output health must be independent of optional sensors");
   check(motor_host::attachments.size()==5,"four motors and one servo must be attached");
   const int pins[5]={13,16,21,40,11};
   for(int i=0;i<5;++i) {
@@ -94,6 +97,36 @@ int main(int argc,char** argv) {
   bot::motorStop(); allStopped();
 #if ESP_ARDUINO_VERSION_MAJOR >= 3
   check(motor_host::pinWrites==0,"core 3 must write channels through ledcWriteChannel, not GPIO-based ledcWrite");
+  for(int failedChannel=0;failedChannel<4;++failedChannel) {
+    motor_host::failWriteChannel=-1;bot::hardwareBegin(cfg);
+    for(int i=0;i<4;++i)bot::motorWrite(i,500,cfg);
+    motor_host::failWriteChannel=failedChannel;bot::motorStop();
+    check(!bot::hardwareOutputsHealthy(),"failed zero write must close output admission");
+    uint16_t reported[4];bot::motorOutputs(reported);
+    for(int i=0;i<4;++i) {
+      if(i==failedChannel) {
+        check(motor_host::duties[i]==500,"failed stop must not pretend physical channel is zero");
+        check(reported[i]==500,"failed zero write must retain last confirmed software duty");
+      } else {
+        check(motor_host::duties[i]==0&&reported[i]==0,"stop must still attempt all remaining channels");
+      }
+    }
+    const auto requests=motor_host::nonzeroMotorWrites;
+    for(int i=0;i<4;++i)bot::motorWrite(i,700,cfg);
+    check(motor_host::nonzeroMotorWrites==requests,"zero-write failure must reject later output requests");
+    motor_host::failWriteChannel=-1;bot::motorStop();allStopped();
+    check(!bot::hardwareOutputsHealthy(),"successful retry must not silently reopen fault admission");
+  }
+  bot::hardwareBegin(cfg);
+  for(int i=0;i<4;++i) bot::motorWrite(i,500,cfg);
+  motor_host::failWriteChannel=2;bot::motorWrite(2,600,cfg);
+  check(!bot::hardwareOutputsHealthy(),"runtime PWM failure must close output admission");
+  for(int i=0;i<4;++i) if(i!=2) check(motor_host::duties[i]==0,"available channels must stop after one runtime failure");
+  uint16_t reported[4];bot::motorOutputs(reported);
+  check(reported[2]==500&&motor_host::duties[2]==500,"failed nonzero write must not replace last confirmed request");
+  const auto before=motor_host::nonzeroMotorWrites;
+  for(int i=0;i<4;++i) bot::motorWrite(i,500,cfg);
+  check(motor_host::nonzeroMotorWrites==before,"closed admission must refuse subsequent motor commands");
 #endif
   std::cout<<"PASS core "<<ESP_ARDUINO_VERSION_MAJOR<<": motor / servo / stop / reversal\n";
 }

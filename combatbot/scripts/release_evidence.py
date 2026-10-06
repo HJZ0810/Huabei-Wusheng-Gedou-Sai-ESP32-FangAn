@@ -1,4 +1,4 @@
-"""V4 交付凭据：绑定真实源码、服务端、补丁依赖和全部成功日志。"""
+"""交付凭据：绑定当前版本真实源码、服务端、补丁依赖和全部成功日志。"""
 from pathlib import Path
 from zipfile import ZipFile, ZipInfo, ZIP_DEFLATED
 import hashlib
@@ -159,12 +159,12 @@ def source_manifest():
 def verify_evidence():
     data = json.loads(EVIDENCE.read_text(encoding="utf-8"))
     if data.get("schemaVersion") != 2 or data.get("firmwareVersion") != version():
-        raise RuntimeError("旧版凭据不能用于 V4，请重新执行 verify_release.py")
+        raise RuntimeError("凭据版本与当前工程不一致，请重新执行 verify_release.py")
     if data.get("sources") != source_manifest() or data.get("dependencies") != dependency_manifest():
         raise RuntimeError("源码、服务端、工具或依赖已改变，请重跑完整验证")
     checks = data.get("checks", {})
     if not REQUIRED.issubset(checks):
-        raise RuntimeError("交付凭据缺少 V4 必要检查")
+        raise RuntimeError("交付凭据缺少必要的软件检查")
     for name, item in checks.items():
         path = (ROOT / item["log"]).resolve()
         if not path.is_relative_to((ROOT / "test-artifacts").resolve()) or item["exitCode"] != 0 or sha(path.read_bytes()) != item["sha256"]:

@@ -1,0 +1,39 @@
+Command: C:\Users\Administrator\AppData\Local\Programs\Python\Python315\python.exe scripts/verify_arduino.py --pio D:\PRO\claw\Codexlinshi\2026-10-04-23-19-00\combatbot\.tools\venv\Scripts\platformio.exe
+Export equality OK; building delivered CombatBotArduino.ino
+Processing esp32s3 (platform: espressif32@6.9.0; board: esp32-s3-devkitc-1; framework: arduino)
+--------------------------------------------------------------------------------
+Verbose mode can be enabled via `-v, --verbose` option
+CONFIGURATION: https://docs.platformio.org/page/boards/espressif32/esp32-s3-devkitc-1.html
+PLATFORM: Espressif 32 (6.9.0) > Espressif ESP32-S3-DevKitC-1-N8 (8 MB QD, No PSRAM)
+HARDWARE: ESP32S3 240MHz, 320KB RAM, 3MB Flash
+DEBUG: Current (esp-builtin) On-board (esp-builtin) External (cmsis-dap, esp-bridge, esp-prog, iot-bus-jtag, jlink, minimodule, olimex-arm-usb-ocd, olimex-arm-usb-ocd-h, olimex-arm-usb-tiny-h, olimex-jtag-tiny, tumpa)
+PACKAGES: 
+ - framework-arduinoespressif32 @ 3.20017.241212+sha.dcc1105b 
+ - tool-esptoolpy @ 1.40501.0 (4.5.1) 
+ - toolchain-riscv32-esp @ 8.4.0+2021r2-patch5 
+ - toolchain-xtensa-esp32s3 @ 8.4.0+2021r2-patch5
+Converting CombatBotArduino.ino
+LDF: Library Dependency Finder -> https://bit.ly/configure-pio-ldf
+LDF Modes: Finder ~ chain, Compatibility ~ soft
+Found 37 compatible libraries
+Scanning dependencies...
+Dependency Graph
+|-- ArduinoJson @ 7.3.1
+|-- AsyncTCP @ 3.3.2
+|-- ESPAsyncWebServer @ 3.6.0
+|-- WebSockets @ 2.7.2
+|-- WiFi @ 2.0.0
+|-- Preferences @ 2.0.0
+|-- Wire @ 2.0.0
+|-- DNSServer @ 2.0.0
+|-- ESPmDNS @ 2.0.0
+Building in release mode
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\src\CombatBotArduino.ino.cpp.o
+Retrieving maximum program size D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\firmware.elf
+Checking size D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\firmware.elf
+Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
+RAM:   [==        ]  19.1% (used 62660 bytes from 327680 bytes)
+Flash: [====      ]  36.9% (used 1159505 bytes from 3145728 bytes)
+========================= [SUCCESS] Took 5.59 seconds =========================
+
+[exit code: 0]

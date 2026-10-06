@@ -1,4 +1,5 @@
 Command: "C:\Program Files\nodejs\node.exe" test/ui_contract.mjs --file
+PASS: UI defaults match real configJson(Config()) for all 82 fields including PID and wheel arrays
 PASS: file:// 模式初始化无 JavaScript 异常，保持离线且生成真实 QR
 
 [exit code: 0]

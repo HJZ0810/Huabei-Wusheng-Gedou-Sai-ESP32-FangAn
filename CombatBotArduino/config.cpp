@@ -32,7 +32,7 @@ Config live;
 SemaphoreHandle_t configMutex=nullptr;
 // 清单按数据类型分组，键名保持与 Config 成员一致；解析时仍严格检查 JSON 类型。
 #define FLOAT_FIELDS(X) \
- X(wheelMm) X(wheelbaseMm) X(trackMm) X(ppr) X(pulsesPerCm) X(turnFactor) \
+ X(wheelMm) X(wheelbaseMm) X(trackMm) X(ppr) X(pulsesPerCm) X(turnFactor) X(turnFactorLeft) X(turnFactorRight) \
  X(maxSpeed) X(defaultSpeed) X(acceleration) X(deceleration) X(maxYawRate) X(turnAcceleration) X(turnDeceleration) \
  X(fusionAlpha) X(leftTrim) X(rightTrim) X(pwmDeadzone) X(irThresholdCm) \
  X(batteryLowV) X(batteryScale) X(gyroBias) X(servoDownDeg) X(servoUpDeg) \
@@ -42,7 +42,7 @@ SemaphoreHandle_t configMutex=nullptr;
  X(arenaEntryX) X(arenaEntryY) X(arenaEntryHeading)
 #define BOOL_FIELDS(X) X(staEnabled) X(grayActiveHigh) X(e18ActiveHigh) X(safetyEnabled) X(coastOnLoss) \
  X(edgeProtection) X(irProtection) X(tiltProtection) X(irFailSafeStop) \
- X(cloudEnabled) X(arenaEnabled) X(arenaCalibrated) X(arenaClimbEnabled)
+ X(cloudEnabled) X(arenaEnabled) X(arenaCalibrated) X(arenaClimbEnabled) X(developmentMode)
 #define INT_FIELDS(X) X(irCount) X(batteryChannel) X(gyroAxis) X(gyroSign) X(servoMinUs) X(servoMaxUs) X(servoCenterUs) X(digitalDebounceMs) X(telemetryHz) X(cloudPort) X(arenaTaskMs) X(arenaClimbMs)
 #define STRING_FIELDS(X) X(apSsid) X(apPass) X(staSsid) X(staPass) X(hostname) X(cloudHost) X(cloudPath) X(cloudDeviceId) X(cloudDeviceKey)
 
@@ -151,6 +151,7 @@ bool validate(const Config& c,String& e) {
   // 尺寸为 mm；速度为 cm/s；加减速度为 cm/s²；角速度为 °/s。
   CHECK(wheelMm,20,500); CHECK(wheelbaseMm,30,1000); CHECK(trackMm,50,1000);
   CHECK(ppr,1,10000); CHECK(pulsesPerCm,0,10000); CHECK(turnFactor,0.1f,10);
+  CHECK(turnFactorLeft,0.1f,10); CHECK(turnFactorRight,0.1f,10);
   CHECK(maxSpeed,1,220); CHECK(defaultSpeed,0.1f,c.maxSpeed);
   CHECK(acceleration,1,500); CHECK(deceleration,1,1000); CHECK(maxYawRate,1,720);
   CHECK(turnAcceleration,1,3600); CHECK(turnDeceleration,1,3600);
@@ -201,6 +202,9 @@ bool patchGains(JsonVariantConst v,Gains& g,const char* field,String& e) {
 bool patch(JsonVariantConst input,Config& c,String& e) {
   if(!input.is<JsonObjectConst>()) return fail(e,"config","必须是JSON对象");
   const JsonObjectConst object=input.as<JsonObjectConst>();
+  const bool hasLegacyTurn=object["turnFactor"].is<float>() || object["turnFactor"].is<double>() || object["turnFactor"].is<int>();
+  const bool hasLeftTurn=object["turnFactorLeft"].is<float>() || object["turnFactorLeft"].is<double>() || object["turnFactorLeft"].is<int>();
+  const bool hasRightTurn=object["turnFactorRight"].is<float>() || object["turnFactorRight"].is<double>() || object["turnFactorRight"].is<int>();
   // A 旧导出由 PID、网络、舵机和 IR 字段指纹识别，并要求没有融合新增键。
   // 兼容这一旧格式时补齐渐进区间；仅更新阈值的普通请求仍须满足跨字段校验。
   // B 导出由外部显式转换处理，不能通过别名绕过设备端校验。
@@ -208,7 +212,7 @@ bool patch(JsonVariantConst input,Config& c,String& e) {
     && !object["servoMinUs"].isNull() && !object["irThresholdCm"].isNull();
   const char* addedFields[]={"edgeProtection","irProtection","tiltProtection","irFailSafeStop",
     "stallTimeoutMs","telemetryHz","irScale","impactThresholdG","irSlowdownCm",
-    "turnAcceleration","turnDeceleration"};
+    "turnAcceleration","turnDeceleration","developmentMode","turnFactorLeft","turnFactorRight"};
   for(JsonPairConst kv:object) {
     for(const char* field:addedFields) if(!strcmp(kv.key().c_str(),field)) legacyA=false;
   }
@@ -255,8 +259,12 @@ bool patch(JsonVariantConst input,Config& c,String& e) {
       for(size_t i=0;i<pem.size();++i) if(((unsigned char)pem.c_str()[i]<32 && pem.c_str()[i]!='\r' && pem.c_str()[i]!='\n') || pem.c_str()[i]==127) return fail(e,key,"含非法控制字符");
       memcpy(c.cloudCaPem,pem.c_str(),pem.size()+1); continue;
     }
-    if(!strcmp(key,"hasApPass") || !strcmp(key,"hasStaPass") || !strcmp(key,"hasCloudDeviceKey")) continue;
+    if(!strcmp(key,"hasApPass") || !strcmp(key,"hasStaPass") || !strcmp(key,"hasCloudDeviceKey") || !strcmp(key,"revision")) continue;
     return fail(e,key,"未知配置字段");
+  }
+  // 旧协议只有单一转向系数；仅当请求未携带方向系数时同步两侧，保留历史配置语义。
+  if(hasLegacyTurn && !hasLeftTurn && !hasRightTurn) {
+    c.turnFactorLeft=c.turnFactorRight=c.turnFactor;
   }
   return validate(c,e);
 }
@@ -320,6 +328,7 @@ Config configSnapshot() {
  *       如需保留密码，部分更新请求应省略对应密码字段。
  */
 void configJson(const Config& c,JsonObject o,bool secrets) {
+  o["revision"]=c.revision;
 #define WRITE(field) o[#field]=c.field;
   FLOAT_FIELDS(WRITE) BOOL_FIELDS(WRITE) INT_FIELDS(WRITE)
 #undef WRITE

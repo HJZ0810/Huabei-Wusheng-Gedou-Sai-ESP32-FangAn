@@ -79,6 +79,9 @@ int main() {
   routeConfig.driftPerSecondCm=0.001f; ArenaModel around(routeConfig); f=good();
   assert(around.setPoseAnchor(155,0,90,Layer::Lower,100));
   assert(around.startNavigate(-155,0,100)); d=around.tick(f);
+  assert(d.routeValid && d.routeCount>=2 && d.routeCount<=MaxRoutePoints);
+  assert(near(d.route[d.routeCount-1].xCm,-155) && near(d.route[d.routeCount-1].yCm,0));
+  assert(std::fabs(d.route[0].yCm)>120); // 可见路线上至少有一个绕台中间点。
   bool sawNorth=false;
   for(int i=0;i<2500 && around.snapshot().mode==Mode::Navigate;++i) {
     d=around.snapshot(); advance(around,f,d.forwardCmS*f.dtS,d.yawDegS*f.dtS);

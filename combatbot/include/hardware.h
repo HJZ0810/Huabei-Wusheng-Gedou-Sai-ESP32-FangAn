@@ -32,11 +32,12 @@ void motorSample(float dt, const Config&, int64_t pulses[4], float speed[4], flo
  * @param signedPwm 符号为逻辑方向，绝对值为 0~1023 占空比计数。
  */
 void motorWrite(int index, float signedPwm, const Config&);
-/** @brief 将四轮 PWM 置零；不主动刹车，也不清空计数历史。 */
+/** @brief 尽力向四轮写入零 PWM；写入失败关闭准入，不保证故障通道停止或主动刹车。 */
 void motorStop();
 /**
- * @brief   读取当前四轮已施加的占空比计数。
+ * @brief   读取最近被输出 API 接受的四轮软件占空比请求。
  * @param pwm 输出数组，至少 4 项，范围 0~1023。
+ * @note 不是物理电平测量；写入失败保留上次确认值，不能用它证明机械停车。
  */
 void motorOutputs(uint16_t pwm[4]);
 // ============================================================================
@@ -51,4 +52,8 @@ void servoWrite(float pos, const Config&);
 Sensors sensorsRead(const Config&);
 /** @brief 返回初始化、PWM 输出建立成功且 MPU 在线；不涵盖 IO、电池等传感器。 */
 bool hardwareHealthy();
+/** @brief 返回电机 PWM 输出链路是否已成功初始化；不依赖可选传感器在线状态。 */
+bool hardwareOutputsHealthy();
+/** @brief 返回本次上电随机标识，用于隔离重启前后的标定结果。 */
+uint32_t hardwareBootId();
 }

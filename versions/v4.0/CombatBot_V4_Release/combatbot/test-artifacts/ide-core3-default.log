@@ -1,0 +1,22 @@
+Sketch: D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\CombatBotArduino
+FQBN: esp32:esp32:esp32s3
+User libraries: C:\Users\Administrator\Documents\Arduino
+
+> "C:\Users\Administrator\AppData\Local\Programs\Arduino IDE\resources\app\lib\backend\resources\arduino-cli.exe" --config-file D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\test-artifacts\ide-core3-default.arduino-cli.yaml version
+arduino-cli  Version: 1.5.1 Commit: 01f3d4f2b Date: 2026-06-05T10:22:12Z
+
+[exit code: 0]
+
+> "C:\Users\Administrator\AppData\Local\Programs\Arduino IDE\resources\app\lib\backend\resources\arduino-cli.exe" --config-file D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\test-artifacts\ide-core3-default.arduino-cli.yaml core list
+ID          Installed Latest Name
+arduino:avr 1.8.8     1.8.8  Arduino AVR Boards
+esp32:esp32 3.3.12    3.3.12 esp32
+
+
+[exit code: 0]
+
+> "C:\Users\Administrator\AppData\Local\Programs\Arduino IDE\resources\app\lib\backend\resources\arduino-cli.exe" --config-file D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\test-artifacts\ide-core3-default.arduino-cli.yaml compile --fqbn esp32:esp32:esp32s3 --jobs 8 --build-path D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\test-artifacts\ide-core3-default-build D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\CombatBotArduino
+Sketch uses 1128500 bytes (86%) of program storage space. Maximum is 1310720 bytes.
+Global variables use 53192 bytes (16%) of dynamic memory, leaving 274488 bytes for local variables. Maximum is 327680 bytes.
+
+[exit code: 0]

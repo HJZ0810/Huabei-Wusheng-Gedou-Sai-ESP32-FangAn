@@ -21,25 +21,37 @@ CombatBot V4 本地与云端车控页面
 @media(max-width:850px){.arena-layout{grid-template-columns:1fr}.cloud-login{grid-template-columns:1fr 1fr}.cloud-login button{grid-column:1/-1}}
 @media(max-width:700px){.shell{padding:104px 14px calc(94px + env(safe-area-inset-bottom))}.grid,.settings{grid-template-columns:1fr}.topbar{gap:12px;padding:12px max(14px,env(safe-area-inset-left));padding-top:max(12px,env(safe-area-inset-top))}.brand{font-size:15px}.brand small{font-size:8px;letter-spacing:.8px}.topstate{gap:5px 10px;font-size:10px}.topstate .host{display:none}.estop{min-width:76px;padding:11px 9px;font-size:12px}.tabs{gap:0;padding:9px 6px calc(9px + env(safe-area-inset-bottom))}.tabs button{min-width:0;flex:1;padding:11px 2px;font-size:12px}.card,.arena-map-card{padding:18px;border-radius:15px}.heading{margin:4px 0 18px}.heading h1{font-size:22px}.joystick-wrap{min-height:280px}.joystick{height:245px;width:245px}.fields{gap:12px}.settings .actions{bottom:80px}.split{flex-wrap:wrap}.full{grid-column:auto}.arena-metrics b{font-size:17px}.arena-legend{gap:9px 13px}.card h2 small{margin-left:4px}.stack,.grid,.settings,.arena-layout{gap:16px}.readout .value{font-size:22px}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
-</style></head><body>
+/* V5 工作台：方向由用户显式选择，不依赖设备方向传感器。 */
+.workspace-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:8px 0 20px}.workspace-modes,.workspace-options{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.workspace-modes button.active{background:#eaf1ff;border-color:#9dbbf4;color:#1855d4}.workspace-grid{display:grid;grid-template-columns:minmax(300px,1fr) minmax(320px,1.25fr);gap:18px;align-items:start}.workspace-panel{min-width:0}.workspace-panel>section{display:block}.workspace-panel .heading{margin:0 0 14px}.workspace-panel .heading h1{font-size:20px}.workspace-panel .arena-layout{grid-template-columns:1fr}.workspace-panel .arena-layout>.stack{min-width:0}.workspace-panel .arena-map{width:100%;min-height:380px;max-height:68vh;aspect-ratio:1}.workspace-panel .radar{width:100%;max-width:700px;margin:0 auto}.workspace-panel .joystick{width:min(270px,68vw);height:min(270px,68vw)}.sensor-dock{display:flex;flex-direction:column;gap:16px}.sensor-dock .grid{grid-template-columns:1fr}.sensor-dock .stack{gap:14px}.offline-hint{display:block;min-height:1em;margin-top:7px;color:#8797ad;font-size:11px}.map-actions{display:flex;gap:10px;align-items:center;margin-top:12px;flex-wrap:wrap}.path-state{font-size:11px;color:#718198}.orientation-landscape{overflow:hidden}.orientation-landscape .topbar{position:relative}.orientation-landscape .shell{max-width:none;padding:16px 20px 20px}.orientation-landscape #workbench{height:calc(100dvh - 92px);overflow:auto}.orientation-landscape .workspace-grid{grid-template-columns:minmax(280px,.85fr) minmax(400px,1.4fr);height:calc(100% - 90px)}.orientation-landscape .workspace-panel{height:100%;overflow:auto}.orientation-landscape .workspace-panel .arena-map{height:min(68vh,720px);width:auto;max-width:100%;margin:auto}.orientation-landscape .joystick-wrap{min-height:250px}.orientation-landscape .joystick{width:min(250px,42vh);height:min(250px,42vh)}.orientation-landscape .tabs{position:relative;padding:8px}.orientation-landscape #precise,.orientation-landscape #settings{max-height:calc(100dvh - 130px);overflow:auto}
+@media(max-width:760px){.workspace-grid{grid-template-columns:1fr}.workspace-panel .arena-map{min-height:300px}.workspace-toolbar{align-items:flex-start;flex-direction:column}.orientation-landscape .workspace-grid{grid-template-columns:minmax(220px,.85fr) minmax(260px,1.15fr)}.orientation-landscape .workspace-panel .arena-map{min-height:0;height:min(62vh,520px)}}
+[hidden]{display:none!important}
+/* 横屏是工作台自身的显式旋转布局，在窄屏也强制占满旋转后的视口。 */
+.orientation-landscape{width:100vw;height:100dvh;overflow:hidden}.orientation-landscape #appViewport{position:fixed;left:100vw;top:0;width:100dvh;height:100vw;display:flex;flex-direction:column;transform:rotate(90deg);transform-origin:top left}.orientation-landscape .topbar{position:relative;inset:auto;width:100%;flex:0 0 auto}.orientation-landscape .shell{position:relative;inset:auto;max-width:none;width:100%;height:auto;min-height:0;flex:1;overflow:auto;margin:0;padding:12px 16px 16px}.orientation-landscape #workbench{height:100%;display:flex;flex-direction:column}.orientation-landscape .workspace-grid{flex:1;min-height:0;grid-template-columns:minmax(250px,.85fr) minmax(320px,1.2fr)}.orientation-landscape .workspace-panel{height:100%;overflow:auto}.orientation-landscape .workspace-panel .arena-map{height:min(66vh,680px);min-height:0;width:auto;max-width:100%;margin:0 auto}.orientation-landscape .joystick-wrap{min-height:220px}.orientation-landscape .joystick{width:min(240px,38vh);height:min(240px,38vh)}.orientation-landscape .tabs{position:relative;inset:auto;width:100%;flex:0 0 auto;padding:6px}.orientation-landscape #precise,.orientation-landscape #settings{max-height:100%;overflow:auto}
+/* 融合布局只保留一层标题；面板允许纵向浏览，控件宽度不挤出操作区。 */
+.workspace-panel>.heading,.workspace-panel>section>.heading{display:none}.workspace-panel .grid{grid-template-columns:1fr}.workspace-panel .card{min-width:0;padding:18px}.workspace-panel{overflow-x:hidden}.workspace-toolbar{margin:4px 0 14px}.workspace-options>small{display:none}.workspace-panel .joystick-wrap{min-height:290px}.workspace-panel .joystick{width:250px;height:250px}.workspace-panel #irValues{line-height:1.8;font-size:10px}.workspace-panel .radar{max-width:620px}.workspace-panel p{font-size:11px}.warning{font-size:11px;margin-bottom:12px;padding:8px 12px}.cal-preview{margin-top:14px;background:#edf4ff;border:1px solid #dae7fc;padding:12px 14px;border-radius:12px;font-size:12px;color:#416188;line-height:1.7}.orientation-landscape #workbench>.heading{display:none}.orientation-landscape .workspace-toolbar{flex-direction:row;align-items:center;margin:0 0 8px;flex:0 0 auto}.orientation-landscape .workspace-toolbar button{padding:7px 10px;font-size:11px}.orientation-landscape .workspace-grid{grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:10px}.orientation-landscape .workspace-panel{overflow-y:auto;overflow-x:hidden}.orientation-landscape .workspace-panel .card{padding:12px}.orientation-landscape .workspace-panel h2{font-size:13px;margin-bottom:8px}.orientation-landscape .workspace-panel .joystick-wrap{min-height:0;padding:12px 0}.orientation-landscape .workspace-panel .joystick{width:clamp(150px,30vw,230px);height:clamp(150px,30vw,230px)}.orientation-landscape .workspace-panel .radar{width:100%;height:auto;max-height:320px;object-fit:contain}.orientation-landscape .warning{padding:0 3px;margin-bottom:7px;border:0;background:none;font-size:10px}.orientation-landscape .topbar{padding:9px 14px;min-height:48px}.orientation-landscape .topstate>span:nth-child(n+2){display:none}.orientation-landscape .brand small{display:none}.orientation-landscape .brand{font-size:17px}.orientation-landscape .estop{padding:8px 13px}.orientation-landscape .shell{padding:8px 10px}.orientation-landscape .readout .value{font-size:19px}.orientation-landscape .readout{padding:12px 0}.orientation-landscape .tabs button{padding:7px 10px;font-size:11px}.orientation-landscape .workspace-panel .arena-map{width:100%;height:auto;max-height:none;min-height:0}.orientation-landscape .offline-hint{font-size:10px;margin:0 0 5px}
+@keyframes deckAppear{from{opacity:.6;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}.workspace-panel .card{animation:deckAppear .28s ease-out;background:linear-gradient(150deg,#fff 65%,#f5f9ff);box-shadow:0 5px 22px #3372c207}.workspace-panel .radar{filter:drop-shadow(0 0 15px #2765e80a)}.joystick:focus-visible,.joystick:active{box-shadow:0 0 0 6px #2765e80d,0 0 36px #2765e813}.workspace-modes button{transition:background .2s,border-color .2s,color .2s,transform .2s}.workspace-modes button:active{transform:scale(.97)}@media(prefers-reduced-motion:reduce){.workspace-panel .card{animation:none}.workspace-modes button{transition:none}}
+/* 强制横屏后的可用高度由 JS 实测；完整图形优先，详细读数留在面板纵向滚动区。 */
+.orientation-landscape .workspace-panel .radar,.orientation-landscape .workspace-panel .arena-map{height:var(--workspace-visual-height,170px);width:auto;max-width:100%;max-height:none;min-height:0;aspect-ratio:1;object-fit:contain;margin:0 auto}.orientation-landscape #workbench:not(.active){display:none}
+</style></head><body><div id="appViewport">
 <!-- 全局状态栏 · 连接信息、电池与急停入口 -->
 <header class="topbar"><div class="brand">Combat<span style="color:var(--cyan)">Bot</span><small>竞技控制台</small></div><div class="topstate"><span><i class="status-dot" id="connDot"></i><b id="conn">离线</b> <span class="badge" id="net">—</span></span><span>电池 <b class="mono" id="bat">— V</b></span><span>信号 <b class="mono" id="rssi">—</b></span><span class="host" id="address">等待设备地址</span></div><button class="estop" id="estop" aria-label="急停并锁定">■ 急停</button></header>
 <main class="shell"><div class="warning" id="banner">等待小车连接 · 本地请连接车辆 Wi-Fi 后访问 192.168.4.1</div>
 
 <!-- 公网页面直连唯一车辆；专用链接换取会话后仅显示控制状态。 -->
 <section id="cloudPanel" class="card cloud-bar" hidden><div class="row" style="justify-content:space-between"><div><h2 style="margin:0">远程连接 <small id="cloudIdentity">等待连接</small></h2></div><div class="row"><span class="badge" id="cloudState">未连接</span><button class="primary" id="cloudClaim">接管控制</button><button id="cloudRelease">释放控制</button></div></div><p class="tiny muted" id="cloudHint" style="margin:12px 0 0">请使用专用控制链接</p></section>
+<section class="tab active" id="workbench"><div class="heading"><div><div class="eyebrow">CONTROL DECK</div><h1>融合工作台</h1></div><span class="badge" id="workModeStatus">手动驾驶</span></div><div class="workspace-toolbar"><div class="workspace-modes" role="group" aria-label="工作模式"><button id="manualMode" class="active" aria-pressed="true">手动驾驶</button><button id="autoMode" aria-pressed="false">自动导航</button></div><div class="workspace-options"><button id="landscapeToggle" aria-pressed="false">横屏布局</button><small class="muted">方向由按钮明确控制</small></div></div><div id="manualGrid" class="workspace-grid"><div id="driveDock" class="workspace-panel"></div><div id="sensorDock" class="workspace-panel sensor-dock"></div></div><div id="autoGrid" class="workspace-grid" hidden><div id="autoSensorDock" class="workspace-panel sensor-dock"></div><div id="mapDock" class="workspace-panel"></div></div></section>
 <!-- 连续控制 · 摇杆、方向按钮与四轮反馈 -->
 <section class="tab active" id="continuous"><div class="heading"><div><div class="eyebrow">MANUAL CONTROL</div><h1>驾驶控制</h1></div><span class="badge" id="driveState">等待连接</span></div><div class="grid"><div class="card"><h2>虚拟摇杆 <small>松手即停</small></h2><div class="joystick-wrap"><div class="joystick" id="joystick" role="group" tabindex="0" aria-label="虚拟摇杆，前后与转向"><span class="joystick-label top">前进</span><span class="joystick-label bottom">后退</span><div class="stick" id="stick"></div></div></div><div class="readout"><div><small>线速度 cm/s</small><span class="value" id="speed">—</span></div><div><small>航向 °</small><span class="value" id="yaw">—</span></div><div><small>里程 cm</small><span class="value" id="odo">—</span></div></div><p class="muted">WASD / 方向键驾驶 · 空格急停</p></div><div class="stack"><div class="card"><h2>速度上限</h2><div class="speed-row"><span class="speed-number mono" id="speedPct">40%</span><div><strong class="mono" id="speedLimit">等待配置</strong><small style="display:block">驾驶速度</small></div></div><input id="speedSlider" type="range" min="0" max="100" value="40" aria-label="速度百分比"><div class="dpad"><span class="blank"></span><button data-dir="0,1" aria-label="前进">↑</button><span class="blank"></span><button data-dir="-1,0" aria-label="左转">←</button><button id="stop">■</button><button data-dir="1,0" aria-label="右转">→</button><span class="blank"></span><button data-dir="0,-1" aria-label="后退">↓</button><span class="blank"></span></div><div class="row"><button data-servo="1" class="orange motion">举铲 ↑</button><button data-servo="0" class="motion">放铲 ↓</button></div></div><div class="card"><h2>四轮转速 <small>rpm · 左前 / 右前 / 左后 / 右后</small></h2><div id="wheels"></div></div></div></div></section>
 
 <!-- 竞技地图显示估计位姿；选点与执行分开，避免触屏误触直接启动车辆。 -->
-<section class="tab" id="arena"><div class="heading"><div><div class="eyebrow">ARENA</div><h1>竞技地图</h1></div><span class="badge" id="arenaMode">等待定位</span></div><div class="arena-layout"><div class="card arena-map-card"><div class="row" style="justify-content:space-between;margin-bottom:14px"><h2 style="margin:0">擂台 <small>估计位置</small></h2><button id="clearTrail" class="tiny">清除轨迹</button></div><canvas id="arenaMap" class="arena-map" width="720" height="720" tabindex="0" role="application" aria-label="擂台目标选择，方向键移动候选点，回车选定；使用执行导航按钮启动" aria-describedby="mapHelp"></canvas><div class="arena-legend"><span><i style="background:#2765e8"></i>车辆 / 航向</span><span><i style="background:#159578"></i>候选目标</span><span><i style="background:#b67513"></i>登台入口</span><span><i style="background:#87a9d6"></i>估计误差范围</span></div><p id="mapHelp" class="tiny muted">点击地图选点，再执行导航。方向键微调，Shift 加大步长。</p><p class="arena-source">外场 380 × 380 cm · 高台 240 × 240 cm · 登台点为对准位置</p></div><div class="stack"><div class="card"><h2>实时状态 <small id="arenaAge">等待遥测</small></h2><div class="arena-metrics"><div><small>估计坐标 / cm</small><b id="arenaPosition">— / —</b></div><div><small>航向 / °</small><b id="arenaHeading">—</b></div><div><small>误差范围 / cm</small><b id="arenaUncertainty">—</b></div><div><small>定位质量</small><b id="arenaQuality">未知</b></div></div><div class="arena-status" id="arenaStatus" role="status">等待定位 · 请先完成本地校准</div><div class="arena-target" id="arenaTarget">导航目标：未选择</div><div class="arena-controls"><button class="primary" id="arenaGoto">执行导航 →</button><button class="orange" id="arenaAuto">自动格斗</button><button id="arenaClimb">尝试登台 ↑</button><button id="arenaTakeover">人工接管</button><button class="danger" id="arenaStop">停止全部任务</button></div><p class="arena-steps">自主任务断网继续 · 手动失联停车。位置与目标均为传感器估计，质量为估计评分。</p></div><div class="card"><h2>设置起点 <small>摆车后更新</small></h2><form id="poseForm"><div class="fields"><label class="field">X / cm<input id="poseX" type="number" step="0.1" min="-190" max="190" value="0" required></label><label class="field">Y / cm<input id="poseY" type="number" step="0.1" min="-190" max="190" value="0" required></label><label class="field">航向 / °<input id="poseHeading" type="number" step="0.1" min="-360" max="360" value="90" required></label><label class="field">所在区域<select id="poseFloor"><option value="lower">低层外圈</option><option value="upper">中央高台（人工确认）</option></select></label></div><button class="primary" id="setPose" type="submit" style="width:100%;margin-top:14px">确认起点</button></form><p class="tiny muted">摆到已知位置后确认坐标与朝向。登台需先启用并验证机械能力。</p></div></div></div></section>
+<section class="tab" id="arena"><div class="heading"><div><div class="eyebrow">ARENA</div><h1>擂台导航</h1></div><span class="badge" id="arenaMode">等待定位</span></div><div class="arena-layout"><div class="card arena-map-card"><div class="row" style="justify-content:space-between;margin-bottom:14px"><h2 style="margin:0">擂台 <small>估计位置</small></h2><label class="field tiny"><span class="check"><input id="mapClickGo" type="checkbox">点选即前往</span></label><button id="clearTrail" class="tiny">清除轨迹</button></div><canvas id="arenaMap" class="arena-map" width="720" height="720" tabindex="0" role="application" aria-label="擂台目标选择，方向键移动候选点，回车选定；使用执行导航按钮启动" aria-describedby="mapHelp"></canvas><div class="arena-legend"><span><i style="background:#2765e8"></i>车辆 / 航向</span><span><i style="background:#159578"></i>候选目标</span><span><i style="background:#b67513"></i>登台入口</span><span><i style="background:#87a9d6"></i>估计误差范围</span></div><p id="mapHelp" class="tiny muted">点击地图选择目标；虚线是本地路线预览，实线是车辆路线。</p><p class="arena-source">外场 380 × 380 cm · 高台 240 × 240 cm · 登台点为对准位置</p></div><div class="stack"><div class="card"><h2>实时状态 <small id="arenaAge">等待遥测</small></h2><div class="arena-metrics"><div><small>估计坐标 / cm</small><b id="arenaPosition">— / —</b></div><div><small>航向 / °</small><b id="arenaHeading">—</b></div><div><small>误差范围 / cm</small><b id="arenaUncertainty">—</b></div><div><small>定位质量</small><b id="arenaQuality">未知</b></div></div><div class="arena-status" id="arenaStatus" role="status">等待定位 · 请先完成本地校准</div><div class="arena-target" id="arenaTarget">导航目标：未选择</div><div class="arena-controls"><button class="primary" id="arenaGoto">前往目标 →</button><button class="orange" id="arenaAuto">自动格斗</button><button id="arenaClimb">尝试登台 ↑</button><button id="arenaTakeover">人工接管</button><button class="danger" id="arenaStop">停止全部任务</button></div><p class="arena-steps">自主任务断网继续 · 手动失联停车。位置与目标均为传感器估计，质量为估计评分。</p></div><div class="card"><h2>设置起点 <small>摆车后更新</small></h2><form id="poseForm"><div class="fields"><label class="field">X / cm<input id="poseX" type="number" step="0.1" min="-190" max="190" value="0" required></label><label class="field">Y / cm<input id="poseY" type="number" step="0.1" min="-190" max="190" value="-155" required></label><label class="field">航向 / °<input id="poseHeading" type="number" step="0.1" min="-360" max="360" value="90" required></label><label class="field">所在区域<select id="poseFloor"><option value="lower">低层外圈</option><option value="upper">中央高台（人工确认）</option></select></label></div><button class="primary" id="setPose" type="submit" style="width:100%;margin-top:14px">确认起点</button></form><p class="tiny muted">摆到已知位置后确认坐标与朝向。登台需先启用并验证机械能力。</p></div></div></div></section>
 <!-- 精准动作 · 定距、定角与设备完成结果 -->
-<section class="tab" id="precise"><div class="heading"><div><div class="eyebrow">PRECISE MOTION</div><h1>精准动作</h1></div><button class="danger" id="preciseStop">立即停车</button></div><div class="grid"><div class="card"><h2>定距直线</h2><label class="field">目标距离 / cm <input type="number" id="distance" value="30" step="0.1" min="-1000" max="1000"></label><div class="chips" id="distancePresets"></div><small>正数前进，负数后退 · 动作中请保持页面前台</small><div class="action-row"><button class="primary motion" id="move">执行直线 →</button></div></div><div class="card"><h2>原地转向</h2><label class="field">角度 / ° <input type="number" id="angle" value="90" step="0.1" min="-1440" max="1440"></label><div class="chips" id="anglePresets"></div><small>左转为正，右转为负</small><div class="action-row"><button class="primary motion" id="turnLeft">↶ 左转</button><button class="motion" id="turnRight">右转 ↷</button></div></div><div class="card full"><div class="row" style="justify-content:space-between"><h2 style="margin:0">执行反馈</h2><b class="mono" id="progressText">—</b></div><div class="progress"><i id="progress"></i></div><div class="result" id="result">等待动作结果</div></div><div class="card full"><h2>设备事件</h2><div class="log" id="events"><div class="muted">暂无事件</div></div></div></div></section>
+<section class="tab" id="precise"><div class="heading"><div><div class="eyebrow">CALIBRATION</div><h1>标定中心</h1></div><button class="danger" id="preciseStop">立即停车</button></div><div class="grid"><div class="card"><h2>直线复验</h2><label class="field">目标距离 / cm <input type="number" id="distance" value="30" step="0.1" min="-1000" max="1000"></label><div class="chips" id="distancePresets"></div><small>正数前进，负数后退 · 动作中请保持页面前台</small><div class="action-row"><button class="primary motion" id="move">执行直线 →</button></div></div><div class="card"><h2>转向复验</h2><label class="field">角度 / ° <input type="number" id="angle" value="90" step="0.1" min="-1440" max="1440"></label><div class="chips" id="anglePresets"></div><small>左转为正，右转为负</small><div class="action-row"><button class="primary motion" id="turnLeft">↶ 左转</button><button class="motion" id="turnRight">右转 ↷</button></div></div><div class="card full"><div class="row" style="justify-content:space-between"><h2 style="margin:0">执行反馈</h2><b class="mono" id="progressText">—</b></div><div class="progress"><i id="progress"></i></div><div class="result" id="result">等待动作结果</div></div><div class="card full"><h2>设备事件</h2><div class="log" id="events"><div class="muted">暂无事件</div></div></div></div></section>
 <!-- 传感器展示 · 测距、加速度与数字触发 -->
-<section class="tab" id="sensors"><div class="heading"><div><div class="eyebrow">SENSORS</div><h1>传感器</h1></div><span class="badge" id="sensorAge">等待遥测</span></div><div class="grid"><div class="card"><h2>红外扇区 <small>20–150 cm · 超量程未知</small></h2><canvas class="radar" id="radar" width="520" height="400" aria-label="红外测距雷达"></canvas><div class="row tiny muted" id="irValues">没有有效测距</div><p class="tiny muted">从车头起顺时针排列 · 安装方向须与配置一致</p></div><div class="stack"><div class="card"><h2>姿态 / 加速度 <small>ADXL345</small></h2><p class="tiny muted" id="accelMeta">等待加速度来源</p><canvas id="attitude" width="440" height="200"></canvas><div class="row mono" id="accValues">X — · Y — · Z — g</div><canvas id="wave" width="440" height="110" aria-label="三轴加速度波形"></canvas><small id="waveRange" class="muted">显示范围 ±2 g</small> · <small style="color:#2765e8">X</small> <small style="color:#b67513">Y</small> <small style="color:#159578">Z</small></div><div class="card"><h2>数字灰度 <small>亮灯表示触发</small></h2><div class="sensor-lights" id="grayLights"></div><h2 style="margin-top:20px">E18 光电开关</h2><div class="sensor-lights" id="e18Lights"></div><p class="muted tiny">无效信号显示未知</p></div></div></div></section>
+<section class="tab" id="sensors"><div class="heading"><div><div class="eyebrow">SENSORS</div><h1>传感器</h1></div><span class="badge" id="sensorAge">等待遥测</span></div><div class="grid"><div class="card"><h2>红外扇区 <small>20–150 cm · 超量程未知</small></h2><canvas class="radar" id="radar" width="640" height="640" aria-label="红外测距雷达"></canvas><div class="row tiny muted" id="irValues">没有有效测距</div></div><div class="stack"><div class="card"><h2>姿态 / 加速度 <small>ADXL345</small></h2><p class="tiny muted" id="accelMeta">等待加速度来源</p><canvas id="attitude" width="440" height="200"></canvas><div class="row mono" id="accValues">X — · Y — · Z — g</div><canvas id="wave" width="440" height="110" aria-label="三轴加速度波形"></canvas><small id="waveRange" class="muted">显示范围 ±2 g</small> · <small style="color:#2765e8">X</small> <small style="color:#b67513">Y</small> <small style="color:#159578">Z</small></div><div class="card"><h2>数字灰度 <small>亮灯表示触发</small></h2><div class="sensor-lights" id="grayLights"></div><h2 style="margin-top:20px">E18 光电开关</h2><div class="sensor-lights" id="e18Lights"></div><p class="muted tiny">无效信号显示未知</p></div></div></div></section>
 <!-- 配置管理 · 参数表单、外部实测标定与连接地址 -->
-<section class="tab" id="settings"><div class="heading"><div><div class="eyebrow">SETTINGS</div><h1>车辆设置</h1></div><button id="reloadConfig">重新读取</button></div><div class="config-state" id="configState">未读取设备配置，无法保存。</div><form id="configForm"><div class="settings" id="settingsGroups"></div></form><div class="card" style="margin-top:18px"><h2>三步标定</h2><p class="muted">先举轮检查极性，确认场地安全。标定时保持页面前台，填写尺或量角器的实测值。</p><div class="row"><button class="motion" id="calImu">① 静止 IMU 零偏</button><button class="motion" id="calOdo">② 行程标定 100 cm</button><button class="motion" id="calTurn">③ 转向标定 360°</button></div><div class="calbox fields"><label class="field">行程外部实测 / cm <input id="measuredOdo" type="number" min="1" max="1500" step="0.1" placeholder="先完成行程标定"></label><label class="field">转向外部实测 / ° <input id="measuredTurn" type="number" min="10" max="1800" step="0.1" placeholder="先完成转向标定"></label><button id="applyOdo">应用行程实测</button><button id="applyTurn">应用转向实测</button></div><p class="tiny muted" id="calStatus">完成对应标定后，填写并应用实测值。</p></div><div class="card" style="margin-top:18px"><div class="split"><div><h2>连接到这台设备</h2><div class="mono link" id="currentUrl">—</div><p class="mono tiny" id="deviceAddresses">等待设备网络信息</p><small>扫码连接 · 本地模式无需互联网</small></div><div class="qr" id="qrcode"></div></div></div><div class="actions row" style="margin-top:18px"><button class="primary" id="saveConfig">保存设置</button><button id="exportConfig">导出 JSON</button><button id="importConfig">导入 JSON</button><input id="importFile" type="file" accept=".json,application/json" hidden><button class="danger" id="defaults">恢复默认</button><button class="danger" id="clearWifi">清除 WiFi</button><button class="danger" id="reboot">重启设备</button></div></section>
-</main><nav class="tabs" aria-label="控制面板页面"><button data-tab="continuous" class="active">◉ 驾驶</button><button data-tab="arena">▧ 地图</button><button data-tab="precise">◎ 精准</button><button data-tab="sensors">⌁ 传感器</button><button data-tab="settings">⚙ 设置</button></nav><div class="toast" id="toast" role="status"></div>
+<section class="tab" id="settings"><div class="heading"><div><div class="eyebrow">SETTINGS</div><h1>车辆设置</h1></div><button id="reloadConfig">重新读取</button></div><div class="config-state" id="configState">未读取设备配置，无法保存。</div><form id="configForm"><div class="settings" id="settingsGroups"></div></form><div class="card" style="margin-top:18px"><h2>校准工作台</h2><p class="muted">每项按“执行动作 → 外部实测 → 应用修正”完成。冲台观测只记录倾角、轮程、耗时和支撑变化，不推断台阶高度或机械能力。</p><div class="row"><button class="motion" id="calImu">静止 IMU 零偏</button><button class="motion" id="calOdo">直线行程 · 100 cm</button><button class="motion" id="calTurnLeft">左转 · 360°</button><button class="motion" id="calTurnRight">右转 · 360°</button><button class="motion" id="calClimbStart">开始登台观测</button><button id="calClimbEnd">结束观测并记录</button></div><div class="calbox fields"><label class="field">直线外测距离 / cm<input id="measuredOdo" type="number" min="1" max="1500" step="0.1" placeholder="先完成直线动作"></label><label class="field">左转外测角度 / °<input id="measuredLeftTurn" type="number" min="10" max="1800" step="0.1" placeholder="先完成左转动作"></label><label class="field">右转外测角度 / °<input id="measuredRightTurn" type="number" min="10" max="1800" step="0.1" placeholder="先完成右转动作"></label><div class="row"><button id="applyOdo">应用直线修正</button><button id="applyTurnLeft">应用左转修正</button><button id="applyTurnRight">应用右转修正</button></div></div><p class="tiny muted" id="climbObservationResult">登台观察记录尚未完成</p><div class="cal-preview" id="calibrationPreview">完成动作并填写实测值后，显示修正预览。</div><p class="tiny muted" id="calStatus">等待选择校准动作。</p></div><div class="card" style="margin-top:18px"><div class="split"><div><h2>连接到这台设备</h2><div class="mono link" id="currentUrl">—</div><p class="mono tiny" id="deviceAddresses">等待设备网络信息</p><small>扫码连接 · 本地模式无需互联网</small></div><div class="qr" id="qrcode"></div></div></div><div class="actions row" style="margin-top:18px"><button class="primary" id="saveConfig">保存设置</button><button id="exportConfig">导出 JSON</button><button id="importConfig">导入 JSON</button><input id="importFile" type="file" accept=".json,application/json" hidden><button class="danger" id="defaults">恢复默认</button><button class="danger" id="clearWifi">清除 WiFi</button><button class="danger" id="reboot">重启设备</button></div></section>
+</main><nav class="tabs" aria-label="控制面板页面"><button data-tab="workbench" class="active">◉ 工作台</button><button data-tab="precise">◎ 标定</button><button data-tab="settings">⚙ 设置</button></nav></div><div class="toast" id="toast" role="status"></div>
 <script>
 //---------------------------------------------------------------------
 //
@@ -2373,26 +2385,111 @@ let ws = null,
   lastTm = 0,
   hasConfig = false,
   config = null,
+  draftConfig = null,
   active = false,
   motionSession = "",
   automaticStopIssued = false,
   inputRevision = 0,
   continuous = false,
   pointer = null,
+  workspaceMode = "manual",
+  localLandscape = false,
   driveX = 0,
   driveY = 0,
   pressed = new Set(),
   requestedAt = 0,
   pendingCal = null,
+  pendingCalContext = null,
+  manualTimeoutPending = false,
+  manualTimeoutSeen = false,
+  timedOutPointer = null,
+  timedOutKeys = new Set(),
   toastTimer,
   reconnectTimer,
   configRevision = 0;
 // samples 仅缓存真实加速度；四轮标签顺序与固件 LF / RF / LR / RR 对齐。
 const samples = [],
-  recentCal = { odo: false, turn: false },
+  recentCal = { odo: false, turn: false, leftTurn: false, rightTurn: false,
+    odoId: 0, turnId: 0, leftTurnId: 0, rightTurnId: 0, records: {} },
   labels = ["左前", "右前", "左后", "右后"];
 const n = (v, d = 1) =>
   typeof v === "number" && Number.isFinite(v) ? v.toFixed(d) : "—";
+/** 工作台只重排面板；改变显示布局不发停车、接管或自主任务指令。 */
+function mountWorkbench() {
+  const panels = [$("continuous"), $("arena"), $("sensors")];
+  panels.forEach((panel) => {
+    panel.classList.remove("tab");
+    panel.classList.remove("active");
+  });
+  $("driveDock").append(panels[0]);
+  $("mapDock").append(panels[1]);
+  $("sensorDock").append(panels[2]);
+  const hint = document.createElement("small");
+  hint.id = "sensorConnectionHint";
+  hint.className = "offline-hint";
+  hint.textContent = "开发预览 · 未连接时读数显示为未知";
+  $("sensors").prepend(hint);
+  const calibrationCard = $("calImu").closest(".card");
+  if (calibrationCard) {
+    calibrationCard.classList.add("full");
+    $("precise").querySelector(".grid").prepend(calibrationCard);
+  }
+}
+function setWorkspaceMode(mode) {
+  clearManualInputForLayout();
+  workspaceMode = mode === "auto" ? "auto" : "manual";
+  const automated = workspaceMode === "auto";
+  $("manualGrid").hidden = automated;
+  $("autoGrid").hidden = !automated;
+  $(automated ? "autoSensorDock" : "sensorDock").append($("sensors"));
+  $("manualMode").classList.toggle("active", !automated);
+  $("autoMode").classList.toggle("active", automated);
+  $("manualMode").setAttribute("aria-pressed", String(!automated));
+  $("autoMode").setAttribute("aria-pressed", String(automated));
+  $("workModeStatus").textContent = automated ? "自动导航" : "手动驾驶";
+  resizeWorkspace();
+  renderArena();
+}
+function toggleLandscape() {
+  clearManualInputForLayout();
+  localLandscape = !localLandscape;
+  document.body.classList.toggle("orientation-landscape", localLandscape);
+  $("landscapeToggle").classList.toggle("active", localLandscape);
+  $("landscapeToggle").setAttribute("aria-pressed", String(localLandscape));
+  $("landscapeToggle").textContent = localLandscape ? "退出横屏布局" : "横屏布局";
+  resizeWorkspace();
+  renderArena();
+}
+/**
+ * @brief 依据旋转后的真实操作高度缩放完整图形，避免沿用未旋转的 vh。
+ * @details 90° 布局的物理宽度才是逻辑高度；再用活动网格的变换后宽度
+ *          扣除图卡标题、内边距和连接提示，图形下方的信息可继续纵向滚动。
+ */
+function resizeWorkspace() {
+  const viewportHeight = localLandscape ? window.innerWidth : window.innerHeight;
+  const grid = $(workspaceMode === "auto" ? "autoGrid" : "manualGrid");
+  const rect = grid.getBoundingClientRect();
+  const panelHeight = localLandscape ? rect.width : rect.height;
+  const available = Math.min(Number.isFinite(viewportHeight) ? viewportHeight - 150 : 420, panelHeight - 85);
+  const height = Math.max(100, Math.min(520, available));
+  if (document.body.style.setProperty) document.body.style.setProperty("--workspace-visual-height", height + "px");
+  else document.body.style["--workspace-visual-height"] = height + "px";
+}
+window.addEventListener("resize", resizeWorkspace);
+function clearManualInputForLayout() {
+  if (workspaceMode !== "manual" || !continuous) return;
+  const neutral = { t:"drv", x:0, y:0, spd:Number($("speedSlider").value) };
+  resetInput();
+  if (online() && !ownedElsewhere()) {
+    send(neutral);
+    active = false;
+    motionSession = "";
+  }
+}
+mountWorkbench();
+$("manualMode").onclick = () => setWorkspaceMode("manual");
+$("autoMode").onclick = () => setWorkspaceMode("auto");
+$("landscapeToggle").onclick = toggleLandscape;
 // OPEN 只说明传输连接建立；收到 hello 且最近 1600 ms 内有遥测才视为可用。
 // 这是网页输入门限，设备实际停车时限由固件 heartbeatMs 决定。
 const online = () =>
@@ -2454,7 +2551,7 @@ function send(msg) {
  */
 function ensureControl() {
   if (!online()) {
-    toast("未连接设备或遥测已中断");
+    $("driveState").textContent = "未连接 · 操作尚未发送";
     return false;
   }
   if (!cloudCanControl()) { toast("请先点击接管控制"); return false; }
@@ -2487,6 +2584,29 @@ function resetInput() {
   $("stick").style.transform = "translate(-50%,-50%)";
 }
 /**
+ * @brief 车端开发限时停车后撤销本页持续输入，禁止按住摇杆或按键自动续跑。
+ * @details 固件锁存只接受显式 Stop 重新准入；松手时补发一次 Stop，
+ *          普通定时心跳、零驱动与断开连接均不能代替这个确认。
+ */
+function acceptManualTimeout(m) {
+  if (m?.fault !== "development_drive_timeout") { manualTimeoutSeen = false; return; }
+  if (manualTimeoutSeen) return;
+  manualTimeoutSeen = true;
+  if (!active && !continuous && pointer === null && !pressed.size) return;
+  timedOutPointer = pointer;
+  timedOutKeys = new Set(pressed);
+  manualTimeoutPending = true;
+  active = false; motionSession = ""; requestedAt = 0;
+  pendingCal = null; pendingCalContext = null;
+  resetInput();
+  toast("开发调试已达 15 秒 · 松手或点击停止后重试");
+}
+function releaseManualTimeout() {
+  if (!manualTimeoutPending) return;
+  timedOutPointer = null; timedOutKeys.clear();
+  if (online() && !ownedElsewhere() && !autonomyActive()) stop("开发限时停车后松手确认");
+}
+/**
  * @brief 尽力发送停车指令，并立即清理本地动作和标定等待状态。
  * @param {string} [reason] 可选的本地事件说明。
  * @param {boolean} [automatic=false] 自动释放仅允许本页当前会话的动作停车。
@@ -2504,6 +2624,7 @@ function stop(reason, automatic = false) {
       (lastTm > 0 && tm?.owner === client));
   const shouldSend = !automatic || (!automaticStopIssued && ownMotion);
   if (shouldSend) send({ t: "stop" });
+  if (shouldSend && !automatic) { manualTimeoutPending = false; timedOutPointer = null; timedOutKeys.clear(); }
   automaticStopIssued = true;
   active = false;
   motionSession = "";
@@ -2546,6 +2667,12 @@ function start(msg) {
  * @details spd 为最高速度的百分比；死区与指数曲线由固件统一处理，页面不重复施加。
  */
 function drive(x, y) {
+  if (manualTimeoutPending) { toast("请先松手或点击停止，再开始开发调试"); return; }
+  if (!online()) {
+    driveX = Math.max(-1, Math.min(1, x)); driveY = Math.max(-1, Math.min(1, y));
+    $("driveState").textContent = "未连接 · 操作尚未发送";
+    return;
+  }
   if (!ensureControl()) {
     resetInput();
     return;
@@ -2572,7 +2699,7 @@ function speedDisplay() {
   $("speedPct").textContent = pct + "%";
   $("speedLimit").textContent = config
     ? n((config.maxSpeed * pct) / 100) + " cm/s"
-    : "等待配置";
+    : n((UI_DEFAULT_CONFIG.maxSpeed * pct) / 100) + " cm/s · 草稿";
   if (continuous) send({ t: "drv", x: driveX, y: driveY, spd: pct });
 }
 
@@ -2595,7 +2722,7 @@ function connectionUI() {
   const warning = [];
   if (!ok)
     warning.push(
-      "等待小车连接 · 本地请连接车辆 Wi-Fi 后访问 192.168.4.1",
+      "未连接 · 操作仅在本页预览",
     );
   if (ok && tm.estop) warning.push("急停已锁定：所有运动禁止，须明确解锁。");
   if (ok && ownedElsewhere())
@@ -2606,7 +2733,9 @@ function connectionUI() {
     warning.push(
       "红外方向保护正在限速：" + n((tm.irSpeedScale ?? 0) * 100, 0) + "%。",
     );
-  if (ok && tm.irUnavailable)
+  if (ok && tm.developmentMode)
+    warning.push("开发调试 · 低 PWM · 单次最长 15 s · 速度未知");
+  if (ok && tm.irUnavailable && !tm.developmentMode)
     warning.push("运动方向存在无效测距；按配置的失效策略处理。");
   if (ok && tm.impact)
     warning.push(
@@ -2658,7 +2787,7 @@ function connect() {
   lastTm = 0;
   hasConfig = false;
   config = null;
-  recentCal.odo = recentCal.turn = false;
+  clearCalibrationRecords();
   ws = new WebSocket(
     (location.protocol === "https:" ? "wss://" : "ws://") +
       location.host +
@@ -2687,6 +2816,8 @@ function connect() {
     } else if (m.t === "tm") {
       tm = m;
       lastTm = Date.now();
+      acceptManualTimeout(m);
+      invalidateCalibrationRecords(m);
       if (ownedElsewhere()) {
         active = false;
         pendingCal = null;
@@ -2710,38 +2841,7 @@ function connect() {
       renderTelemetry();
       connectionUI();
     } else if (m.t === "done") {
-      active = false;
-      resetInput();
-      $("result").textContent =
-        m.type +
-        " · 目标 " +
-        n(m.target, 2) +
-        " / 实际 " +
-        n(m.actual, 2) +
-        " / 误差 " +
-        n(m.err, 2) +
-        " · #" +
-        (m.id ?? "—");
-      event("动作完成：" + $("result").textContent);
-      if (
-        pendingCal === "odo" &&
-        (m.type === "odo_cal" ||
-          m.type === "odoCal" ||
-          m.type === "cal_odo" ||
-          m.type === "odo")
-      ) {
-        recentCal.odo = true;
-        $("calStatus").textContent = "行程标定动作完成，请测量实际距离再应用。";
-      }
-      if (
-        pendingCal === "turn" &&
-        (m.type === "turn_cal" || m.type === "turnCal" || m.type === "cal_turn")
-      ) {
-        recentCal.turn = true;
-        $("calStatus").textContent = "转向标定动作完成，请测量实际转角再应用。";
-      }
-      pendingCal = null;
-      toast("设备动作结果已收到");
+      acceptMotionResult(m);
     } else if (m.t === "error") {
       active = false;
       pendingCal = null;
@@ -2765,8 +2865,9 @@ function connect() {
     sessionToken = "";
     hasConfig = false;
     config = null;
-    recentCal.odo = recentCal.turn = false;
-    $("configState").textContent = "连接已断开，需重新读取设备配置。";
+    updateConfigControls();
+    clearCalibrationRecords();
+    $("configState").textContent = "设备连接已断开 · 表单为本地草稿，尚未重新读取或发送。";
     connectionUI();
     cloudLease = ""; cloudPermit = ""; cloudSeq = 0;
     event("连接断开：人工输入已清除；车端自主任务按设备策略继续");
@@ -2886,13 +2987,13 @@ function renderLights(id, values, count, valid) {
 function drawRadar() {
   const c = $("radar"),
     ctx = c.getContext("2d"),
-    cx = 260,
-    cy = 205,
-    r = 155;
+    cx = 320,
+    cy = 320,
+    r = 267;
   ctx.clearRect(0, 0, c.width, c.height);
   ctx.strokeStyle = "#d5e2f4";
   ctx.fillStyle = "#718198";
-  ctx.font = "11px monospace";
+  ctx.font = "13px monospace";
   for (let d = 50; d <= 150; d += 50) {
     ctx.beginPath();
     ctx.arc(cx, cy, (r * d) / 150, 0, Math.PI * 2);
@@ -2905,21 +3006,25 @@ function drawRadar() {
   ctx.moveTo(cx - r, cy);
   ctx.lineTo(cx + r, cy);
   ctx.stroke();
-  const ir = tm?.ir || [];
+  const count = Math.max(1, Math.min(12, Number.isInteger((config || draftConfig)?.irCount) ? (config || draftConfig).irCount : 6));
+  const ir = Array.isArray(tm?.ir) ? tm.ir : [];
   const texts = [];
-  ir.forEach((v, i) => {
-    const a = ((-90 + (i * 360) / ir.length) * Math.PI) / 180,
-      valid = Number.isFinite(v) && tm.irValid?.[i] !== false,
+  for (let i = 0; i < count; i++) {
+    const v = ir[i],
+      a = ((-90 + (i * 360) / count) * Math.PI) / 180,
+      valid = !!tm && Number.isFinite(v) && tm.irValid?.[i] !== false,
       rr = valid ? (Math.max(20, Math.min(150, v)) / 150) * r : r;
     const alert = valid && v < (config?.irThresholdCm || 25);
-    ctx.fillStyle = valid ? (alert ? "#f43f5e40" : "#2765e830") : "#71819814";
-    ctx.strokeStyle = valid ? (alert ? "#f43f5e" : "#2765e8") : "#a5b7ce";
+    ctx.fillStyle = valid ? (alert ? "#f43f5e40" : "#2765e830") : "#a9bbd51c";
+    ctx.strokeStyle = valid ? (alert ? "#f43f5e" : "#2765e8") : "#9aacc4";
+    ctx.setLineDash(valid ? [] : [4, 4]);
     ctx.beginPath();
     ctx.moveTo(cx, cy);
-    ctx.arc(cx, cy, rr, a - 0.14, a + 0.14);
+    ctx.arc(cx, cy, rr, a - Math.PI / count * 0.44, a + Math.PI / count * 0.44);
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
+    ctx.setLineDash([]);
     ctx.fillStyle = valid ? "#314e75" : "#718198";
     ctx.textAlign = "center";
     ctx.fillText(
@@ -2927,14 +3032,19 @@ function drawRadar() {
       cx + Math.cos(a) * (r + 26),
       cy + Math.sin(a) * (r + 26),
     );
-    texts.push("IR" + (i + 1) + " " + (valid ? n(v, 0) + "cm" : "无效"));
-  });
+    texts.push("IR" + (i + 1) + " " + (valid ? n(v, 0) + "cm" : "未知"));
+  }
   ctx.textAlign = "left";
   ctx.fillStyle = "#eaf2ff";
-  ctx.fillRect(cx - 13, cy - 20, 26, 40);
-  ctx.strokeStyle = "#2765e8";
-  ctx.strokeRect(cx - 13, cy - 20, 26, 40);
-  $("irValues").textContent = texts.join(" · ") || "等待有效测距";
+  ctx.beginPath();
+  ctx.moveTo(cx + 18, cy); ctx.lineTo(cx - 12, cy - 12); ctx.lineTo(cx - 8, cy);
+  ctx.lineTo(cx - 12, cy + 12); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = "#2765e8"; ctx.lineWidth = 2; ctx.stroke();
+  $("irValues").textContent = texts.filter((_,i)=>Number.isFinite(ir[i]) && tm?.irValid?.[i] !== false).join(" · ") || count + " 路测距未知";
+  const validCount = texts.filter((_, i) => Number.isFinite(ir[i]) && tm?.irValid?.[i] !== false).length;
+  $("sensorConnectionHint").textContent = tm
+    ? "IR " + validCount + "/" + count + " 路有效"
+    : "未连接 · " + count + " 路未知";
 }
 /**
  * @brief 根据加速度估算静态滚转 / 俯仰示意位置。
@@ -3031,7 +3141,7 @@ drawWave();
 $$("[data-tab]").forEach(
   (b) =>
     (b.onclick = () => {
-      stop("切换页面", true);
+      stop("离开手动操作页面", true);
       $$("[data-tab]").forEach((t) => t.classList.toggle("active", t === b));
       $$(".tab").forEach((t) =>
         t.classList.toggle("active", t.id === b.dataset.tab),
@@ -3059,11 +3169,16 @@ $("estop").onclick = () => {
  * @param {PointerEvent} e 当前摇杆指针事件。
  * @details 屏幕坐标向下为正，转成车辆输入后向前为正；圆外输入保留方向并归一。
  */
+function eventToLocalPoint(e, element) {
+  const r = element.getBoundingClientRect();
+  if (!localLandscape) return { x:e.clientX-r.left, y:e.clientY-r.top, width:r.width, height:r.height };
+  return { x:e.clientY-r.top, y:r.right-e.clientX, width:r.height, height:r.width };
+}
 function pointerVector(e) {
-  const r = $("joystick").getBoundingClientRect(),
-    radius = r.width * 0.34,
-    x = Math.max(-1, Math.min(1, (e.clientX - r.left - r.width / 2) / radius)),
-    y = Math.max(-1, Math.min(1, -(e.clientY - r.top - r.height / 2) / radius)),
+  const p = eventToLocalPoint(e, $("joystick")),
+    radius = Math.min(p.width, p.height) * 0.34,
+    x = Math.max(-1, Math.min(1, (p.x - p.width / 2) / radius)),
+    y = Math.max(-1, Math.min(1, -(p.y - p.height / 2) / radius)),
     norm = Math.max(1, Math.hypot(x, y));
   $("stick").style.transform =
     "translate(calc(-50% + " +
@@ -3075,7 +3190,7 @@ function pointerVector(e) {
 }
 // 捕获当前指针，使拖动越出摇杆仍能接收释放；取消或丢失捕获同样请求停车。
 $("joystick").onpointerdown = (e) => {
-  if (!ensureControl()) return;
+  if (online() && !ensureControl()) return;
   e.preventDefault();
   pressed.clear();
   pointer = e.pointerId;
@@ -3090,6 +3205,7 @@ $("joystick").onpointermove = (e) => {
 };
 ["pointerup", "pointercancel", "lostpointercapture"].forEach((type) =>
   $("joystick").addEventListener(type, (e) => {
+    if (manualTimeoutPending && timedOutPointer === e.pointerId) { releaseManualTimeout(); return; }
     if (pointer === e.pointerId) stop("摇杆释放", true);
   }),
 );
@@ -3097,7 +3213,7 @@ $("joystick").onpointermove = (e) => {
 $$("[data-dir]").forEach((b) => {
   let held = null, heldSession = "", heldRevision = 0;
   b.onpointerdown = (e) => {
-    if (!ensureControl()) return;
+    if (online() && !ensureControl()) return;
     e.preventDefault();
     held = e.pointerId;
     heldSession = sessionToken;
@@ -3110,6 +3226,7 @@ $$("[data-dir]").forEach((b) => {
     b.addEventListener(type, (e) => {
       if (held === e.pointerId) {
         held = null;
+        if (manualTimeoutPending && heldSession === sessionToken) { releaseManualTimeout(); return; }
         if (heldSession === sessionToken && heldRevision === inputRevision)
           stop("方向键释放", true);
       }
@@ -3152,7 +3269,7 @@ window.addEventListener("keydown", (e) => {
     return;
   }
   const key = keys[e.key.length === 1 ? e.key.toLowerCase() : e.key];
-  if (!key || !$("continuous").classList.contains("active")) return;
+  if (!key || workspaceMode !== "manual" || !$("workbench").classList.contains("active")) return;
   e.preventDefault();
   if (!e.repeat) {
     pressed.add(key);
@@ -3161,6 +3278,11 @@ window.addEventListener("keydown", (e) => {
 });
 window.addEventListener("keyup", (e) => {
   const key = keys[e.key.length === 1 ? e.key.toLowerCase() : e.key];
+  if (key && manualTimeoutPending && timedOutKeys.has(key)) {
+    timedOutKeys.delete(key);
+    if (!timedOutKeys.size) releaseManualTimeout();
+    return;
+  }
   if (key && pressed.has(key)) {
     pressed.delete(key);
     keyboardDrive();
@@ -3263,7 +3385,7 @@ const groups = [
   ],
   [
     "机械与编码器",
-    "72 mm 轮径、154 mm 轴距、170 mm 轮距已核实；PPR=90 为预估，最终以外部实测标定为准。",
+    "72 mm 轮径、154 mm 轴距、170 mm 轮距已核实；PPR=90 与左右转向修正均是初始估值，以实测标定为准。",
     [
       ["wheelMm", "轮直径 / mm", "number", 20, 500],
       ["wheelbaseMm", "轴距 / mm", "number", 30, 1000],
@@ -3271,6 +3393,8 @@ const groups = [
       ["ppr", "FG 每轮转脉冲数", "number", 1, 10000],
       ["pulsesPerCm", "标定脉冲 / cm（0=理论计算）", "number", 0, 10000],
       ["turnFactor", "转向滑移系数 K_turn", "number", 0.1, 10],
+      ["turnFactorLeft", "左转滑移修正", "number", 0.1, 10],
+      ["turnFactorRight", "右转滑移修正", "number", 0.1, 10],
     ],
   ],
   [
@@ -3318,6 +3442,7 @@ const groups = [
       ["grayActiveHigh", "灰度高电平触发", "bool"],
       ["e18ActiveHigh", "E18 高电平触发", "bool"],
       ["safetyEnabled", "启用传感器安全联动总开关", "bool"],
+      ["developmentMode", "开发调试模式（限时低速手动）", "bool"],
       ["edgeProtection", "启用边缘保护", "bool"],
       ["irProtection", "启用红外方向保护", "bool"],
       ["tiltProtection", "启用倾倒保护", "bool"],
@@ -3358,6 +3483,24 @@ const groups = [
     ],
   ],
 ];
+// 与固件 Config 构造默认值逐字段镜像。它只作为离线表单草稿，不代表设备已读取或应用。
+const UI_DEFAULT_CONFIG = {
+  apSsid:"CombatBot-AP", apPass:"12345678", staSsid:"", staPass:"", hostname:"combatbot", staEnabled:false,
+  cloudEnabled:false, cloudHost:"combatbot.luo-jin-ai.com", cloudPath:"/ws/device", cloudDeviceId:"combatbot-01", cloudDeviceKey:"", cloudCaPem:"", cloudPort:443,
+  arenaEnabled:false, arenaCalibrated:false, arenaClimbEnabled:false, arenaOuterCm:380, arenaPlatformCm:240,
+  arenaBodyLengthCm:26, arenaBodyWidthCm:24, arenaMarginCm:8, arenaNavSpeed:12, arenaSearchSpeed:12, arenaPushSpeed:18, arenaClimbSpeed:20,
+  arenaEntryX:0, arenaEntryY:-150, arenaEntryHeading:90, arenaTaskMs:180000, arenaClimbMs:6000,
+  wheelMm:72, wheelbaseMm:154, trackMm:170, ppr:90, pulsesPerCm:0, turnFactor:1, turnFactorLeft:1, turnFactorRight:1,
+  maxSpeed:100, defaultSpeed:40, acceleration:80, deceleration:100, maxYawRate:120, turnAcceleration:180, turnDeceleration:240,
+  speedPid:{kp:3,ki:8,kd:0}, positionPid:{kp:2,ki:0,kd:0}, headingPid:{kp:1.5,ki:0,kd:0.04}, fusionAlpha:0.85,
+  invert:[false,true,false,true], leftTrim:1, rightTrim:1, pwmDeadzone:110,
+  grayActiveHigh:true, e18ActiveHigh:false, safetyEnabled:false, developmentMode:false,
+  edgeProtection:true, irProtection:true, tiltProtection:true, irFailSafeStop:true, digitalDebounceMs:30,
+  irThresholdCm:25, batteryLowV:21.5, batteryScale:11, irSlowdownCm:60, irScale:1, impactThresholdG:2, irCount:6, batteryChannel:6,
+  gyroAxis:2, gyroSign:1, gyroBias:0,
+  servoMinUs:500, servoMaxUs:2500, servoCenterUs:1500, servoDownDeg:0, servoUpDeg:90,
+  heartbeatMs:1000, stallTimeoutMs:1500, telemetryHz:15, coastOnLoss:true,
+};
 // 历史兼容字段只保留已有值，不提供没有硬件效果的刹车开关。
 const compatibilityFields = ["coastOnLoss"];
 const allFields = [];
@@ -3458,12 +3601,16 @@ groups.forEach(([title, description, fields]) => {
   card.append(h, p, grid);
   $("settingsGroups").append(card);
 });
+draftConfig = { ...UI_DEFAULT_CONFIG };
+writeConfigForm(draftConfig);
+$("configState").textContent = "本地默认草稿 · 尚未读取或发送到车辆。";
+updateConfigControls();
 /**
  * @brief 将完整配置写入表单和本地显示快照。
  * @param {Object} c 设备读取或 JSON 导入的配置对象。
  * @details 导入只填写表单；是否落盘仍需点击保存并等待设备成功响应。
  */
-function fillConfig(c) {
+function writeConfigForm(c) {
   allFields.forEach(([key, , type]) => {
     if (key === "cloudDeviceKey") { $("cfg_" + key).value = ""; $("cfg_" + key).dataset.edited = "false"; return; }
     if (!(key in c)) return;
@@ -3478,15 +3625,27 @@ function fillConfig(c) {
     } else if (type === "bool") $("cfg_" + key).checked = !!c[key];
     else $("cfg_" + key).value = c[key];
   });
-  config = { ...c };
-  delete config.cloudDeviceKey;
-  hasConfig = true;
+}
+function fillConfig(c, deviceConfirmed = hasConfig) {
+  writeConfigForm(c);
+  draftConfig = { ...c };
+  if (deviceConfirmed) {
+    config = { ...c };
+    delete config.cloudDeviceKey;
+    hasConfig = true;
+    if (Number.isInteger(c.revision)) invalidateCalibrationRecords({ ...(tm || {}), configRevision:c.revision });
+  } else if (!hasConfig) config = null;
   configRevision++;
-  $("configState").textContent = "已读取设备配置，编辑后需保存到设备。";
+  $("configState").textContent = hasConfig ? "已读取设备配置，编辑后需保存到设备。" : "本地默认草稿 · 尚未读取或发送到车辆。";
+  updateConfigControls();
   if (!continuous) {
     $("speedSlider").value = Math.round((c.defaultSpeed / c.maxSpeed) * 100);
     speedDisplay();
   }
+}
+function updateConfigControls() {
+  ["saveConfig", "clearWifi", "reboot"].forEach(id => { $(id).disabled = !hasConfig; });
+  $("defaults").disabled = false;
 }
 /**
  * @brief 按字段类型收集当前表单，并保留 PID 对象和四轮布尔数组。
@@ -3495,7 +3654,8 @@ function fillConfig(c) {
 function collectConfig() {
   const out = {};
   compatibilityFields.forEach((key) => {
-    if (config && key in config) out[key] = config[key];
+    const source = config || draftConfig;
+    if (source && key in source) out[key] = source[key];
   });
   allFields.forEach(([key, , type]) => {
     if (key === "cloudDeviceKey" && $("cfg_" + key).dataset.edited !== "true") return;
@@ -3637,7 +3797,7 @@ async function api(path, data) {
  */
 async function readConfig() {
   const c = await api("/api/config");
-  fillConfig(c.config || c);
+  fillConfig(c.config || c, true);
 }
 /**
  * @brief 统一显示异步操作的错误，同时写入本页事件记录。
@@ -3654,8 +3814,12 @@ async function action(fn) {
 // 保存完成后重新读取设备快照，使页面反映服务端校验和持久化后的实际参数。
 $("reloadConfig").onclick = () => action(readConfig);
 $("configForm").onsubmit = (e) => e.preventDefault();
-$("configForm").oninput = () =>
-  ($("configState").textContent = "有未保存修改；车辆尚未应用这些参数。");
+$("configForm").oninput = () => {
+  draftConfig = collectConfig();
+  $("configState").textContent = hasConfig
+    ? "有未保存修改；车辆尚未应用这些参数。"
+    : "本地草稿 · 尚未发送到车辆。";
+};
 $("saveConfig").onclick = () =>
   action(async () => {
     if (!hasConfig) throw new Error("请先读取完整配置");
@@ -3667,12 +3831,8 @@ $("saveConfig").onclick = () =>
   });
 // 导出内容是当前表单，可能含未保存参数；导入仅回填，经检查后再显式保存。
 $("exportConfig").onclick = () => {
-  if (!hasConfig) {
-    toast("请先读取配置");
-    return;
-  }
   if (!validateForm()) return;
-  if (!confirm("JSON 包含真实 WiFi 密码及当前表单参数；显式编辑的设备密钥也会导出。确认下载并妥善保管？"))
+  if (!confirm("JSON 包含当前本地草稿参数、WiFi 密码及显式编辑的设备密钥。请妥善保管；离线草稿不会证明设备已应用。确认导出？"))
     return;
   const blob = new Blob([JSON.stringify(collectConfig(), null, 2)], {
       type: "application/json",
@@ -3717,7 +3877,7 @@ $("importFile").onchange = () =>
       if (["text", "password", "textarea"].includes(type) && typeof c[key] !== "string")
         throw new Error("文本无效：" + key);
     }
-    fillConfig(c);
+    fillConfig(c, hasConfig);
     if (typeof c.cloudDeviceKey === "string") { $("cfg_cloudDeviceKey").value = c.cloudDeviceKey; $("cfg_cloudDeviceKey").dataset.edited = "true"; }
     $("configState").textContent =
       "已导入到表单，尚未应用到设备；检查后点击保存。";
@@ -3732,8 +3892,14 @@ $("importFile").onchange = () =>
  * @details REST 响应确认当前请求阶段；重启本身会中断连接。
  */
 function dangerous(id, path, text) {
-  $(id).onclick = () =>
-    action(async () => {
+  $(id).onclick = () => {
+    if (id === "defaults" && !hasConfig) {
+      fillConfig(UI_DEFAULT_CONFIG, false);
+      $("configState").textContent = "已恢复本地默认草稿 · 尚未发送到车辆。";
+      toast("本地草稿已恢复为固件默认值");
+      return;
+    }
+    return action(async () => {
       if (!online()) throw new Error("设备未连接");
       if (!confirm(text)) return;
       stop("设备管理操作");
@@ -3742,6 +3908,7 @@ function dangerous(id, path, text) {
       event("设备已确认 " + path);
       if (id === "defaults") await readConfig();
     });
+  };
 }
 dangerous(
   "defaults",
@@ -3774,26 +3941,100 @@ function calibration(mode) {
     !confirm(
       mode === "imu"
         ? "确认车身静止，开始约 3 秒的 IMU 零偏采样？"
-        : "确认场地净空，开始" +
-            (mode === "odo" ? "100 cm 前进行程" : "360° 左转") +
-            "标定动作？",
+        : mode === "climb_observe"
+          ? "观测期间车辆保持静止，不会自动冲台。确认车身已停稳且比赛动作已结束？"
+          : "确认场地净空，开始" + ({odo:"100 cm 前进行程",turn:"360° 左转",turn_left:"360° 左转",turn_right:"360° 右转"}[mode] || "标定") + "动作？",
     )
   )
     return;
   if (start({ t: "cal", mode })) {
     pendingCal = mode;
+    pendingCalContext = { token:sessionToken, revision:tm?.configRevision, afterId:tm?.resultId || 0 };
   }
   if (pendingCal === mode) {
-    $("calStatus").textContent = "已请求 " + mode + " 标定；等待设备完成反馈。";
-    if (mode !== "imu") recentCal[mode] = false;
+    $("calStatus").textContent = "等待设备完成标定动作。";
+    clearCalibrationRecords();
   }
 }
 $("calImu").onclick = () => calibration("imu");
 $("calOdo").onclick = () => calibration("odo");
-$("calTurn").onclick = () => calibration("turn");
+if ($("calTurn")) $("calTurn").onclick = () => calibration("turn");
+$("calTurnLeft").onclick = () => calibration("turn_left");
+$("calTurnRight").onclick = () => calibration("turn_right");
+$("calClimbStart").onclick = () => calibration("climb_observe");
+$("calClimbEnd").onclick = () => {
+  if (pendingCal !== "climb_observe" || !ensureControl()) return;
+  if (send({t:"cal",mode:"climb_observe_end"})) $("calStatus").textContent = "已请求结束观测，等待设备发布传感记录。";
+};
+/** @brief 清除本页待应用结果；连接变化、参数改动和新动作都不能复用旧系数。 */
+function clearCalibrationRecords() {
+  for (const key of ["odo","turn","leftTurn","rightTurn"]) {
+    recentCal[key] = false; recentCal[key + "Id"] = 0;
+  }
+  recentCal.records = {};
+  updateCalibrationPreview();
+}
+function calibrationKey(mode) { return mode === "turn_left" ? "leftTurn" : mode === "turn_right" ? "rightTurn" : mode; }
+/** @brief 校验当前上电会话、最新结果和配置代次，过期记录仅展示，不能保存。 */
+function invalidateCalibrationRecords(m) {
+  if (!m) return;
+  for (const [key,r] of Object.entries(recentCal.records)) {
+    if (r.token !== sessionToken || (Number.isInteger(m.configRevision) && r.configRevision !== m.configRevision) ||
+        (Number.isInteger(m.calibrationSessionId) && m.calibrationSessionId > 0 && r.sessionId !== m.calibrationSessionId) ||
+        (Number.isInteger(m.resultId) && m.resultId > r.id)) {
+      recentCal[key] = false; delete recentCal.records[key];
+    }
+  }
+  updateCalibrationPreview();
+}
+/**
+ * @brief 接收设备完成记录；广播结果可见，只有本页请求的匹配结果可用于标定。
+ * @details 绑定随机上电会话、配置代次与 resultId。外部实测仍由操作者填写，
+ *          地图估计值和 IMU 闭环误差不能代替真实距离、真实转角。
+ */
+function acceptMotionResult(m) {
+  active = false; resetInput();
+  $("result").textContent = (m.type || "动作") + " · 目标 " + n(m.target,2) +
+    " / 估计 " + n(m.actual,2) + " / 误差 " + n(m.err,2) + " · #" + (m.id ?? "—");
+  event("动作完成：" + $("result").textContent);
+  const types = { odo:"odo_cal", turn:"turn_cal", turn_left:"turn_left_cal", turn_right:"turn_right_cal", climb_observe:"climb_observe" };
+  const matched = pendingCal && types[pendingCal] === m.type;
+  const bound = matched && pendingCalContext?.token === sessionToken &&
+    Number.isInteger(m.id) && m.id > pendingCalContext.afterId &&
+    Number.isInteger(m.sessionId) && m.sessionId > 0 && Number.isInteger(m.configRevision) &&
+    m.configRevision === pendingCalContext.revision && m.configRevision === tm?.configRevision;
+  clearCalibrationRecords();
+  if (bound && pendingCal !== "climb_observe") {
+    const key = calibrationKey(pendingCal);
+    recentCal[key] = true; recentCal[key + "Id"] = m.id;
+    recentCal.records[key] = { ...m, token:sessionToken };
+    $("calStatus").textContent = "动作已完成 · 填写实测值，预览后应用修正。";
+  } else if (bound) {
+    $("climbObservationResult").textContent = "记录 #" + m.id + " · " + n(m.calibrationDurationMs/1000,1) +
+      " s · 轮程估计 " + n(m.actual,1) + " cm · 最大倾角 " + n(m.calibrationMaxTiltDeg,1) +
+      "° · 支撑变化 " + (m.calibrationSupportChanges ?? "—") + " 次 · 请另行记录实际是否登台。";
+    $("calStatus").textContent = "观测记录已完成 · 记录不自动修改登台参数。";
+  } else if (matched) $("calStatus").textContent = "结果绑定已变化 · 请重新执行标定。";
+  pendingCal = null; pendingCalContext = null; updateCalibrationPreview();
+}
+/** @brief 展示候选值；明确应用并回读成功之前，不更改表单中的设备确认值。 */
+function updateCalibrationPreview() {
+  const host = $("calibrationPreview"); if (!host) return;
+  const lines = [];
+  for (const [key,id] of [["odo","measuredOdo"],["leftTurn","measuredLeftTurn"],["rightTurn","measuredRightTurn"]]) {
+    const r = recentCal.records[key], measured = Number($(id).value);
+    if (!r || !Number.isFinite(measured) || measured <= 0) continue;
+    const candidate = key === "odo" ? r.calibrationPulses/measured : r.calibrationTurnFactor*Math.abs(r.target)/measured;
+    if (!Number.isFinite(candidate) || candidate <= 0) continue;
+    lines.push((key === "odo" ? "行程脉冲/cm" : key === "leftTurn" ? "左转滑移系数" : "右转滑移系数") +
+      " → " + n(candidate,4) + " · 外测误差 " + n(measured-Math.abs(r.target),2) + (key === "odo" ? " cm" : "°"));
+  }
+  host.textContent = lines.length ? lines.join("；") + " · 待明确应用" : "完成动作并填写实测值后，显示修正预览。";
+}
+["measuredOdo","measuredLeftTurn","measuredRightTurn"].forEach(id => $(id).oninput = updateCalibrationPreview);
 /**
  * @brief 将外部测量与最近已完成标定关联，交由固件更新并保存系数。
- * @param {string} mode odo 或 turn。
+ * @param {string} mode odo、turn、turn_left 或 turn_right。
  * @param {string} id 外部实测输入框 ID，单位分别为 cm 或 °。
  * @return {Promise<void>} 完成请求及回读流程；失败由 action() 展示。
  * @details recentCal 是本页流程门限；后端独立核对结果类型，并限制会话 resultId 应用一次。
@@ -3801,7 +4042,10 @@ $("calTurn").onclick = () => calibration("turn");
  */
 function applyCalibration(mode, id) {
   return action(async () => {
-    if (!recentCal[mode]) throw new Error("请先完成本页对应的标定动作");
+    const key = calibrationKey(mode), record = recentCal.records[key];
+    if (!recentCal[key] || !record) throw new Error("请先完成本页对应的标定动作");
+    invalidateCalibrationRecords(tm);
+    if (!recentCal[key]) throw new Error("结果已过期，请重新执行标定");
     const input = $(id);
     if (
       !input.reportValidity() ||
@@ -3819,18 +4063,17 @@ function applyCalibration(mode, id) {
       )
     )
       return;
-    const r = await api("/api/calibrate", {
-      mode,
-      measured: Number(input.value),
-    });
+    const r = await api("/api/calibrate", { mode, measured:Number(input.value), id:record.id, sessionId:record.sessionId, configRevision:record.configRevision });
     await readConfig();
-    recentCal[mode] = false;
+    clearCalibrationRecords();
     $("calStatus").textContent = r.message || "设备已应用并保存标定系数。";
     toast("标定参数已保存");
   });
 }
 $("applyOdo").onclick = () => applyCalibration("odo", "measuredOdo");
-$("applyTurn").onclick = () => applyCalibration("turn", "measuredTurn");
+if ($("applyTurn")) $("applyTurn").onclick = () => applyCalibration("turn", "measuredTurn");
+$("applyTurnLeft").onclick = () => applyCalibration("turn_left", "measuredLeftTurn");
+$("applyTurnRight").onclick = () => applyCalibration("turn_right", "measuredRightTurn");
 
 
 // ============================================================================
@@ -3850,6 +4093,49 @@ function arenaGeometry() {
 function mapPoint(x, y) {
   const c = $("arenaMap"), {extent} = arenaGeometry(), scale = c.width / (extent * 2);
   return {x:c.width / 2 + x * scale, y:c.height / 2 - y * scale, scale};
+}
+function segmentCrossesArenaBlock(ax, ay, bx, by, half) {
+  half -= 0.02;
+  let lo = 0, hi = 1;
+  for (const [a, d] of [[ax, bx - ax], [ay, by - ay]]) {
+    if (Math.abs(d) < 1e-5) { if (Math.abs(a) >= half) return false; }
+    else {
+      let p = (-half - a) / d, q = (half - a) / d;
+      if (p > q) [p, q] = [q, p];
+      lo = Math.max(lo, p); hi = Math.min(hi, q);
+      if (lo >= hi) return false;
+    }
+  }
+  return lo < hi && hi > 0 && lo < 1;
+}
+/** 六节点可见图用于界面预览；设备路径遥测仍是执行状态的唯一依据。 */
+function planArenaPreview(sx, sy, gx, gy, a = tm?.arena || {}) {
+  const { outer, platform } = arenaGeometry();
+  const bodyLength = config?.arenaBodyLengthCm || 26, bodyWidth = config?.arenaBodyWidthCm || 24;
+  const margin = Math.hypot(bodyLength, bodyWidth) / 2 + (config?.arenaMarginCm || 8) +
+    (Number.isFinite(a.uncertainty) ? a.uncertainty : 0);
+  const obstacle = platform / 2 + margin, boundary = outer / 2 - margin, corner = obstacle + 5;
+  const inside = (x, y, half) => Math.abs(x) <= half && Math.abs(y) <= half;
+  if (corner >= boundary || !inside(sx, sy, boundary) || !inside(gx, gy, boundary) ||
+      inside(sx, sy, obstacle - 0.02) || inside(gx, gy, obstacle - 0.02)) return [];
+  const x = [sx, gx, corner, -corner, -corner, corner];
+  const y = [sy, gy, corner, corner, -corner, -corner];
+  const cost = [0, Infinity, Infinity, Infinity, Infinity, Infinity], previous = Array(6).fill(-1), used = Array(6).fill(false);
+  for (let pass = 0; pass < 6; pass++) {
+    let u = -1;
+    for (let i = 0; i < 6; i++) if (!used[i] && (u < 0 || cost[i] < cost[u])) u = i;
+    if (u < 0 || !Number.isFinite(cost[u])) break;
+    used[u] = true;
+    for (let v = 0; v < 6; v++) if (!used[v] && !segmentCrossesArenaBlock(x[u], y[u], x[v], y[v], obstacle)) {
+      const next = cost[u] + Math.hypot(x[v] - x[u], y[v] - y[u]);
+      if (next < cost[v]) { cost[v] = next; previous[v] = u; }
+    }
+  }
+  if (previous[1] < 0) return [];
+  const reversed = []; let next = 1;
+  while (next !== 0 && reversed.length < 6) { reversed.push({ x: x[next], y: y[next] }); next = previous[next]; if (next < 0) return []; }
+  if (next !== 0) return [];
+  return [{ x: sx, y: sy }, ...reversed.reverse()];
 }
 function selectArenaTarget(x, y) {
   const {outer} = arenaGeometry();
@@ -3873,6 +4159,12 @@ function acceptArenaTelemetry(m) {
   }
 }
 /** 绘制采用世界坐标；轨迹、误差圆、传感器候选与车头共同遵循同一航向约定。 */
+function arenaDevicePath(a) {
+  if (!online() || !a.routeValid || ![a.x,a.y].every(Number.isFinite) ||
+      !Array.isArray(a.path) || a.path.length < 1 || a.path.length > 6 ||
+      !a.path.every(p=>Number.isFinite(p?.x)&&Number.isFinite(p?.y))) return [];
+  return [{x:a.x,y:a.y}, ...a.path];
+}
 function renderArena() {
   const c = $("arenaMap"), ctx = c.getContext("2d"), {a,outer,platform} = arenaGeometry();
   const center = mapPoint(0,0), scale = center.scale;
@@ -3899,6 +4191,28 @@ function renderArena() {
     ctx.fillStyle="#a87017";ctx.font="12px sans-serif";ctx.textAlign="center";ctx.fillText("登台对准点",e.x,e.y+25);
   }
   if(arenaTrail.length>1){ctx.strokeStyle="#2765e866";ctx.lineWidth=2;ctx.beginPath();arenaTrail.forEach((p,i)=>{const q=mapPoint(p.x,p.y);i?ctx.lineTo(q.x,q.y):ctx.moveTo(q.x,q.y)});ctx.stroke();}
+  let displayPath = arenaDevicePath(a);
+  let previewPath = false;
+  if (!displayPath.length && selectedTarget) {
+    const start = [a.x, a.y].every(Number.isFinite)
+      ? { x: a.x, y: a.y }
+      : { x:Number($("poseX").value), y:Number($("poseY").value) };
+    const upper = ["upper","upper_anchored","upper_estimated"].includes(a.floor) || (!Number.isFinite(a.x) && $("poseFloor").value === "upper");
+    const upperMargin = Math.hypot(config?.arenaBodyLengthCm || 26, config?.arenaBodyWidthCm || 24) / 2 + (config?.arenaMarginCm || 8);
+    const upperBound = platform / 2 - upperMargin;
+    const upperSafe = [start.x,start.y,selectedTarget.x,selectedTarget.y].every(v=>Number.isFinite(v)&&Math.abs(v)<=upperBound);
+    displayPath = upper ? (upperSafe ? [start,selectedTarget] : []) : planArenaPreview(start.x, start.y, selectedTarget.x, selectedTarget.y, a);
+    previewPath = displayPath.length > 1;
+  }
+  if (displayPath.length > 1) {
+    ctx.save(); ctx.beginPath();
+    displayPath.forEach((point, i) => { const q=mapPoint(point.x,point.y); i ? ctx.lineTo(q.x,q.y) : ctx.moveTo(q.x,q.y); });
+    ctx.lineWidth = previewPath ? 4 : 5;
+    ctx.strokeStyle = previewPath ? "#159578" : "#2765e8";
+    ctx.setLineDash(previewPath ? [9,8] : []); ctx.lineCap="round"; ctx.lineJoin="round"; ctx.stroke(); ctx.setLineDash([]);
+    displayPath.slice(1,-1).forEach(point=>{const q=mapPoint(point.x,point.y);ctx.fillStyle=previewPath?"#fff":"#2765e8";ctx.strokeStyle="#2765e8";ctx.beginPath();ctx.arc(q.x,q.y,5,0,Math.PI*2);ctx.fill();ctx.stroke();});
+    ctx.restore();
+  }
   if ([a.x,a.y,a.heading].every(Number.isFinite)) {
     const p=mapPoint(a.x,a.y), fresh=online();
     if(Number.isFinite(a.uncertainty)&&a.uncertainty>=0){ctx.fillStyle="#2765e80c";ctx.strokeStyle="#6b95e888";ctx.setLineDash([5,5]);ctx.beginPath();ctx.arc(p.x,p.y,a.uncertainty*scale,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.setLineDash([]);}
@@ -3911,6 +4225,10 @@ function renderArena() {
   }
   if(a.active&&[a.targetX,a.targetY].every(Number.isFinite)){const p=mapPoint(a.targetX,a.targetY);ctx.strokeStyle="#159578";ctx.setLineDash([4,4]);ctx.beginPath();ctx.arc(p.x,p.y,12,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);}
   if(selectedTarget){const p=mapPoint(selectedTarget.x,selectedTarget.y);ctx.strokeStyle="#159578";ctx.lineWidth=2;ctx.beginPath();ctx.arc(p.x,p.y,9,0,Math.PI*2);ctx.moveTo(p.x-16,p.y);ctx.lineTo(p.x+16,p.y);ctx.moveTo(p.x,p.y-16);ctx.lineTo(p.x,p.y+16);ctx.stroke();}
+  $("mapHelp").textContent = displayPath.length > 1
+    ? (previewPath ? (!Number.isFinite(a.x) ? "虚线 · 由表单草稿起点规划" : "虚线 · 本地路线预览") : "实线 · 车辆计划路线") + " · " + ($("mapClickGo").checked ? "点选即前往已开启" : "选点后点击前往")
+    : selectedTarget ? "当前起点与目标之间没有可行预览路线；车辆仍会独立执行安全检查。"
+      : "点击地图选择目标；路线仅在起点有效时显示，方向键微调，Shift 加大步长。";
   $("arenaPosition").textContent=n(a.x)+" / "+n(a.y);
   $("arenaHeading").textContent=n(a.heading);
   $("arenaUncertainty").textContent=Number.isFinite(a.uncertainty)?"± "+n(a.uncertainty):"未知";
@@ -3936,7 +4254,12 @@ function requestArenaTask(command) {
   if(send(command)){resetInput();active=false;autonomousRequested=true;autonomousRequestedAt=Date.now();event("已请求车端自主任务："+command.t);updateArenaControls();return true;}
   return false;
 }
-$("arenaMap").onclick=e=>{const r=$("arenaMap").getBoundingClientRect(),{extent}=arenaGeometry();selectArenaTarget(((e.clientX-r.left)/r.width-.5)*extent*2,(.5-(e.clientY-r.top)/r.height)*extent*2)};
+$("arenaMap").onclick=e=>{const p=eventToLocalPoint(e,$("arenaMap")),{extent}=arenaGeometry();
+  if(selectArenaTarget((p.x/p.width-.5)*extent*2,(.5-p.y/p.height)*extent*2) && workspaceMode === "auto" && $("mapClickGo").checked && online())
+    requestArenaTask({t:"goto",x:selectedTarget.x,y:selectedTarget.y});
+};
+$("mapClickGo").onchange = renderArena;
+["poseX","poseY","poseFloor"].forEach(id=>$(id).addEventListener("input", renderArena));
 $("arenaMap").onkeydown=e=>{
   if(!["ArrowLeft","ArrowRight","ArrowUp","ArrowDown","Enter"].includes(e.key))return;
   e.preventDefault();const p=selectedTarget||{x:Number.isFinite(tm?.arena?.x)?tm.arena.x:0,y:Number.isFinite(tm?.arena?.y)?tm.arena.y:0},step=e.shiftKey?20:5;
@@ -4029,7 +4352,7 @@ function updateCloudUI() {
   $("cloudClaim").disabled=!cloudAuthorized||!cloudDeviceId||!!cloudLease||!cloudDeviceState?.online;
   $("cloudRelease").disabled=!cloudLease;
   $("cloudHint").textContent=!cloudAuthorized?"请使用专用控制链接":cloudLease?"手动失联停车 · 自主任务断网继续":"点击接管控制开始驾驶 · 设置与解锁请连接本地车辆 Wi-Fi";
-  ["reloadConfig","saveConfig","exportConfig","importConfig","defaults","clearWifi","reboot","calImu","calOdo","calTurn","applyOdo","applyTurn"].forEach(id=>$(id).disabled=true);
+  ["reloadConfig","saveConfig","exportConfig","importConfig","defaults","clearWifi","reboot","calImu","calOdo","calTurnLeft","calTurnRight","calClimbStart","calClimbEnd","applyOdo","applyTurnLeft","applyTurnRight"].forEach(id=>$(id).disabled=true);
   $("configState").textContent="设置与标定请连接本地车辆 Wi-Fi";
   $("stop").disabled=$("preciseStop").disabled=!online()||!cloudCanControl();
 }
@@ -4051,12 +4374,12 @@ function cloudMessage(m) {
   }
   else if(m.t==="lease_end") { if(m.lease===cloudLease){cloudLease="";cloudSeq=0;active=false;resetInput();event("控制租约已结束："+(m.reason||"设备已收回控制"));} }
   else if(m.t==="tm") {
-    tm=m;lastTm=Date.now();if(m.estop){active=false;pendingCal=null;resetInput();}
+    tm=m;lastTm=Date.now();acceptManualTimeout(m);invalidateCalibrationRecords(m);if(m.estop){active=false;pendingCal=null;resetInput();}
     if(active&&!continuous&&m.owner===0&&(m.st==="idle"||m.st==="done")&&Date.now()-requestedAt>1500)active=false;
     acceptArenaTelemetry(m);renderTelemetry();
   } else if(m.t==="error") { active=false;pendingCal=null;resetInput();if(["invalid_lease","device_offline"].includes(m.code)){cloudLease="";cloudSeq=0;}if(m.code==="permit_expired")cloudPermit="";toast(m.message||"云端拒绝操作");event("云端拒绝："+(m.message||m.code||"未知错误")); }
   else if(m.t==="ack") { if(m.ok===false){active=false;resetInput();}event((m.ok===false?"设备拒绝：":"请求已受理：")+(m.message||m.command||"执行情况以遥测为准")); }
-  else if(m.t==="done") {active=false;resetInput();event("设备动作完成："+(m.type||"任务"));$("result").textContent=(m.type||"动作")+" · 目标 "+n(m.target)+" / 实际 "+n(m.actual)+" / 误差 "+n(m.err);}
+  else if(m.t==="done") { acceptMotionResult(m); }
   connectionUI();
 }
 $("cloudClaim").onclick=()=>{if(!cloudAuthorized||!cloudDeviceState?.online)return;cloudSendControl({t:"claim",deviceId:cloudDeviceId});};

@@ -18,7 +18,10 @@ struct HostSerial { void println(const char*){} } Serial;
 static bool apply(const char* json,String& error){
   JsonDocument doc;assert(!deserializeJson(doc,json));return bot::configApply(doc.as<JsonVariantConst>(),error);
 }
-int main(){
+int main(int argc,char** argv){
+  if(argc!=1 && (argc!=3 || std::string(argv[1])!="--defaults-fixture")) {
+    std::fputs("usage: test_config [--defaults-fixture output.json]\n",stderr); return 1;
+  }
   // ============================================================================
   // 场景一：默认值、有效字段更新与省略密码保留
   // ============================================================================
@@ -30,14 +33,24 @@ int main(){
   String error;bot::configBegin();
   assert(bot::configSnapshot().wheelMm==72);
   const auto defaults=bot::configSnapshot();
+  assert(!defaults.developmentMode);
   assert(!defaults.safetyEnabled && defaults.edgeProtection && defaults.irProtection && defaults.tiltProtection);
   assert(defaults.irFailSafeStop && defaults.stallTimeoutMs==1500 && defaults.telemetryHz==15);
+  assert(!defaults.developmentMode && defaults.turnFactorLeft==1 && defaults.turnFactorRight==1);
   assert(defaults.irScale==1 && defaults.impactThresholdG==2 && defaults.irSlowdownCm==60);
   assert(defaults.turnAcceleration==180 && defaults.turnDeceleration==240);
   assert(apply(R"({"apSsid":"TestBot","staSsid":"Router","staPass":"secret-pass","staEnabled":true,"wheelMm":80,"speedPid":{"kp":4,"ki":2,"kd":0.1},"invert":[true,false,true,false],"digitalDebounceMs":70})",error));
   auto cfg=bot::configSnapshot();assert(cfg.wheelMm==80 && cfg.invert[0] && cfg.speedPid.kp==4);
   assert(apply(R"({"maxSpeed":90})",error));
   assert(std::string(bot::configSnapshot().staPass)=="secret-pass");
+  assert(apply(R"({"turnFactor":1.4})",error));
+  assert(bot::configSnapshot().turnFactorLeft==1.4f&&bot::configSnapshot().turnFactorRight==1.4f);
+  assert(apply(R"({"turnFactorLeft":1.2,"turnFactorRight":1.6,"developmentMode":true})",error));
+  assert(bot::configSnapshot().turnFactorLeft==1.2f&&bot::configSnapshot().turnFactorRight==1.6f&&bot::configSnapshot().developmentMode);
+  const auto previousRevision=bot::configSnapshot().revision;
+  assert(apply(R"({"revision":4294967295,"maxSpeed":91})",error));
+  assert(bot::configSnapshot().revision==previousRevision+1); // 只读metadata不能由客户端改写。
+  assert(!apply(R"({"turnFactorLeft":10.1})",error));
   // ============================================================================
   // 场景二：字段类型、范围和非有限值拒绝
   // ============================================================================
@@ -79,9 +92,10 @@ int main(){
   hostNvs["combatfusion/config"]="corrupt-json";bot::configBegin();assert(bot::configSnapshot().wheelMm==72);
   assert(bot::configDefaults(error));
   // 旧 A 配置缺少融合新增键时，加载原参数并以默认值补齐新增项。
-  hostNvs["combatfusion/config"]=R"({"wheelMm":82,"safetyEnabled":false,"heartbeatMs":900})";
+  hostNvs["combatfusion/config"]=R"({"wheelMm":82,"safetyEnabled":false,"heartbeatMs":900,"turnFactor":1.5})";
   bot::configBegin(); cfg=bot::configSnapshot();
   assert(cfg.wheelMm==82 && !cfg.safetyEnabled && cfg.heartbeatMs==900);
+  assert(!cfg.developmentMode && cfg.turnFactorLeft==cfg.turnFactorRight && cfg.turnFactorLeft==1.5f);
   assert(cfg.edgeProtection && cfg.irProtection && cfg.tiltProtection && cfg.irFailSafeStop);
   assert(cfg.stallTimeoutMs==1500 && cfg.telemetryHz==15 && cfg.irScale==1);
   // 完整旧 A 导出的高停车距离有明示兼容；普通部分更新不触发迁移。
@@ -99,10 +113,22 @@ int main(){
   bot::configBegin(); cfg=bot::configSnapshot();
   assert(cfg.safetyEnabled && !cfg.edgeProtection && !cfg.irProtection && !cfg.tiltProtection && !cfg.irFailSafeStop);
   assert(cfg.stallTimeoutMs==5000 && cfg.telemetryHz==30 && cfg.irScale==2 && cfg.impactThresholdG==16);
+  assert(!cfg.developmentMode);
   assert(cfg.irThresholdCm==149 && cfg.irSlowdownCm==150 && cfg.turnAcceleration==3600 && cfg.turnDeceleration==3600);
   const auto stable=hostNvs["combatfusion/config"];
   hostNvsOpen=false; assert(!apply(R"({"telemetryHz":10})",error));
   assert(bot::configSnapshot().telemetryHz==30 && hostNvs["combatfusion/config"]==stable); hostNvsOpen=true;
   assert(hostNvs["combatbot/config"]==oldA && hostNvs["cbot/cfg"]==oldB);
+  if(argc==3) {
+    // 从默认结构体经过生产序列化器输出，供网页逐字段比对；不读取 NVS 或私有配置。
+    JsonDocument fixture;bot::configJson(bot::Config(),fixture.to<JsonObject>(),true);
+    std::string defaultsJson;serializeJson(fixture,defaultsJson);
+    FILE* outputFile=std::fopen(argv[2],"wb");
+    if(!outputFile) { std::perror("create defaults fixture");return 1; }
+    const bool written=std::fwrite(defaultsJson.data(),1,defaultsJson.size(),outputFile)==defaultsJson.size();
+    const int closed=std::fclose(outputFile);
+    if(!written || closed) { std::fputs("write defaults fixture failed\n",stderr);return 1; }
+    std::puts("firmware default config JSON fixture generated");
+  }
   std::puts("config validation/persistence-path tests passed");
 }

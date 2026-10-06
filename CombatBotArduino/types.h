@@ -15,7 +15,7 @@
 
 namespace bot {
 /** @brief 固件发行版本；用于启动日志与握手识别，不作为配置版本或账户凭据。 */
-constexpr const char* FirmwareVersion="4.0.0";
+constexpr const char* FirmwareVersion="5.0.0";
 constexpr uint32_t CloudOwner=0xFFFFFFFEu, AutonomousOwner=0xFFFFFFFDu;
 // ============================================================================
 // 控制参数 · PID 系数与车辆配置
@@ -32,7 +32,7 @@ struct Gains {
 };
 /** @brief 保存车辆完整配置；默认值用于首次启动及恢复出厂参数。 */
 struct Config {
-  uint32_t revision=1; ///< 内存发布代次，不序列化；用于控制任务识别配置切换。
+  uint32_t revision=1; ///< 内存发布代次；JSON 中只读，重启后重置，用于拒绝过期标定。
   // ============================================================================
   // 网络寻址 · 字符数组容量包含结尾的空字符
   // ============================================================================
@@ -60,8 +60,8 @@ struct Config {
   // wheelbaseMm 目前用于配置存储与展示，尚未参与控制计算。
   // 三项尺寸单位均为 mm；PPR 按输出轴一圈的 FG 上升沿事件数定义。
   float wheelMm=72, wheelbaseMm=154, trackMm=170, ppr=90;
-  // pulsesPerCm 为脉冲/cm，0 表示使用理论换算；turnFactor 为转向滑移修正系数。
-  float pulsesPerCm=0, turnFactor=1;
+  // pulsesPerCm 为脉冲/cm，0 表示理论换算；左右滑移系数独立，通用系数保留旧协议语义。
+  float pulsesPerCm=0, turnFactor=1, turnFactorLeft=1, turnFactorRight=1;
   // 最大/默认速度为 cm/s，加减速度为 cm/s²，转向角速度上限为 °/s。
   float maxSpeed=100, defaultSpeed=40, acceleration=80, deceleration=100, maxYawRate=120;
   float turnAcceleration=180, turnDeceleration=240; ///< 转向角加、减速度，单位 °/s²；与直线斜坡分别调节。
@@ -79,6 +79,8 @@ struct Config {
   // 传感器映射与保护阈值 · 有效电平在采集层归一化为触发状态
   // ============================================================================
   bool grayActiveHigh=true, e18ActiveHigh=false, safetyEnabled=false;
+  // 开发模式仅放宽手动摇杆的缺失传感器门槛；开环 PWM ≤180、单次 ≤15 s，默认关闭。
+  bool developmentMode=false;
   // 总开关保留旧版语义；分项只在总开关启用时参与运动仲裁。
   bool edgeProtection=true, irProtection=true, tiltProtection=true;
   bool irFailSafeStop=true; ///< 启用红外保护时，相关方向测距无效则拒绝该方向运动。
@@ -126,7 +128,7 @@ struct Sensors {
 // ============================================================================
 
 /** @brief 控制器支持的指令类型；标定开始与标定参数应用使用不同入口。 */
-enum class CommandType { Heartbeat, Drive, Move, Turn, Stop, Estop, Unlock, Servo, ImuCal, OdoCalStart, TurnCalStart, Pose, Navigate, Battle, Climb, Takeover };
+enum class CommandType { Heartbeat, Drive, Move, Turn, Stop, Estop, Unlock, Servo, ImuCal, OdoCalStart, TurnCalStart, ClimbObserveStart, ClimbObserveEnd, Pose, Navigate, Battle, Climb, Takeover };
 // client 为 WebSocket 连接编号；它用于控制权协调，不构成身份认证凭据。
 // x/y 为 [-1,1] 摇杆输入（右 / 前为正），speed 为 cm/s。
 // value 随类型表示距离 cm、转角 ° 或舵机归一位置 [0,1]；receivedMs 为接收时间 ms。
@@ -135,6 +137,7 @@ struct Command {
   float x=0,y=0,speed=40,value=0; uint32_t receivedMs=0;
   bool expires=false; uint32_t expiresAt=0; ///< 云入口签发的设备时钟期限；入队后不得重算。
   bool upper=false; ///< Pose：人工明确设置所在层面，不能仅由坐标推断。
+  bool directionalCalibration=false; ///< 区分旧版通用转向标定与左/右独立标定协议。
 };
 
 // ============================================================================
@@ -156,9 +159,13 @@ struct Telemetry {
   char state[24]="idle", fault[64]="";
   // 网页输出 progress 时乘以 100；完成结果按 resultId 去重推送。
   bool resultReady=false; ///< 最近一次动作结果是否可读；停车或失败不等同于正常完成。
-  char resultType[12]="";
+  char resultType[20]="";
   float target=0, actual=0, error=0; ///< 目标、实际量与误差；单位随结果类型为 cm、° 或 IMU 零偏 °/s。
   uint32_t resultId=0; ///< 本次启动会话内递增的完成编号；不跨重启持久化。
+  uint32_t resultConfigRevision=0; ///< 结果生成时使用的配置代次；拒绝用旧结果覆盖新参数。
+  uint32_t calibrationSessionId=0; ///< 本次上电随机标识；和 resultId 组合隔离旧页面/旧结果。
   float calibrationPulses=0, calibrationTurnFactor=1; ///< 四轮绝对行程脉冲均值及标定动作使用的转向系数。
+  float calibrationMaxTiltDeg=0; ///< 登台观测期间采样到的最大加速度倾角；仅为观测值。
+  uint32_t calibrationDurationMs=0, calibrationSupportChanges=0; ///< 观测时长及支撑输入变化数，不代表高度或登台成功。
 };
 }

@@ -29,11 +29,21 @@ Dependency Graph
 |-- ESPmDNS @ 2.0.0
 Building in release mode
 Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\src\CombatBotArduino.ino.cpp.o
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\src\controller.cpp.o
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\src\motor.cpp.o
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\src\sensors.cpp.o
+Compiling D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\src\web.cpp.o
+Linking D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\firmware.elf
 Retrieving maximum program size D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\firmware.elf
 Checking size D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\firmware.elf
 Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
-RAM:   [==        ]  19.1% (used 62660 bytes from 327680 bytes)
-Flash: [====      ]  36.9% (used 1159505 bytes from 3145728 bytes)
-========================= [SUCCESS] Took 5.59 seconds =========================
+RAM:   [==        ]  19.2% (used 62940 bytes from 327680 bytes)
+Flash: [====      ]  37.4% (used 1177277 bytes from 3145728 bytes)
+Building D:\PRO\claw\Codexlinshi\CombatBot-v3.0-GitHub\combatbot\.pio\build-arduino\esp32s3\firmware.bin
+esptool.py v4.5.1
+Creating esp32s3 image...
+Merged 2 ELF sections
+Successfully created esp32s3 image.
+========================= [SUCCESS] Took 18.82 seconds =========================
 
 [exit code: 0]

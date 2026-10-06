@@ -31,9 +31,18 @@ inline float pulsesPerCm(const Config& c) { return c.pulsesPerCm>0?c.pulsesPerCm
  * @details s = θ × 有效轮距 / 2；正转角对应左侧后退、右侧前进。
  *          线性比例同样适用于角速度 °/s 到单侧轮速 cm/s 的换算。
  */
-inline float wheelTurnDistance(float degrees,const Config& c) { return degrees*pi/180*(c.trackMm/10)*c.turnFactor/2; }
+inline float directionalTurnFactor(float degrees,const Config& c) {
+  if(degrees>0) return c.turnFactorLeft;
+  if(degrees<0) return c.turnFactorRight;
+  return c.turnFactor;
+}
+inline float wheelTurnDistance(float degrees,const Config& c) { return degrees*pi/180*(c.trackMm/10)*directionalTurnFactor(degrees,c)/2; }
 /** @brief 用右侧减左侧的行程差估算偏航增量；输入 cm，输出 °。 */
-inline float odoYawDegrees(float leftCm,float rightCm,const Config& c) { return (rightCm-leftCm)/(c.trackMm/10*c.turnFactor)*180/pi; }
+inline float odoYawDegrees(float leftCm,float rightCm,const Config& c) {
+  const float differential=rightCm-leftCm;
+  const float factor=directionalTurnFactor(differential,c);
+  return differential/(c.trackMm/10*factor)*180/pi;
+}
 /** @brief 对四轮带符号量求均值；原地差速转向时左右理想值相互抵消。 */
 inline float wheelMean(const float wheel[4]) { return (wheel[0]+wheel[1]+wheel[2]+wheel[3])/4; }
 /**

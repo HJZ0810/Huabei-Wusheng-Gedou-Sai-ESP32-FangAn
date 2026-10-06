@@ -1,8 +1,22 @@
-# CombatBot V4.0 · ESP32-S3 云端控制与自主格斗系统
+# CombatBot · ESP32-S3 四驱格斗车控制系统
+
+**正式版 V4.0 已发布；V5.0 本地预备交付已完成，软件验证通过，尚未公开发布。**
+
+## V5.0 开发预备：融合工作台与实测调校
+
+当前预备分支已实现融合工作台：手动左摇杆/右传感器，自动左传感器/右地图；显式横屏按钮直接旋转布局，按旋转后的实际高度完整显示雷达与地图。无车辆连接时也保留场地、640×640雷达未知扇区和全量默认参数草稿；摇杆可预览外观，操作不会排队或自动发送。
+
+地图显示当前导航阶段完整剩余航点，直达1点也完整渲染；新鲜车端路线为实线，本地绕台或草稿起点预览为虚线。默认地图点选后明确前往，另有默认关闭的“点选即前往”开关，显式开启后仍须自动布局、连接与控制权。标定中心提供IMU、100cm行程、左右转独立修正以及零PWM登台观测；外测候选先预览，结果编号、上电会话、配置代次绑定后明确应用并回读。
+
+新增 developmentMode 默认关闭。本地明确启用后，缺失模块可进行受限人工开环调试：最终PWM≤180/1023，单次最长15秒，保留急停、驱动故障、控制权、换向和心跳停车；实际车速未知，缺失探头不提供完整防掉能力。自动与闭环动作继续核对各自反馈条件。没有新增直行偏差自动修正、舵机限位自标定或登台参数自动建议；公网配置与标定仍走本地车辆Wi-Fi。
+
+19条软件门控全部通过，Arduino-ESP32 2.0.17与3.3.12 Huge APP实际编译链接成功；82项默认配置、离线交互、标定、路线及手机横屏视觉均完成检查。 本地完整包包含V1～V4只读快照；正式公网与GitHub下载仍为V4。设计见 [V5 工作台与调试设计](docs/design/V5融合工作台与调试设计.md)，已实现能力及边界见 [V5 预备记录](docs/releases/V5.0.md)。正式安装与下载仍使用 [V4.0 Release](https://github.com/HJZ0810/Huabei-Wusheng-Gedou-Sai-ESP32-FangAn/releases/tag/v4.0)，V1～V4源码、资料和展开更新记录继续保留。
+
+## 已发布的 V4.0：云端控制与自主格斗
 
 **STA 联网远程访问、分层场地地图、估计定位、点选导航与自主格斗，继续使用分文件 Arduino 工程。** AP 本地操作保留；自主在车端运行，云断网后按任务预算继续，重连可查看与接管。
 
-V4 全量软件门控及Arduino-ESP32 2.0.17/3.3.12实际双编译已通过，公网独立服务、协议替身及专属链接浏览器检查也已完成；当前进行完整包与GitHub发布准备。证据见 [V4 发布说明](docs/releases/V4.0.md)。安装见 [传感器安装与校准](docs/hardware/V4传感器安装与校准.md)，操作见 [联网与比赛](docs/setup/V4联网与比赛操作.md)，服务部署见 [公网入口记录](docs/setup/V4服务器部署.md)。V1/V2/V3 历史内容全部保留，新版本持续向下方记录顶部追加。
+V4 全量软件门控及Arduino-ESP32 2.0.17/3.3.12实际双编译已通过，公网独立服务、协议替身及专属链接浏览器检查也已完成；完整包核验与GitHub发布均已完成。证据见 [V4 发布说明](docs/releases/V4.0.md)。安装见 [传感器安装与校准](docs/hardware/V4传感器安装与校准.md)，操作见 [联网与比赛](docs/setup/V4联网与比赛操作.md)，服务部署见 [公网入口记录](docs/setup/V4服务器部署.md)。V1/V2/V3/V4 历史内容全部保留，新版本持续向下方记录顶部追加。
 
 ## V4.0 带来什么
 
@@ -48,16 +62,34 @@ V3.0 重点修正 V2.0 的运动方向、闭环输出、配置保存及多客户
 
 ## 完整版本更新记录
 
-项目按 **V1.0 完整功能基础 → V2.0 安全与并发加固 → V3.0 控制正确性与可复核交付 → V4.0 云端访问与车端自主** 演进。以下各版本全部展开；历史源码、原说明和扩写说明一并保留，方便查看功能来源与升级取舍。
+项目按 **V1.0 完整功能基础 → V2.0 安全与并发加固 → V3.0 控制正确性与可复核交付 → V4.0 云端访问与车端自主 → V5.0 融合操作与实测调校（本地预备交付）** 演进。以下各版本全部展开；历史源码、原说明和扩写说明一并保留，方便查看功能来源与升级取舍。
 
 | 版本 | 对应源码 | 原版说明 | 扩写版本说明 | 发布与下载 |
 |---|---|---|---|---|
-| V4.0 | [当前 Arduino 工程](CombatBotArduino/) / [维护工程](combatbot/) | [当前 README](README.md) | [V4.0 发布记录](docs/releases/V4.0.md) | [已发布：完整 Arduino 工程包](https://github.com/HJZ0810/Huabei-Wusheng-Gedou-Sai-ESP32-FangAn/releases/tag/v4.0) |
+| V5.0 | [当前维护分支](combatbot/)（本地预备交付） | [V5 预备记录](docs/releases/V5.0.md) | [V5 工作台与调试设计](docs/design/V5融合工作台与调试设计.md) | 本地完整包已校验，未公开发布 |
+| V4.0 | [固定 Arduino 工程](https://github.com/HJZ0810/Huabei-Wusheng-Gedou-Sai-ESP32-FangAn/tree/v4.0/CombatBotArduino) / [固定维护工程](https://github.com/HJZ0810/Huabei-Wusheng-Gedou-Sai-ESP32-FangAn/tree/v4.0/combatbot) | [V4 发布时 README](https://github.com/HJZ0810/Huabei-Wusheng-Gedou-Sai-ESP32-FangAn/blob/v4.0/README.md) | [V4.0 发布记录](docs/releases/V4.0.md) | [已发布：完整 Arduino 工程包](https://github.com/HJZ0810/Huabei-Wusheng-Gedou-Sai-ESP32-FangAn/releases/tag/v4.0) |
 | V3.0 | [固定 Arduino 源码](https://github.com/HJZ0810/Huabei-Wusheng-Gedou-Sai-ESP32-FangAn/tree/v3.0/CombatBotArduino) / [固定维护工程](https://github.com/HJZ0810/Huabei-Wusheng-Gedou-Sai-ESP32-FangAn/tree/v3.0/combatbot) | [V3.0 发布时 README](https://github.com/HJZ0810/Huabei-Wusheng-Gedou-Sai-ESP32-FangAn/blob/3fa1f7e/README.md) | [V3.0 发布与迁移](docs/releases/V3.0.md) | [V3.0 Release](https://github.com/HJZ0810/Huabei-Wusheng-Gedou-Sai-ESP32-FangAn/releases/tag/v3.0) |
 | V2.0 | [CombatBot_Fusion](versions/v2.0/CombatBot_Fusion/) | [V2.0 原 README](versions/v2.0/CombatBot_Fusion/README.md) | [V2.0 详细说明](docs/releases/V2.0.md) | [V2.0 历史 Release](https://github.com/HJZ0810/Huabei-Wusheng-Gedou-Sai-ESP32-FangAn/releases/tag/v2.0) |
 | V1.0 | [CombatBot_ESP32S3](versions/v1.0/CombatBot_ESP32S3/) | [V1.0 原 README](versions/v1.0/CombatBot_ESP32S3/README.md) | [V1.0 详细说明](docs/releases/V1.0.md) | [V1.0 历史 Release](https://github.com/HJZ0810/Huabei-Wusheng-Gedou-Sai-ESP32-FangAn/releases/tag/v1.0) |
 
-### V4.0 · 云端访问、估计地图与车端自主 · 2026-10-06（发布准备）
+### V5.0 · 融合操作、离线准备与实测调校 · 2026-10-06（本地验证通过，未公开发布）
+
+**本版定位：** 在V4单车云控与车端自主基础上，把驾驶和感知整合，支持未装机时完整准备界面与参数，并用真实外测修正设备系数。本节描述当前预备分支实现，不代表正式发布或实车验收。
+
+- **融合工作台。** 手动左操作/右感知，自动左感知/右地图，单份DOM重排；切换布局不自动比赛或接管，必要时清理人工输入。
+- **强制横屏。** 按钮直接旋转操作容器，地图/摇杆共用坐标逆变换；根据旋转后的可用高度缩放完整图形，详情在两列内部纵向浏览。
+- **全量默认草稿。** 已有固件默认字段、PID、反向数组完整填表，未连接可编辑/导入/导出；默认草稿不建立设备读取成功状态，不自动保存或发Command。
+- **大雷达与未知态。** 640×640雷达保留完整环、扇区和通道，地图离线仍绘场地；离线摇杆响应外观并提示尚未发送，不生成模拟位置、障碍或读数。
+- **可见路径和点击前往。** 新鲜车端1～6个剩余航点连到当前估计位置；虚线预览使用本地可见图/Dijkstra，离线草稿起点明确标注。默认关闭的点选即前往开关仅在自动布局与有效控制条件下发送导航，车端独立检查。
+- **受限开发驱动。** developmentMode默认false，本地明确启用后采用前馈开环，最终PWM≤180/1023，单次最长15秒；持续drv不延长预算；超时后锁存，必须显式Stop执行后才重新准入，网页同步清理按住输入。急停/故障/换向/失联保留。速度未知，未装探头不能认证防掉，比赛与闭环反馈条件不放宽。
+- **实测绑定标定。** 标定中心包含IMU、100cm前进行程、左右360°独立系数、零PWM登台观测及直线/转角复验。候选先预览，再以id/sessionId/configRevision匹配最近未消费结果应用，NVS成功后回读确认。登台观测不驱动车辆、不认证成功、不自动调参。
+- **白蓝交互与历史保留。** 减少重复标题，增加轻量入场、光晕及按压反馈；未知和过期来源仍清楚，支持减少动画。V1～V4展开记录与固定下载入口继续保留。
+
+**进步与优势：** 同页操作与观察降低切页负担；装车前可完整查看默认参数及未知探头；外测修正可以先看候选，旧结果不会跨会话、跨配置或重复保存。完整当前阶段路线与草稿预览有不同样式，既能查看计划也能辨别来源。V4已有控制权、PID、急停、AP/STA与自主断网继续均为继承。
+
+**当前证据与边界：** 19条软件门控全部通过，Arduino-ESP32 2.0.17与3.3.12 Huge APP实际编译链接成功；82项默认配置、离线交互、标定、路线及手机横屏视觉均完成检查。 本地完整包与CRC/SHA256核验完成，V1～V4共378个原始文件保留。尚未公开发布或升级公网，未上板。未新增自动直行偏差修正、独立后退标定、舵机限位自标定或试验历史库；公网管理仍只在本地Wi-Fi进行，真实爬阶、防掉、滑移和停止距离待实装。详细状态见 [V5记录](docs/releases/V5.0.md)。
+
+### V4.0 · 云端访问、估计地图与车端自主 · 2026-10-06（已发布）
 
 **本版定位：** 从 V3 手动控制基础继续扩展，STA 联网后使用服务器托管网页远程访问，车端独立执行带预算的导航、登台和格斗任务。AP 本地方式保留，旧版资料和发布入口不被新版本覆盖。
 
@@ -179,7 +211,7 @@ python scripts/convert_workbuddy_config.py "V2参数.json" "V3候选.json"
 | [combatbot/scripts/](combatbot/scripts/) | 导出、验证、迁移、打包工具 |
 | [docs/README.md](docs/README.md) | 当前资料与各版本历史说明索引 |
 | [server/](server/) | 单车公网中继、固定依赖、部署与协议测试 |
-| [versions/](versions/) | V1.0 / V2.0 / V3.0 完整历史工程及原版文档，只读保留 |
+| [versions/](versions/) | V1.0 / V2.0 / V3.0 / V4.0 完整历史工程及原版文档，只读保留 |
 
 修改维护源或网页后，在 `combatbot/` 执行以下命令同步导出并重新验证；不要只改导出副本后继续打包。
 

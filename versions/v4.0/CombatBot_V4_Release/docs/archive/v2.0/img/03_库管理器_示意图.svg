@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 566" width="900" height="566" font-family="Segoe UI, Microsoft YaHei, PingFang SC, sans-serif">
+  <rect width="900" height="566" fill="#0B0F14" rx="10"/>
+
+  <!-- 标题栏 -->
+  <rect x="0" y="0" width="900" height="46" fill="#131A22" rx="10"/>
+  <rect x="0" y="36" width="900" height="10" fill="#131A22"/>
+  <circle cx="22" cy="23" r="6" fill="#F43F5E"/>
+  <circle cx="42" cy="23" r="6" fill="#FF8A3D"/>
+  <circle cx="62" cy="23" r="6" fill="#34D399"/>
+  <text x="86" y="29" fill="#8B98A5" font-size="13">Arduino IDE 2.x — 库管理器（示意图，用于说明操作位置）</text>
+
+  <!-- 左侧图标栏 -->
+  <rect x="0" y="46" width="46" height="520" fill="#0E141B"/>
+  <rect x="6" y="96" width="34" height="34" rx="8" fill="#22D3EE" opacity="0.18" stroke="#22D3EE" stroke-width="1.5"/>
+  <g stroke="#22D3EE" stroke-width="1.6" fill="none">
+    <rect x="14" y="104" width="18" height="4" rx="1"/>
+    <rect x="14" y="110" width="18" height="4" rx="1"/>
+    <rect x="14" y="116" width="18" height="4" rx="1"/>
+  </g>
+  <rect x="6" y="146" width="34" height="34" rx="8" fill="#1B2530"/>
+  <path d="M14 172 L20 156 L26 172 Z" fill="#8B98A5"/>
+  <rect x="6" y="196" width="34" height="34" rx="8" fill="#1B2530"/>
+  <circle cx="23" cy="213" r="7" fill="none" stroke="#8B98A5" stroke-width="1.6"/>
+  <rect x="6" y="246" width="34" height="34" rx="8" fill="#1B2530"/>
+  <path d="M15 258 h16 M23 258 v14 M17 272 h12" stroke="#8B98A5" stroke-width="1.6" fill="none"/>
+
+  <!-- 指向图标栏的注释 -->
+  <path d="M118 113 L52 113" stroke="#22D3EE" stroke-width="2" fill="none" marker-end="url(#a1)"/>
+  <defs>
+    <marker id="a1" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto">
+      <path d="M0 0 L9 4.5 L0 9 z" fill="#22D3EE"/>
+    </marker>
+  </defs>
+  <text x="126" y="110" fill="#22D3EE" font-size="15" font-weight="600">第 1 步：点左侧第 2 个图标（书堆）= 库管理器</text>
+  <text x="126" y="132" fill="#8B98A5" font-size="12.5">工具 → 管理库… 也能打开同一个面板</text>
+
+  <!-- 搜索框 -->
+  <rect x="70" y="160" width="800" height="42" rx="8" fill="#131A22" stroke="#22D3EE" stroke-width="2"/>
+  <circle cx="96" cy="181" r="7" fill="none" stroke="#8B98A5" stroke-width="2"/>
+  <path d="M101 186 L107 192" stroke="#8B98A5" stroke-width="2"/>
+  <text x="120" y="186" fill="#E6EDF3" font-size="15">ArduinoJson</text>
+  <text x="790" y="186" fill="#8B98A5" font-size="12">类型：全部</text>
+
+  <!-- 结果卡片 1 -->
+  <rect x="70" y="220" width="800" height="112" rx="10" fill="#131A22" stroke="#34D399" stroke-width="2"/>
+  <text x="92" y="250" fill="#E6EDF3" font-size="16" font-weight="700">ArduinoJson</text>
+  <text x="240" y="250" fill="#8B98A5" font-size="13">by Benoit Blanchon</text>
+  <text x="92" y="278" fill="#8B98A5" font-size="13">JSON 序列化 / 反序列化库。本项目配置读写依赖它。</text>
+  <text x="92" y="304" fill="#34D399" font-size="13">✔ 版本请选 7.x（下拉框可选）</text>
+  <rect x="700" y="248" width="150" height="38" rx="19" fill="#22D3EE"/>
+  <text x="775" y="273" fill="#06222B" font-size="15" font-weight="700" text-anchor="middle">安  装</text>
+
+  <!-- 结果卡片 2 -->
+  <rect x="70" y="348" width="800" height="76" rx="10" fill="#131A22" stroke="#1E2A36" stroke-width="1.5"/>
+  <text x="92" y="378" fill="#8B98A5" font-size="15" font-weight="600">ArduinoJson（其它版本 / 同名条目）</text>
+  <text x="92" y="402" fill="#5C6B7A" font-size="12.5">不要重复安装多个版本，否则编译时会提示重复定义</text>
+  <rect x="700" y="366" width="150" height="38" rx="19" fill="#1B2530" stroke="#3A4A5A"/>
+  <text x="775" y="391" fill="#8B98A5" font-size="15" text-anchor="middle">已安装</text>
+
+  <!-- 底部提示 -->
+  <rect x="70" y="444" width="800" height="104" rx="10" fill="#1A1508" stroke="#FF8A3D" stroke-width="1.5"/>
+  <text x="92" y="472" fill="#FF8A3D" font-size="14" font-weight="700">⚠ 本项目一共要装 7 个库（在库管理器里逐个搜索安装）</text>
+  <text x="92" y="500" fill="#E8D9C0" font-size="13">ArduinoJson · ESPAsyncWebServer · AsyncTCP · Adafruit MPU6050</text>
+  <text x="92" y="524" fill="#E8D9C0" font-size="13">Adafruit ADXL345 · Adafruit Unified Sensor · Adafruit MCP23017 Arduino Library</text>
+  <text x="92" y="542" fill="#8B98A5" font-size="11.5">注意：ESPAsyncWebServer 与 AsyncTCP 必须选作者 ESP32Async 的 3.x 版</text>
+</svg>

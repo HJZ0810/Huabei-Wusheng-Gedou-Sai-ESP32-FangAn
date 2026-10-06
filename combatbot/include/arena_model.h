@@ -71,6 +71,8 @@ struct Target {
   float bearingDeg=0, distanceCm=0;
   uint32_t observedMs=0;
 };
+constexpr uint8_t MaxRoutePoints=6;
+struct RoutePoint { float xCm=0,yCm=0; };
 struct Decision {
   float forwardCmS=0, yawDegS=0;
   Mode mode=Mode::Idle;
@@ -81,6 +83,9 @@ struct Decision {
   bool climbEstimated=false;
   bool hasGoal=false;
   float goalX=0, goalY=0; ///< 世界目标坐标 cm；候选敌人不是固定世界目标。
+  bool routeValid=false;
+  uint8_t routeCount=0;
+  RoutePoint route[MaxRoutePoints]; ///< 由当前估计位姿生成的剩余规划点，不代表实测轨迹。
 };
 
 /** @brief 校验配置；不能代替硬件标定。 */

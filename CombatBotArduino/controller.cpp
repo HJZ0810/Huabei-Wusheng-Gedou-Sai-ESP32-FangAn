@@ -31,23 +31,30 @@
 
 namespace bot {
 namespace {
+// 开发模式仍限制最终 PWM 输出，不依赖速度 PID 或死区补偿间接限速。
+constexpr float DevelopmentPwmLimit=180.0f;
+constexpr uint32_t DevelopmentDriveLimitMs=15000;
 // ============================================================================
 // 控制任务私有状态与跨任务门控
 // ============================================================================
 // 除原子门控、命令队列和发布快照外，本命名空间的运动状态由 run() 独占。
-enum class Mode:uint8_t { Idle,Drive,Move,Turn,OdoCal,TurnCal,ImuCal,Autonomous };
+enum class Mode:uint8_t { Idle,Drive,Move,Turn,OdoCal,TurnCal,ImuCal,ClimbObserve,Autonomous };
 /** @brief 命令携带投递代次；停止后不再执行旧代次的排队命令。 */
 struct Queued { Command command; uint32_t generation; };
 QueueHandle_t queue=nullptr; ///< 网络侧生产、控制任务消费的有界命令队列。
 // generation：停止代次；owner：占用运动的客户端 ID，0 表示无占用者。
 // heartbeat：当前占用者最近一次有效心跳的 millis() 时间。所有权不承担身份认证。
 std::atomic<uint32_t> generation{0}, owner{0}, heartbeat{0};
-std::atomic<unsigned> pendingStop{0}; ///< 位 0 为待处理停止；位 1 为需保持的急停锁定。
+std::atomic<unsigned> pendingStop{0}; ///< 位0：停止；位1：急停锁定；位2：显式Stop允许开发驾驶重新准入。
 // locked 拒绝运动，busy 表示动作或保存门控，continuous 允许同一占用者更新 Drive。
 std::atomic<bool> locked{false}, busy{false}, continuous{false};
+std::atomic<bool> climbObserveActive{false};
+// 开发驾驶超时后必须先显式停车；连续摇杆包、空闲零输入和内部断线停车不能重开窗口。
+std::atomic<bool> developmentDriveExpired{false};
 // 0=可申请，1=控制任务正在消费命令，2=配置操作；只做短路径仲裁，不自旋等待。
 std::atomic<unsigned> admission{0};
-// 所有权释放与实际撤输出不是同一时刻；配置窗口必须等控制任务执行过 motorStop。
+// 所有权释放与停止调用不是同一时刻；配置窗口必须等控制任务执行过 motorStop。
+// 此标志只确认停止流程已运行；输出硬件健康独立门控，不能据此证明物理 PWM 归零。
 std::atomic<bool> outputsStopped{true};
 portMUX_TYPE snapshotMux=portMUX_INITIALIZER_UNLOCKED;
 Telemetry published, t; ///< published 为受临界区保护的发布副本，t 为控制任务工作副本。
@@ -74,6 +81,10 @@ uint32_t arenaRevision=0;
 uint32_t poseQuietStarted=0;
 bool poseQuiet=false;
 arena::Mode arenaDriveMode=arena::Mode::Idle;
+bool directionalTurnCal=false;
+uint32_t climbObserveStarted=0, climbObserveSupportChanges=0;
+float climbObserveMaxTilt=0;
+bool climbObserveGround[7]={false};
 
 /** @brief 将本周期参数映射为无网络依赖的自主配置；保存只在空闲窗口进行。 */
 void configureArena(const Config& c) {
@@ -102,7 +113,7 @@ void configureArena(const Config& c) {
 // ============================================================================
 void text(char* dest,size_t n,const char* value) { snprintf(dest,n,"%s",value); }
 bool precision() { return mode==Mode::Move || mode==Mode::Turn || mode==Mode::OdoCal || mode==Mode::TurnCal; }
-bool moving() { return mode!=Mode::Idle && mode!=Mode::ImuCal; }
+bool moving() { return mode!=Mode::Idle && mode!=Mode::ImuCal && mode!=Mode::ClimbObserve; }
 /** @brief 动作切换时清除 PID、速度需求和到位保持状态，避免旧积分影响新动作。 */
 void resetLoops() {
   headingLoop.reset();
@@ -111,10 +122,11 @@ void resetLoops() {
   settleSince=0;
 }
 /**
- * @brief   在控制任务中撤去电机输出，释放占用者并回到空闲状态。
+ * @brief   在控制任务中请求四轮零输出，释放占用者并回到空闲状态。
  * @param reason 可选故障文本；为空时保留现有文本。
  * @param latch 为 true 时保持急停锁定。
- * @note PWM 归零只撤去驱动，实际余转与停车距离由硬件和负载决定。
+ * @note 输出 API 失败时仅能尽力撤驱动并关闭硬件准入；成功归零也不代表主动制动。
+ *       实际余转与停车距离由硬件和负载决定。
  *       此函数不改变命令代次；需使旧命令失效的调用路径另行增加 generation。
  */
 void stopMotion(const char* reason=nullptr,bool latch=false) {
@@ -124,6 +136,7 @@ void stopMotion(const char* reason=nullptr,bool latch=false) {
   arenaDriveMode=arena::Mode::Idle;
   motorStop(); outputsStopped.store(true); resetLoops(); mode=Mode::Idle;
   owner.store(0); busy.store(false); continuous.store(false);
+  climbObserveActive.store(false);
   t.owner=0; t.imuCalibrating=false;
   if(latch) locked.store(true);
   t.estop=locked.load(); text(t.state,sizeof(t.state),t.estop?"locked":"idle");
@@ -139,45 +152,94 @@ void fault(const char* reason) {
  *       标定计数取四轮脉冲增量绝对值均值，原地转向时不会左右抵消。
  */
 void result(const Config& c) {
+  if(mode==Mode::OdoCal) {
+    const float mean=absolutePulseTravel(t.pulses,startPulses);
+    for(int i=0;i<4;++i) {
+      const double delta=double(t.pulses[i]-startPulses[i]);
+      // 直线均值到位不能证明四路 FG 都有反馈；断一路时拒绝形成可落库结果。
+      if(delta*target<=0 || std::fabs(delta)<mean*0.5f) { fault("calibration_fg_incomplete"); return; }
+    }
+  }
   const bool angular=mode==Mode::Turn || mode==Mode::TurnCal;
-  text(t.resultType,sizeof(t.resultType),mode==Mode::OdoCal?"odo_cal":mode==Mode::TurnCal?"turn_cal":angular?"turn":"move");
+  const char* type=mode==Mode::OdoCal?"odo_cal":mode==Mode::TurnCal?
+    (directionalTurnCal?(target>0?"turn_left_cal":"turn_right_cal"):"turn_cal"):angular?"turn":"move";
+  text(t.resultType,sizeof(t.resultType),type);
   t.target=target; t.actual=angular?t.yaw-startYaw:t.odo-startOdo;
   t.error=t.actual-t.target; t.resultReady=true; ++t.resultId;
+  t.resultConfigRevision=c.revision; t.calibrationSessionId=hardwareBootId();
   t.calibrationPulses=absolutePulseTravel(t.pulses,startPulses);
   t.calibrationTurnFactor=startTurnFactor;
   t.progress=1;
   stopMotion(); text(t.state,sizeof(t.state),"done");
-  (void)c;
+}
+/** @brief 结束只读登台观测并发布传感记录；该结果不触发配置写入或高度结论。 */
+void finishClimbObservation(const Config& c,uint32_t now) {
+  t.resultReady=true; ++t.resultId; t.resultConfigRevision=c.revision; t.calibrationSessionId=hardwareBootId();
+  text(t.resultType,sizeof(t.resultType),"climb_observe");
+  t.calibrationDurationMs=std::min<uint32_t>(now-climbObserveStarted,60000);
+  t.calibrationSupportChanges=climbObserveSupportChanges;
+  t.calibrationMaxTiltDeg=climbObserveMaxTilt;
+  t.calibrationPulses=absolutePulseTravel(t.pulses,startPulses);
+  t.calibrationTurnFactor=1;
+  t.target=float(t.calibrationDurationMs); t.actual=t.calibrationPulses/pulsesPerCm(c);
+  t.error=t.calibrationMaxTiltDeg; t.progress=1;
+  stopMotion(); text(t.state,sizeof(t.state),"climb_observe_done");
+}
+/** @brief 观测期间只采样，不产生轮速需求；传感器掉线或心跳超时则丢弃记录。 */
+void updateClimbObservation(const Config& c,uint32_t now) {
+  const Sensors& s=t.sensors;
+  if(!hardwareOutputsHealthy() || !s.imuOk || timedOut(now,s.imuMs,80) || !s.accelOk ||
+      !std::isfinite(s.acc[0]) || !std::isfinite(s.acc[1]) || !std::isfinite(s.acc[2]) ||
+      !s.ioOk || timedOut(now,s.digitalMs,80)) {
+    stopMotion("climb_observe_sensor_unavailable"); return;
+  }
+  if(timedOut(now,heartbeat.load(),c.heartbeatMs)) {
+    stopMotion("climb_observe_disconnected"); return;
+  }
+  const float magnitude=std::sqrt(s.acc[0]*s.acc[0]+s.acc[1]*s.acc[1]+s.acc[2]*s.acc[2]);
+  if(magnitude>0.3f && std::isfinite(magnitude))
+    climbObserveMaxTilt=std::max(climbObserveMaxTilt,std::acos(clampf(s.acc[2]/magnitude,-1,1))*180/pi);
+  bool current[7]; for(int i=0;i<4;++i) current[i]=s.gray[i];
+  for(int i=0;i<3;++i) current[i+4]=s.e18[i];
+  for(int i=0;i<7;++i) { if(current[i]!=climbObserveGround[i]) ++climbObserveSupportChanges; climbObserveGround[i]=current[i]; }
+  if(uint32_t(now-climbObserveStarted)>=60000) finishClimbObservation(c,now);
 }
 /**
  * @brief   检查当前运动是否具备基本硬件与传感条件。
- * @details IMU/初始化状态和 250 ms 采集时间检查始终生效；数字边缘与倾倒
- *          由总开关及各自开关控制。已启用保护的输入失效时拒绝运动和解锁。
+ * @details PWM 初始化和采集时间门控始终生效；开发手动可忽略缺失传感器，
+ *          已在线且报告真实危险的输入仍按相应保护开关停车。自主及标定不放宽。
  * @note sampledMs 是采集调用时间，各缓存通道并非同一时刻完成采样。
  */
-const char* sensorFault(const Sensors& s,const Config& c,uint32_t now) {
-  if(!hardwareHealthy() || !s.imuOk || !std::isfinite(s.gyroDps)) return "imu_or_motor_unavailable";
+const char* sensorFault(const Sensors& s,const Config& c,uint32_t now,bool allowDevManual=false) {
+  const bool relaxed=allowDevManual && c.developmentMode;
+  const bool imuFresh=s.imuOk && !timedOut(now,s.imuMs,80);
+  const bool digitalFresh=s.ioOk && !timedOut(now,s.digitalMs,80);
+  if(!hardwareOutputsHealthy()) return "motor_output_unavailable";
+  if(s.imuOk && !std::isfinite(s.gyroDps)) return "imu_or_motor_unavailable";
+  if(!imuFresh && !relaxed) return s.imuOk?"imu_sample_stale":"imu_or_motor_unavailable";
   if(timedOut(now,s.sampledMs,250)) return "sensor_timeout";
   if(c.arenaEnabled) {
-    if(!s.ioOk || timedOut(now,s.digitalMs,80)) return "floor_sensor_unavailable";
+    const bool floorUnavailable=!digitalFresh;
+    if(floorUnavailable && !relaxed) return "floor_sensor_unavailable";
     // 自主边缘处理由模型选择有限撤离方向；人工驾驶则立即撤去输出。
-    if(mode!=Mode::Autonomous) for(int i=0;i<3;++i)
+    if(mode!=Mode::Autonomous && !floorUnavailable) for(int i=0;i<3;++i)
       if(!s.e18[i] || !s.groundRaw[i]) return "floor_support_lost";
   }
   if(c.safetyEnabled) {
     if(c.edgeProtection) {
-      if(!s.ioOk) return "safety_io_unavailable";
-      if(!c.arenaEnabled && sensorEdge(s)) return "edge_detected";
+      if(!digitalFresh) { if(!relaxed) return "safety_io_unavailable"; }
+      else if(!c.arenaEnabled && sensorEdge(s)) return "edge_detected";
     }
     if(c.tiltProtection) {
-      if(!s.accelOk || !std::isfinite(s.acc[0]) || !std::isfinite(s.acc[1]) || !std::isfinite(s.acc[2])) return "tilt_sensor_unavailable";
-      if(sensorTilt(s)) return "robot_tilted";
+      if(!s.accelOk || (s.imuOk && !imuFresh) || !std::isfinite(s.acc[0]) || !std::isfinite(s.acc[1]) || !std::isfinite(s.acc[2])) {
+        if(!relaxed) return "tilt_sensor_unavailable";
+      } else if(sensorTilt(s)) return "robot_tilted";
     }
   }
   return nullptr;
 }
-bool sensorsPermit(const Sensors& s,const Config& c,uint32_t now) {
-  const char* reason=sensorFault(s,c,now);
+bool sensorsPermit(const Sensors& s,const Config& c,uint32_t now,bool allowDevManual=false) {
+  const char* reason=sensorFault(s,c,now,allowDevManual);
   if(reason) { fault(reason); return false; }
   return true;
 }
@@ -197,12 +259,34 @@ void accept(const Command& cmd,const Config& c,uint32_t now) {
     return;
   }
   if(cmd.type==CommandType::Unlock) {
-    if(mode==Mode::Idle && !sensorFault(t.sensors,c,now)) {
+    if(mode==Mode::Idle && !sensorFault(t.sensors,c,now,c.developmentMode)) {
       locked.store(false); t.estop=false; text(t.fault,sizeof(t.fault),""); text(t.state,sizeof(t.state),"idle");
     }
     return;
   }
   if(locked.load()) return;
+  if(cmd.type==CommandType::ClimbObserveEnd) {
+    if(mode==Mode::ClimbObserve && cmd.client==owner.load()) {
+      // 手动结束也必须先检查新鲜度与心跳，不能绕过本周期观测校验。
+      updateClimbObservation(c,now);
+      if(mode==Mode::ClimbObserve) finishClimbObservation(c,now);
+    } else if(mode==Mode::Idle) stopMotion("climb_observe_not_active");
+    return;
+  }
+  if(cmd.type==CommandType::ClimbObserveStart) {
+    if(mode!=Mode::Idle || !sensorsPermit(t.sensors,c,now) || !t.sensors.accelOk || !t.sensors.ioOk ||
+       timedOut(now,t.sensors.imuMs,80) || timedOut(now,t.sensors.digitalMs,80)) {
+      if(mode==Mode::Idle) stopMotion("climb_observe_sensor_unavailable");
+      return;
+    }
+    stopMotion(); mode=Mode::ClimbObserve; busy.store(true); owner.store(cmd.client); t.owner=cmd.client;
+    climbObserveActive.store(true); climbObserveStarted=now; climbObserveSupportChanges=0; climbObserveMaxTilt=0;
+    std::memcpy(startPulses,t.pulses,sizeof(startPulses));
+    for(int i=0;i<4;++i) climbObserveGround[i]=t.sensors.gray[i];
+    for(int i=0;i<3;++i) climbObserveGround[i+4]=t.sensors.e18[i];
+    t.resultReady=false; t.progress=0; text(t.fault,sizeof(t.fault),"");
+    text(t.state,sizeof(t.state),"climb_observe"); return;
+  }
   if(cmd.type==CommandType::Servo) { servoWrite(cmd.value,c); return; }
   if(mode!=Mode::Idle && !(mode==Mode::Drive && cmd.type==CommandType::Drive && cmd.client==t.owner)) return;
   if(cmd.type==CommandType::Pose) {
@@ -219,7 +303,7 @@ void accept(const Command& cmd,const Config& c,uint32_t now) {
     t.resultReady=false; t.imuCalibrating=true; text(t.state,sizeof(t.state),"imu_calibrating");
     std::memcpy(startPulses,t.pulses,sizeof(startPulses)); actionStarted=now; calSum=calSumSq=0; calSamples=0; return;
   }
-  if(!sensorsPermit(t.sensors,c,now)) return;
+  if(!sensorsPermit(t.sensors,c,now,cmd.type==CommandType::Drive && c.developmentMode)) return;
   if(cmd.type==CommandType::Navigate || cmd.type==CommandType::Battle || cmd.type==CommandType::Climb) {
     const bool ok=cmd.type==CommandType::Navigate?arenaModel.startNavigate(cmd.x,cmd.y,now):
       cmd.type==CommandType::Battle?arenaModel.startBattle(now):arenaModel.startClimb(now);
@@ -237,14 +321,14 @@ void accept(const Command& cmd,const Config& c,uint32_t now) {
   heartbeat.store(cmd.receivedMs); actionStarted=now; t.resultReady=false; t.progress=0;
   text(t.fault,sizeof(t.fault),"");
   std::memcpy(startPulses,t.pulses,sizeof(startPulses)); startYaw=t.yaw; startOdo=t.odo;
-  startTurnFactor=c.turnFactor;
+  startTurnFactor=directionalTurnFactor(cmd.value,c);
   actionSpeed=clampf(cmd.speed,1,c.maxSpeed);
   switch(cmd.type) {
     case CommandType::Drive: mode=Mode::Drive; continuous.store(true); driveX=clampf(cmd.x,-1,1); driveY=clampf(cmd.y,-1,1); actionSpeed=clampf(cmd.speed,0,c.maxSpeed); text(t.state,sizeof(t.state),"drive"); return;
     case CommandType::Move: mode=Mode::Move; target=cmd.value; text(t.state,sizeof(t.state),"move"); break;
     case CommandType::Turn: mode=Mode::Turn; target=cmd.value; text(t.state,sizeof(t.state),"turn"); break;
     case CommandType::OdoCalStart: mode=Mode::OdoCal; target=cmd.value==0?100:cmd.value; text(t.state,sizeof(t.state),"odo_cal"); break;
-    case CommandType::TurnCalStart: mode=Mode::TurnCal; target=cmd.value==0?360:cmd.value; text(t.state,sizeof(t.state),"turn_cal"); break;
+    case CommandType::TurnCalStart: mode=Mode::TurnCal; target=cmd.value==0?360:cmd.value; startTurnFactor=directionalTurnFactor(target,c); directionalTurnCal=cmd.directionalCalibration; text(t.state,sizeof(t.state),"turn_cal"); break;
     default: stopMotion(); return;
   }
   continuous.store(false);
@@ -266,6 +350,9 @@ void accept(const Command& cmd,const Config& c,uint32_t now) {
  */
 void updateCalibration(const Config& c,uint32_t now) {
   motorStop();
+  if(!hardwareOutputsHealthy() || !t.sensors.imuOk || timedOut(now,t.sensors.imuMs,80) || !std::isfinite(t.sensors.gyroDps)) {
+    stopMotion("imu_cal_sample_unavailable"); return;
+  }
   bool still=t.sensors.imuOk && std::fabs(t.sensors.gyroDps-c.gyroBias)<8;
   for(int i=0;i<4;++i) still=still && t.pulses[i]==startPulses[i] && std::fabs(t.wheelSpeed[i])<0.5f;
   if(!still) { stopMotion("imu_cal_requires_stationary"); return; }
@@ -276,6 +363,7 @@ void updateCalibration(const Config& c,uint32_t now) {
   if(variance>0.25) { stopMotion("imu_cal_vibration"); return; }
   newBias=float(mean); pendingBiasSave=true; adaptiveBias=0;
   stopMotion(); t.resultReady=true; ++t.resultId; text(t.resultType,sizeof(t.resultType),"imu_cal");
+  t.resultConfigRevision=c.revision; t.calibrationSessionId=hardwareBootId();
   t.target=0; t.actual=newBias; t.error=0; t.progress=1; text(t.state,sizeof(t.state),"imu_cal_saving");
 }
 
@@ -292,8 +380,12 @@ void updateCalibration(const Config& c,uint32_t now) {
  */
 void updateMotion(const Config& c,float dt,uint32_t now) {
   // 1. 先检查运动条件、占用者心跳与动作期限，再计算任何输出需求。
-  if(!sensorsPermit(t.sensors,c,now)) return;
+  if(!sensorsPermit(t.sensors,c,now,mode==Mode::Drive && c.developmentMode)) return;
   if(mode!=Mode::Autonomous && timedOut(now,heartbeat.load(),c.heartbeatMs)) { stopMotion("heartbeat_lost"); generation.fetch_add(1); return; }
+  if(mode==Mode::Drive && c.developmentMode && uint32_t(now-actionStarted)>=DevelopmentDriveLimitMs) {
+    developmentDriveExpired.store(true);
+    stopMotion("development_drive_timeout"); generation.fetch_add(1); return;
+  }
   if(precision() && timedOut(now,actionStarted,actionTimeout)) { fault("action_timeout"); return; }
   // 2. 按动作模式生成四轮速度需求，统一使用 cm/s。
   //    电池电压有效且低于门限时，限速降至配置最大速度的一半。
@@ -381,6 +473,7 @@ void updateMotion(const Config& c,float dt,uint32_t now) {
   t.irSpeedScale=1; t.irLimited=false; t.irUnavailable=false;
   if(c.safetyEnabled && c.irProtection && (mode!=Mode::Autonomous || t.arena.mode==arena::Mode::Navigate)) {
     Config irConfig=c;
+    if(mode==Mode::Drive && c.developmentMode) irConfig.irFailSafeStop=false;
     if(mode==Mode::Autonomous) irConfig.irFailSafeStop=false; // 远场超量程不等于必需地面反馈失效。
     DirectionSafety safety=directionSafety(t.sensors,irConfig,translation,rotation);
     // 换向或减速期间，新指令方向不等于当前运动方向。
@@ -419,7 +512,15 @@ void updateMotion(const Config& c,float dt,uint32_t now) {
     if(pendingStop.load() || locked.load()) { motorStop(); return; }
     demand[i]=rampVelocity(demand[i],desired[i]*scale,c.acceleration,c.deceleration,dt);
     demand[i]=clampf(demand[i],-safeLimit,safeLimit);
-    requests[i]=wheelSpeedPwm(speedLoop[i],demand[i],t.wheelSpeed[i],dt,c,i%2?c.rightTrim:c.leftTrim);
+    if(mode==Mode::Drive && c.developmentMode) {
+      // 开发手动使用前馈开环，避免未接 FG 的零读数被 PID 当作持续速度误差。
+      // 该比例仅为低占空比输出请求，不承诺实际车速；死区、trim 后再限制最终 PWM。
+      speedLoop[i].reset();
+      const float trim=i%2?c.rightTrim:c.leftTrim;
+      const float magnitude=std::fabs(demand[i])<0.05f?0:
+        std::max(c.pwmDeadzone,1023*std::fabs(demand[i])/c.maxSpeed)*trim;
+      requests[i]=(demand[i]<0?-1:1)*std::min(magnitude,DevelopmentPwmLimit);
+    } else requests[i]=wheelSpeedPwm(speedLoop[i],demand[i],t.wheelSpeed[i],dt,c,i%2?c.rightTrim:c.leftTrim);
     motorWrite(i,requests[i],c);
   }
   motorOutputs(t.pwm);
@@ -455,7 +556,10 @@ void run(void*) {
     const Config c=configSnapshot();
     configureArena(c);
     const unsigned stopped=pendingStop.exchange(0);
-    if(stopped) stopMotion(stopped&2?"emergency_stop":nullptr,(stopped&2)!=0);
+    if(stopped) {
+      stopMotion(stopped&2?"emergency_stop":nullptr,(stopped&2)!=0);
+      if(stopped&4) developmentDriveExpired.store(false);
+    }
     motorSample(dt,c,t.pulses,t.wheelSpeed,t.rpm);
     t.sensors=sensorsRead(c);
     // 2. 用脉冲差更新带符号里程，再计算左右轮差对应的偏航增量。
@@ -516,6 +620,7 @@ void run(void*) {
     }
     if(pendingStop.load()) motorStop();
     else if(mode==Mode::ImuCal) updateCalibration(c,now);
+    else if(mode==Mode::ClimbObserve) updateClimbObservation(c,now);
     else if(moving()) updateMotion(c,dt,now);
     else { motorStop(); outputsStopped.store(true); }
     if(pendingBiasSave && mode==Mode::Idle && controllerTryBeginConfig()) {
@@ -550,7 +655,9 @@ bool controllerEnqueue(const Command& source) {
   // 返回 true 只表示请求已登记，PWM 由控制任务响应后撤去。
   if(source.type==CommandType::Stop || source.type==CommandType::Estop || source.type==CommandType::Takeover) {
     if(source.type==CommandType::Estop) locked.store(true);
-    generation.fetch_add(1); pendingStop.fetch_or(source.type==CommandType::Estop?3:1);
+    // client=0 的内部断线停车只撤输出；只有客户端显式 Stop 才重新允许开发驾驶。
+    const unsigned rearm=source.type==CommandType::Stop && source.client?4:0;
+    generation.fetch_add(1); pendingStop.fetch_or((source.type==CommandType::Estop?3:1)|rearm);
     owner.store(0); busy.store(false); continuous.store(false); return true;
   }
   if(!queue) return false;
@@ -563,6 +670,7 @@ bool controllerEnqueue(const Command& source) {
     return false;
   }
   if(!std::isfinite(cmd.x) || !std::isfinite(cmd.y) || !std::isfinite(cmd.value) || !std::isfinite(cmd.speed)) return false;
+  if(cmd.type==CommandType::Drive && developmentDriveExpired.load()) return false;
   if(cmd.type==CommandType::Unlock) { const Queued q{cmd,generation.load()}; return xQueueSend(queue,&q,0)==pdTRUE; }
   if(locked.load()) return false;
   if(cmd.type==CommandType::Servo) {
@@ -579,10 +687,15 @@ bool controllerEnqueue(const Command& source) {
   if(claimed && admission.load()==2) {
     uint32_t mine=cmd.client; owner.compare_exchange_strong(mine,0); return false;
   }
-  if(!claimed && (expected!=cmd.client || !continuous.load() || cmd.type!=CommandType::Drive)) return false;
+  const bool driveRefresh=!claimed && expected==cmd.client && continuous.load() && cmd.type==CommandType::Drive;
+  const bool observationFinish=!claimed && expected==cmd.client && climbObserveActive.load() && cmd.type==CommandType::ClimbObserveEnd;
+  if(!claimed && !driveRefresh && !observationFinish) return false;
   if(claimed) { outputsStopped.store(false); busy.store(true); continuous.store(cmd.type==CommandType::Drive); heartbeat.store(cmd.receivedMs); }
   const Queued q{cmd,generation.load()};
-  if(xQueueSend(queue,&q,0)==pdTRUE) return true;
+  if(xQueueSend(queue,&q,0)==pdTRUE) {
+    if(driveRefresh) heartbeat.store(cmd.receivedMs);
+    return true;
+  }
   // 入队失败时撤回本次新申请，避免无命令却长期保持占用。
   if(claimed) { owner.store(0); busy.store(false); continuous.store(false); }
   return false;

@@ -1,0 +1,8 @@
+Command: C:\Users\Administrator\AppData\Local\Programs\Python\Python315\python.exe test/test_migration.py
+...
+----------------------------------------------------------------------
+Ran 3 tests in 0.000s
+
+OK
+
+[exit code: 0]

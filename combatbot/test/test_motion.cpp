@@ -11,6 +11,8 @@
 #include "pid.h"
 #include "kinematics.h"
 #include "safety.h"
+#include "calibration_model.h"
+#include <cstring>
 #include <cassert>
 #include <cstdio>
 using namespace bot;
@@ -24,9 +26,12 @@ int main() {
   c.pulsesPerCm=4; assert(near(pulsesPerCm(c),4));
   assert(near(wheelTurnDistance(360,c),17*pi));
   assert(near(wheelTurnDistance(-90,c),-17*pi/4));
-  c.turnFactor=1.5f;
+  c.turnFactorLeft=1.5f;
   const float travel=wheelTurnDistance(90,c);
   assert(near(odoYawDegrees(-travel,travel,c),90));
+  c.turnFactorRight=1.8f;
+  const float rightTravel=wheelTurnDistance(-90,c);
+  assert(near(odoYawDegrees(-rightTravel,rightTravel,c),-90));
   int64_t start[4]={100,200,300,400}, forward[4]={140,240,340,440}, backward[4]={60,160,260,360}, turn[4]={60,240,260,440};
   assert(near(pulseTravel(forward,start,c),10));
   assert(near(pulseTravel(backward,start,c),-10));
@@ -93,5 +98,30 @@ int main() {
   s.accelOk=true; s.acc[2]=1; assert(!sensorTilt(s)); s.acc[2]=-1; assert(sensorTilt(s));
   assert(timedOut(15,0xfffffff0u,20)); assert(!timedOut(15,0xfffffff0u,40));
   assert(!timedOut(100,105,250)); // 同一周期中刚更新的异步时间戳，不能误判为失联。
+  // 标定应用必须匹配本次上电结果和动作使用的配置；失败不会留下半份修正。
+  Config original,next; original.revision=7; Telemetry tm;
+  tm.resultReady=true; tm.resultId=3; tm.calibrationSessionId=91; tm.resultConfigRevision=7;
+  tm.calibrationPulses=400; std::strcpy(tm.resultType,"odo_cal");
+  assert(prepareCalibration(original,tm,"odo",3,91,7,0,80,next));
+  assert(near(next.pulsesPerCm,5) && near(next.ppr,5*7.2f*pi));
+  assert(!prepareCalibration(original,tm,"odo",3,92,7,0,80,next));
+  assert(!prepareCalibration(original,tm,"odo",2,91,7,0,80,next));
+  assert(!prepareCalibration(original,tm,"odo",3,91,8,0,80,next));
+  assert(!prepareCalibration(original,tm,"odo",3,91,7,3,80,next));
+  original.revision=8; assert(!prepareCalibration(original,tm,"odo",3,91,7,0,80,next)); original.revision=7;
+  assert(!prepareCalibration(original,tm,"odo",3,91,7,0,NAN,next));
+  tm.target=360;tm.calibrationTurnFactor=1.2f;std::strcpy(tm.resultType,"turn_left_cal");
+  assert(prepareCalibration(original,tm,"turn_left",3,91,7,0,300,next));
+  assert(near(next.turnFactorLeft,1.44f) && next.turnFactorRight==1 && next.turnFactor==1);
+  assert(!prepareCalibration(original,tm,"turn_right",3,91,7,0,300,next));
+  tm.target=-360;tm.calibrationTurnFactor=1.4f;std::strcpy(tm.resultType,"turn_right_cal");
+  assert(prepareCalibration(original,tm,"turn_right",3,91,7,0,420,next));
+  assert(near(next.turnFactorRight,1.2f) && next.turnFactorLeft==1);
+  std::strcpy(tm.resultType,"turn_cal");
+  assert(prepareCalibration(original,tm,"turn",3,91,7,0,420,next));
+  assert(near(next.turnFactor,1.2f)&&near(next.turnFactorLeft,1.2f)&&near(next.turnFactorRight,1.2f));
+  assert(!prepareCalibration(original,tm,"turn",3,91,7,0,10,next)); // 修正超出物理范围。
+  std::strcpy(tm.resultType,"climb_observe");
+  assert(!prepareCalibration(original,tm,"climb_observe",3,91,7,0,100,next));
   std::puts("motion tests passed");
 }

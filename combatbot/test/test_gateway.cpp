@@ -60,6 +60,10 @@ int main(){
   assert(dispatch(R"({"t":"cal","mode":"imu"})"));assert(captured.type==CommandType::ImuCal);
   assert(dispatch(R"({"t":"cal","mode":"odo"})"));assert(captured.type==CommandType::OdoCalStart);
   assert(dispatch(R"({"t":"cal","mode":"turn"})"));assert(captured.type==CommandType::TurnCalStart);
+  assert(dispatch(R"({"t":"cal","mode":"turn_left"})"));assert(captured.type==CommandType::TurnCalStart&&captured.directionalCalibration&&captured.value==360);
+  assert(dispatch(R"({"t":"cal","mode":"turn_right"})"));assert(captured.type==CommandType::TurnCalStart&&captured.directionalCalibration&&captured.value==-360);
+  assert(dispatch(R"({"t":"cal","mode":"climb_observe"})"));assert(captured.type==CommandType::ClimbObserveStart);
+  assert(dispatch(R"({"t":"cal","mode":"climb_observe_end"})"));assert(captured.type==CommandType::ClimbObserveEnd);
   for(const float value:{NAN,INFINITY,-INFINITY}){
     JsonDocument doc;doc["t"]="move";doc["dist"]=value;String error;const auto before=dispatches;
     assert(!bot::commandDispatch(doc.as<JsonVariantConst>(),7,error));assert(dispatches==before);
@@ -68,6 +72,10 @@ int main(){
   assert(!dispatch(R"({"t":"move","dist":30})",true,hostMillis));
   assert(!dispatch(R"({"t":"stop"})",true,hostMillis-1));
   assert(!dispatch(R"({"t":"unlock"})",true));assert(!dispatch(R"({"t":"cal","mode":"imu"})",true));
+  assert(!dispatch(R"({"t":"cal","mode":"turn_left"})",true));
+  assert(!dispatch(R"({"t":"cal","mode":"turn_right"})",true));
+  assert(!dispatch(R"({"t":"cal","mode":"climb_observe"})",true));
+  assert(!dispatch(R"({"t":"cal","mode":"climb_observe_end"})",true));
   for(const char* json:{R"({"t":"goto","x":50,"y":0})",R"({"t":"auto"})",R"({"t":"climb"})",R"({"t":"takeover"})",R"({"t":"estop"})"}){
     assert(dispatch(json,true,hostMillis+200));assert(captured.expires&&captured.expiresAt==hostMillis+200&&captured.client==7);
   }

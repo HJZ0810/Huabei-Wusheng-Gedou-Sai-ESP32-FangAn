@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
-  "firmwareVersion": "4.0.0",
-  "verifiedAtUtc": "2026-10-05T17:40:08.696995+00:00",
+  "firmwareVersion": "5.0.0",
+  "verifiedAtUtc": "2026-10-06T01:46:22.172140+00:00",
   "sources": {
     ".gitattributes": "bccfacac5eaa8a7b6fdcb64c3f49ffc97bd35d2f50803c9482433aa2ea0680cf",
     ".gitignore": "b81dc1b3656a067b42d0476e1cc2d201a4284a3905d302d9bff1d7171098028d",
@@ -10,45 +10,46 @@
     "Arduino依赖库/AsyncTCP-3.3.2.zip": "ef178c0efd434f0e3562236c4cc7a4f1252ac30c2aafda93fd57b13700816797",
     "Arduino依赖库/ESPAsyncWebServer-3.6.0.zip": "b644fa31427abf86f1f14bdc96983aff012b6d81a542fcbd6236bcae708615dc",
     "Arduino依赖库/WebSockets-2.7.2.zip": "cbed3fffeaac444c5c1dd75f7f1422881424e0f35117af0ef960651a557c0a7e",
-    "combatbot/include/arena_model.h": "1c77d95ad175e41d0dd641ba54dbbac6afdd076a47ab6cba930c861ad66c6664",
+    "combatbot/include/arena_model.h": "a6e170a828283c408c5390ea7ae3073b66a3bf0993efe7c3922f8cf92157c96b",
+    "combatbot/include/calibration_model.h": "a7086987111421d2ece1174f54ca2b2fa64dde6bec3f1e401092e0e813724c79",
     "combatbot/include/cloud_client.h": "a3b37d3a196ac0238d150dee5600afd243004dca99a532cc7b6641e8b79c923e",
     "combatbot/include/cloud_protocol.h": "e1b48c5011e591ad3bd0ae59d028f19cb8d8983864d52e3c6b7178e0bae9d4fb",
     "combatbot/include/command_gateway.h": "fa6b9c5f0451bfd5dbca326460f2eef50687c17344f7f12666b21f2be5b2b262",
     "combatbot/include/config.h": "65892a60f3fbee257b993531b6e80f18e9bb8aba531e1860e98e199b1371b8e5",
     "combatbot/include/controller.h": "0bb95c37761cbe7a97f9c31793840f8e610bfa3c9b3396055650ea0571862583",
-    "combatbot/include/hardware.h": "77d04c2921dc8b16d94e22d1230261515b1263da7ad846c9a9d57854482f3149",
+    "combatbot/include/hardware.h": "06cdbf60f2f2f08a49d971758e04c037623402e1339fb453366555ec7ab0f3e0",
     "combatbot/include/hardware_internal.h": "0a2c9f6cbe31494d22298e46ca086aa15492fba290c47d61321a3e943d88a9a5",
-    "combatbot/include/kinematics.h": "a4083172598b2cfe38802d0173c31bc7c220c6ff24a478971a54cee1939603fa",
+    "combatbot/include/kinematics.h": "f249687e9a460609a07972e985430d23cdc33c601fd14e2663c9418968de979e",
     "combatbot/include/pid.h": "34655e59bc42b6b210742d1f9e2c23542fa647c00a4f95bffd870823c9437dba",
     "combatbot/include/safety.h": "306e430af0b482e4df81f7e5b813733910644e72721d15631803dcfa5a82b9e4",
     "combatbot/include/session_registry.h": "ae3c2b9604a0adda7c1929d53a3a61a5610d0d395ca5d59f097fbe190d5666e3",
     "combatbot/include/telemetry_json.h": "dc1bed70d729268630e2bf36b04a55fa4c12fccc5ffe74f8e3b4217c32c4f2ec",
-    "combatbot/include/types.h": "0cad899b96e65d6e5652449e95398bf750ab3192dc9e71ee45487b0d70ce90df",
+    "combatbot/include/types.h": "a35df0952442be74f5cb8e4ca2c8cd0f3a8080eb2be78cac72e8cf82d471f511",
     "combatbot/include/web.h": "5c016d11269d90949cebc275d87cdea9e004b260dfce9703831a7e88df0b0777",
-    "combatbot/include/web_asset.h": "854d2b676d0e18a862ee80b9a9c03e0a110b4dd80ef969141884c3d221c7c087",
+    "combatbot/include/web_asset.h": "b6a3f1f609ccc1bc3ef31c4c7532a1ea2d63960f9c2ad08cd7f028ba57e3ccbc",
     "combatbot/include/wifi_mgr.h": "7081840a4538bff58bc52f17ac9cd072ea73ef61ed9d94b800c7d0627c518f2a",
     "combatbot/platformio.ini": "e6377b9179aaa2f48d6007f03d692760f1bf2e41e4a5ba313b2e836921afa40b",
     "combatbot/scripts/convert_workbuddy_config.py": "43c753f21f825d354a17f78964ed206e74042e8b91edb6f54984baa186b8746b",
     "combatbot/scripts/embed_web.py": "e89d37a4972fa482f7adb1fa807a0695b6b86f118615406e14e05ea906467e88",
     "combatbot/scripts/export_arduino.py": "e6b6872017e3bbc232839b80e749f416f4c4341c10d3420ab48cfba73e1f5337",
-    "combatbot/scripts/package_delivery.py": "f57e5eea2600ffd4dbbd6c8c2484811151456ab52f74413faeda447a21dd3713",
+    "combatbot/scripts/package_delivery.py": "f49287213300d5e3630c5ee63fe38f1aac7090cc17de138f8d60849eb92ab519",
     "combatbot/scripts/patch_websockets.py": "4485f94acf2874fe6d624902651aae896058306dc8b030b9db48e25ea661c2d5",
-    "combatbot/scripts/release_evidence.py": "1ff0c0164c3612692fdd7ec00b93eea2908e1fd8b2d9968077326adde7dec67e",
+    "combatbot/scripts/release_evidence.py": "f22bc11285fbfe02b83d242dd45a578db58ee9f46c32de6cdea59e69902d180a",
     "combatbot/scripts/verify_arduino.py": "28d0680337d56e7dd59c8a27663c6d3671b4fc84db578fc085affbab0109cc56",
     "combatbot/scripts/verify_arduino_cli.py": "f7cac896045569f5b1c7a7f5de17d1e48cd218ae63e4211024950cc4caf28392",
-    "combatbot/scripts/verify_delivery.py": "3177edf10deb8487b7a339d5b9313c7350b002de683a45e0562a0c5b81962d18",
+    "combatbot/scripts/verify_delivery.py": "45cd72a86099d98038664952c6d12b5a960f59afd57197fcd3d1d4bf729de10a",
     "combatbot/scripts/verify_release.py": "517a9fbed781056a2ee5a3931077f4ab96b4009a11d8b1b68c20c45600207ac6",
-    "combatbot/src/arena_model.cpp": "4c70da0198d241077f4b82bfa574b7db404050563fd85b7f89a4364c7ed5fcee",
+    "combatbot/src/arena_model.cpp": "e054dae5f1a1fe84d11de7b086f859aea0e5bc42459942a4fd705eeb9787f3dc",
     "combatbot/src/cloud_client.cpp": "d59cc5a3b6c014c94bfa8c9ed939d940c91d546be7dfeb7097c4dd5ca51c5f5a",
-    "combatbot/src/command_gateway.cpp": "2a9c3edd5b1b280c8de4c69faa25ce49e88a3a38b1612c4634db3683f06401d0",
-    "combatbot/src/config.cpp": "8d97bfcf305ec14cc5b2f33f7793154f1e6394796ee8d4b2c38d8e38b519749a",
-    "combatbot/src/controller.cpp": "11d09adc081f204fa9dcd45ae497761a4c3a448a8776fff00464358cfb09809d",
+    "combatbot/src/command_gateway.cpp": "4b0ff97ec37e01710fc2079ad8806b58fa681d274fad28cf523f0e3362df1a6a",
+    "combatbot/src/config.cpp": "c13774887d1f87c07179490e7dae40bd43d42d9e588289ba9e33619099dfff2b",
+    "combatbot/src/controller.cpp": "19cb9125153c842c057fbdc58f26752e41afb010b9a067752b4c678ff1e57a11",
     "combatbot/src/imu.cpp": "f376be779c6a08d62d1d9cb1554cf87b07c868dadffe012263fed00e9c19b23c",
     "combatbot/src/main.cpp": "93f5335c2519a9b4fdeefff8103b4a4b5046686a566256904211793d45e35229",
-    "combatbot/src/motor.cpp": "e933910c1cd4ae05457d705e72b61f1d84ce6f79a7389592a86774251da23f19",
+    "combatbot/src/motor.cpp": "cef372c4b084f1e40c8f48278a98c432866dcaea07dccf19c7837a3a2294103f",
     "combatbot/src/sensors.cpp": "4d641bd0a4a09a814e19cfdd6b47b0b9999817ddd15d549bb6e0cfb2d653f6b2",
-    "combatbot/src/telemetry_json.cpp": "befe5de28f3d294f6ff9d10e16a574e09569bc5ca361b3ed4ae23ceb33f12251",
-    "combatbot/src/web.cpp": "30a490caa0ef84a166ba78cbb1a1816ee14a7c02aac48e6fb40b7c36064a1339",
+    "combatbot/src/telemetry_json.cpp": "1e0e8ee41089e05e397c5a962ecc289cde65d14a530adb94b133f5182aff5004",
+    "combatbot/src/web.cpp": "637c3d6e9472380387d53b6b099a1733ff8fd5638967c8c2b8b97d13fbba975f",
     "combatbot/src/wifi_mgr.cpp": "77509fd60b95ecc62370a4077fedeebc1317f08b5c149664f811823885404889",
     "combatbot/test/host/Arduino.h": "9cb016554c41616d6c166b9db1acadcfaef24ae5797c3d542b2d5605858e3fde",
     "combatbot/test/host/ArduinoJson.h": "3460bf27d52467c749c7131e460dfa28ca749183ab898003cdc7f8b27a6e444b",
@@ -60,27 +61,28 @@
     "combatbot/test/motor_host/Arduino.h": "504ea015949aaa4ba6e7445dc3e432023bd538c4831fcac408e21e39a23a897f",
     "combatbot/test/motor_host/driver/pcnt.h": "6f66a9ba53b425d6a8b58988fe13ecb16ce658c5effcd3c9c256b4f5976ac6e6",
     "combatbot/test/motor_host/esp_arduino_version.h": "e0c4ba5d7f545f55bfcbf6c41d77672618af3463e2930b3f432db12dd5fc8432",
+    "combatbot/test/motor_host/esp_system.h": "2f89644b7094018bdd6c63126b981360e4d50fefdc1c9480557ac5b5921d2b9d",
     "combatbot/test/motor_host/Wire.h": "371ce75e40662aadb519b9f76f500b1575a9fc32581d76369f51669da55c078b",
-    "combatbot/test/run_host_tests.ps1": "bfeb39edfca3c49fa5dbcdfc90b6d58ed9f1211617a61f565f94095ce9800228",
+    "combatbot/test/run_host_tests.ps1": "8d67382efa6c8338cd2c51eff333aa3b536d67b3634ab93e36e3ad9888d84469",
     "combatbot/test/run_motor_tests.ps1": "e6f0e0e55c788465709de9f297c619ecbd5a09b9b6e4b72b78d5070c023057eb",
     "combatbot/test/run_v4_tests.ps1": "696ddf5337d30544753d83984e33341e9bbccf27797b1a31bcd87e1af55894f8",
     "combatbot/test/sensor_host/Arduino.h": "97dc08bea84a03448e4e4a6d850dec584bf4dea0d85752a3340822478e7145db",
     "combatbot/test/sensor_host/Wire.h": "aa7cfbe38f243bb5dcbd0d163d9826eb6f17f205578dd9c4a15c7ca8ef42a404",
     "combatbot/test/test_arena_defaults.cpp": "129323c120592815ea9c8fe1f5dda45dfa77b695b8e02c868dea35ccb8e67730",
-    "combatbot/test/test_arena_model.cpp": "87deea300dfe6466bb94bd2a18f8dcbc836c1c4818ee385a6d6cfce10f21dba8",
+    "combatbot/test/test_arena_model.cpp": "6c5e708e02e2588898a32dae1ef652bffdde35ae084bd19ba237299b35893339",
     "combatbot/test/test_cloud_protocol.cpp": "3693f57efeda7bfa857f013d297d263642c64add6ff8c1855c52702e17eeb1e9",
-    "combatbot/test/test_config.cpp": "e64097233ab555db0056db3549681a77e1fcc838b33eebeb4b5a038b7b499710",
-    "combatbot/test/test_controller.cpp": "191ec18405fafaa06289fec5a0692ee8bc27269b69ddaa024ac4fe5bd7b1671f",
-    "combatbot/test/test_controller_v4.cpp": "bfae8edfae81546034445a057cc8225e0c6d36e237cc6adccb1213962d40453b",
-    "combatbot/test/test_gateway.cpp": "9b2a685b6af930ef27f5925a7530c602a5b2afc017771cc2890da2f61aac2745",
+    "combatbot/test/test_config.cpp": "775208437cebcfc106637b3dfc2a76db45983b3e0df5c303cbadf3b8e255de13",
+    "combatbot/test/test_controller.cpp": "1a4af5ea262d95ddf2e8c7b940c763073a2bd5837ad8dc5c5c44f476fc55afab",
+    "combatbot/test/test_controller_v4.cpp": "012bb2eff4af2884f96b66093207cb9a0d8d8e0227ffbab553bcff7fe41dbe14",
+    "combatbot/test/test_gateway.cpp": "0e37cce38b1eb227f736e7bfa218809c85949a2abce979dd77f69bc8a975fd9f",
     "combatbot/test/test_migration.py": "38778906cad178eaf7ca5a088577e3cac20d2018205dd1d5ce57a5fbc3065076",
-    "combatbot/test/test_motion.cpp": "f969c78dcd5cae5862c13ae97332e36d57e6c36af8938a57d00c63f9b3b8921d",
-    "combatbot/test/test_motor.cpp": "df5b0ea7b7c6ffbd45d943a96e8d3ac9129a2580b3fb9aa488a4d3896d2e9ec4",
+    "combatbot/test/test_motion.cpp": "a9bc819588fc3ea03cd01ed6f4f460cd6c03b2eb89c583ef962f3fb5726636da",
+    "combatbot/test/test_motor.cpp": "94b55c30bc022dc8c5d310246ab79ac02ed54323ee9343b603cf90b5c3edbde9",
     "combatbot/test/test_sensor_model.cpp": "1224cb213d292ed357ab6cd47f235a802a38968d232bfbfdd7eed020ff1290c0",
     "combatbot/test/test_session.cpp": "d985def67499a1021061ae5aeee19fde8f5142b6f469070e1e0955aab0ee9e92",
-    "combatbot/test/ui_arena_contract.mjs": "ebcffcd4ab32a9ea89eca3511c320432873cf29b42ca2dd6b774d499a0b3dff4",
-    "combatbot/test/ui_contract.mjs": "1147e216d2c16b29e5afc5c7e47d7326e13090a44df02b4b3453695ac3846576",
-    "combatbot/web/index.html": "9a0e7e57667c0ace26c93bd92b208860191843f1534e05ceb7dca3a749444dce",
+    "combatbot/test/ui_arena_contract.mjs": "6c514c15ee93a956118f79ee7db9f5a39e4a9c148cde1b3a800ded32218926d0",
+    "combatbot/test/ui_contract.mjs": "0a9dc119b6dbc1d6f0807be4f599434ce371878176b5a022bdc78b11a58631fb",
+    "combatbot/web/index.html": "0fdefb754ebb58b363537b70dd37d0453ee16a2cffc24099138b696a903d0884",
     "server/.env.example": "dde27ac143305418dd67e518464d860d2bfbc79b28d3de1851d4ccba2c381eb0",
     "server/.gitignore": "0ee0754721dff1f791975af11245de8583cd908500f67839cca994f61fec9150",
     "server/deploy/combatbot-domain.conf": "1e78f02ab04ba7cf1f453edd5b61fcaec1c51d3effb43d117e8b42dff16cbec8",
@@ -97,9 +99,9 @@
     "server/src/main.mjs": "81e73b4630c3af519cd2a93deac04edb2d42a9b87122501991e8c2fe0d85867d",
     "server/src/relay.mjs": "7115ed8538705ea87fe2db8c3ddae2ab0db70981fa5eee49bf6b5cee85e4eba7",
     "server/test/relay.test.mjs": "cfd8dfde5d6f2993b23129c1f676a8ebf0f9406129db6658ba15dc0543de5985",
-    "tools/package_history.py": "a277ff819543fe4acc38f59e264524d322a4c35f3152c7c4d6365707cbd1b548",
-    "VERSION": "e1d49c569ae09b2ede16e2d83820a3809b35eb6c44c13ba9b5330598d6b8f43c",
-    "versions/SOURCE_MANIFEST.json": "f49ec390d02cb99f4525180f287c216c5aa0243fd35952d458c8b6dfaa80f88e",
+    "tools/package_history.py": "8fd5abd6cc82395f85caf263952d90cf67d3a9e3a56cd9ea3570900093ccfd6c",
+    "VERSION": "1cc3d76ac7c21a664e79848fd481e9791016451b244e7de5feeeb9bea5fd2184",
+    "versions/SOURCE_MANIFEST.json": "7f40e5a06d9a405f2a9d7a40f8beba469853d4651062cf73c5778865f4a83845",
     "依赖版本.json": "0a43b61cefa0f7e60cbcbdcd4e548eff22612b909f6ab166b944b4ad88932235",
     "安装Arduino依赖.ps1": "dfe1270c07ae609eb31917689f4812f4256194ec128e13b7357bc45a079d3e12"
   },
@@ -412,7 +414,7 @@
     "host": {
       "exitCode": 0,
       "log": "test-artifacts/host.log",
-      "sha256": "7a6a3b5aa34949014f941455f3de9c240ce3765160610818b67f5efe93d5045e"
+      "sha256": "163fee92498961d81fe4e4896425d1fbf7b3774d86e5778d70481ef0895c47f2"
     },
     "motor": {
       "exitCode": 0,
@@ -422,7 +424,7 @@
     "v4-control": {
       "exitCode": 0,
       "log": "test-artifacts/v4-control.log",
-      "sha256": "c0ecd9ea30b422193c3c1fe926d1c76a57a4f7ec02a6578d352154a5d8b6c3c4"
+      "sha256": "f5081ab6073efdb57cc8944107c3c6990b14efdf1eb04b8bccfff434e466b835"
     },
     "arena-compile": {
       "exitCode": 0,
@@ -467,22 +469,22 @@
     "ui": {
       "exitCode": 0,
       "log": "test-artifacts/ui.log",
-      "sha256": "1423c20c38e733a52a3ac9d9f611e537b7a48682ea698b01472edd2c52191877"
+      "sha256": "8d8ec3d55237bc71177b5291bf31524313b023ace5ca16f54ed8ed5ad9a12c7d"
     },
     "ui-offline": {
       "exitCode": 0,
       "log": "test-artifacts/ui-offline.log",
-      "sha256": "7e207615c3fcc9f173715c9254e6ca62efeaba80ed07b2d8274984c058cafa3a"
+      "sha256": "7b77bad6cf8407c04207bbf8fb4a605744d5e05d940396523531f465974775f9"
     },
     "ui-arena": {
       "exitCode": 0,
       "log": "test-artifacts/ui-arena.log",
-      "sha256": "88080eaea140f151b1979390a9d9e2f37b86dc2644ae2b89ee69028b3f205247"
+      "sha256": "584ac846d2efc5cd856a4b81e326543eb1432741ce065c42c04336fc78a5d6b5"
     },
     "server": {
       "exitCode": 0,
       "log": "test-artifacts/server.log",
-      "sha256": "f44c022bafaff5f1d9b5effde7735b79b21455c78a1a739b8bef1940e783f0e6"
+      "sha256": "445e4c27e53f83087c262d0f920cad9c8dd76ef8a19f27c70296e6084ae0c939"
     },
     "migration": {
       "exitCode": 0,
@@ -492,17 +494,17 @@
     "core2": {
       "exitCode": 0,
       "log": "test-artifacts/core2-compatibility.log",
-      "sha256": "ca83015cc4d1325a1e37435a243da654897301cebcd23499cdaa540e98fb9856"
+      "sha256": "e52b10255e318986beee3e48911a15424114136ff6582eb018f9ce80324f9810"
     },
     "core3": {
       "exitCode": 0,
       "log": "test-artifacts/core3.log",
-      "sha256": "f22337f855f3c7268cc2d5ec34f7e9e9ee8e31f630e30ab0c1ed9b51567b3ac6"
+      "sha256": "6f8ff7b022309a2ddda7c7b23e49a719e7693ba95cffd91e92787ad578360026"
     },
     "core3-native": {
       "exitCode": 0,
       "log": "test-artifacts/ide-core3-huge-app.log",
-      "sha256": "f9f0ea01e8b52a65d2f6a06576a71c06941e93f9cf63a0792a941b7a123725a6"
+      "sha256": "8f1d89247043e9f467e5d44416212705d965cffac33477a0b96c08c0a73b73a0"
     }
   },
   "builds": {

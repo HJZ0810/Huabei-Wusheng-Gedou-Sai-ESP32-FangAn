@@ -72,6 +72,10 @@ def verify_archive(archive):
         core2 = z.read("验证日志/ArduinoESP32-2.0.17.log").decode("utf-8-sig")
         native_name = evidence["builds"]["core3"]["buildName"]
         native = z.read(f"验证日志/ArduinoESP32-3.3.12-{native_name}.log").decode("utf-8")
+        for alias, check in ((core2, "core2"), (native, "core3-native")):
+            original = z.read("combatbot/" + evidence["checks"][check]["log"]).decode("utf-8-sig")
+            if alias != original.replace("\r\n", "\n").replace("\r", "\n"):
+                raise RuntimeError("编译日志别名不属于本次凭据")
         if "[SUCCESS]" not in core2 or not native.rstrip().endswith("[exit code: 0]"):
             raise RuntimeError("双核心版本编译成功记录缺失")
         if "FQBN: " + evidence["builds"]["core3"]["fqbn"] + "\n" not in native:

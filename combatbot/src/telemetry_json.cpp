@@ -10,12 +10,15 @@
 #include "config.h"
 #include "wifi_mgr.h"
 #include "cloud_client.h"
+#include "safety.h"
 #include <Arduino.h>
 #include <esp_heap_caps.h>
 namespace bot {
 void telemetryJson(JsonObject doc) {
   const auto tm=controllerSnapshot(); const auto cfg=configSnapshot();
   doc["t"]="tm"; doc["firmware"]=FirmwareVersion;
+  doc["configRevision"]=cfg.revision;
+  doc["developmentMode"]=cfg.developmentMode;
   doc["spd"]=tm.speed; doc["yaw"]=tm.yaw; doc["odo"]=tm.odo;
   if(tm.sensors.batteryValid) doc["bat"]=tm.sensors.batteryV; else doc["bat"]=nullptr;
   auto rpm=doc["rpm"].to<JsonArray>(); auto pulse=doc["pulses"].to<JsonArray>(); auto pwm=doc["pwm"].to<JsonArray>();
@@ -28,11 +31,22 @@ void telemetryJson(JsonObject doc) {
   doc["accelSource"]=tm.sensors.accelSource; doc["accelSaturated"]=tm.sensors.accelSaturated;
   doc["impact"]=tm.sensors.impact; doc["impactG"]=tm.sensors.impactG;
   doc["irLimited"]=tm.irLimited; doc["irUnavailable"]=tm.irUnavailable; doc["irSpeedScale"]=tm.irSpeedScale;
-  doc["imuOk"]=tm.sensors.imuOk; doc["accelOk"]=tm.sensors.accelOk; doc["ioOk"]=tm.sensors.ioOk;
+  const uint32_t now=millis();
+  doc["imuOk"]=tm.sensors.imuOk && !timedOut(now,tm.sensors.imuMs,80);
+  doc["accelOk"]=tm.sensors.accelOk;
+  doc["ioOk"]=tm.sensors.ioOk && !timedOut(now,tm.sensors.digitalMs,80);
   doc["net"]=networkMode(); doc["rssi"]=networkRssi(); doc["apIp"]=apIp(); doc["staIp"]=staIp();
   doc["ip"]=staIp().length()?staIp():apIp(); doc["mdns"]=String(cfg.hostname)+".local";
   doc["st"]=tm.state; doc["fault"]=tm.fault; doc["estop"]=tm.estop; doc["lowBattery"]=tm.lowBattery;
   doc["owner"]=tm.owner; doc["progress"]=tm.progress*100; doc["imuCalibrating"]=tm.imuCalibrating;
+  doc["resultReady"]=tm.resultReady; doc["resultId"]=tm.resultId; doc["resultType"]=tm.resultType;
+  doc["resultTarget"]=tm.target; doc["resultActual"]=tm.actual; doc["resultError"]=tm.error;
+  doc["resultConfigRevision"]=tm.resultConfigRevision;
+  doc["calibrationSessionId"]=tm.calibrationSessionId;
+  doc["calibrationPulses"]=tm.calibrationPulses; doc["calibrationTurnFactor"]=tm.calibrationTurnFactor;
+  doc["calibrationMaxTiltDeg"]=tm.calibrationMaxTiltDeg;
+  doc["calibrationDurationMs"]=tm.calibrationDurationMs;
+  doc["calibrationSupportChanges"]=tm.calibrationSupportChanges;
   doc["cloud"]=cloudState(); doc["freeHeap"]=ESP.getFreeHeap(); doc["minFreeHeap"]=ESP.getMinFreeHeap();
   doc["largestFreeBlock"]=heap_caps_get_largest_free_block(MALLOC_CAP_8BIT);
   auto a=doc["arena"].to<JsonObject>(); const auto& p=tm.arena.pose;
@@ -49,5 +63,13 @@ void telemetryJson(JsonObject doc) {
   a["climbEstimated"]=tm.arena.climbEstimated;
   if(tm.arena.hasGoal) { a["targetX"]=tm.arena.goalX; a["targetY"]=tm.arena.goalY; }
   else { a["targetX"]=nullptr; a["targetY"]=nullptr; }
+  a["routeValid"]=tm.arena.routeValid;
+  a["routeSource"]=tm.arena.routeValid?"estimated_pose":"none";
+  a["pathCount"]=tm.arena.routeValid?tm.arena.routeCount:0;
+  auto route=a["path"].to<JsonArray>();
+  for(uint8_t i=0;i<tm.arena.routeCount && i<arena::MaxRoutePoints;++i) {
+    JsonObject point=route.add<JsonObject>();
+    point["x"]=tm.arena.route[i].xCm; point["y"]=tm.arena.route[i].yCm;
+  }
 }
 }

@@ -29,7 +29,8 @@ try {
   # 4. 配置：真实 JSON 与存储替身共同验证字段校验和失败保留。
   & $compilerCommand.Source -std=c++17 -Wall -Wextra -Werror -I.pio/libdeps/esp32s3/ArduinoJson/src -Itest/host -Iinclude test/test_config.cpp -o "$artifactDirectory/test_config.exe"
   if ($LASTEXITCODE -ne 0) { throw 'Config test compilation failed; install PlatformIO dependencies first.' }
-  & "$artifactDirectory/test_config.exe"
+  # 默认 fixture 由实际 configJson(Config()) 生成；只有整组配置测试通过才更新。
+  & "$artifactDirectory/test_config.exe" '--defaults-fixture' "$artifactDirectory/config-defaults.json"
   if ($LASTEXITCODE -ne 0) { throw 'Config tests failed.' }
 # 无论成功或失败，都恢复进入脚本前的工作目录。
 } finally { Pop-Location }

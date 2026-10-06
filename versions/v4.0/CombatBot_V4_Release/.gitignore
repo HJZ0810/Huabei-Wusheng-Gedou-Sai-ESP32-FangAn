@@ -1,0 +1,44 @@
+# Local build and IDE files
+.pio/
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+*.log
+_preview/
+
+# 本机运行时、构建产物与私有配置；发布ZIP仅作为GitHub Release附件。
+.tools/
+.cache/
+__pycache__/
+*.pyc
+*.exe
+*.elf
+*.bin
+*.map
+*.zip
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.device-key
+*.control-key
+*.credentials.json
+*.private.json
+config.private.json
+node_modules/
+.test-tools/
+.test-artifacts/
+!server/.env.example
+CombatBotArduino/CombatBotArduino.ino.cpp
+!Arduino依赖库/*.zip
+
+# 只提交与源码哈希绑定的验证凭据和文本日志，不提交编译缓存/CLI本机配置。
+combatbot/test-artifacts/*
+!combatbot/test-artifacts/release-evidence.json
+!combatbot/test-artifacts/*.log
+
+# 外部擂台资料仅用于本机研究，原图保留在上游CC BY-SA仓库。
+planning/v4/arena-*.png
+planning/v4/Arena-BOM.xlsx

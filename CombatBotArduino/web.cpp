@@ -22,6 +22,7 @@
 #include "session_registry.h"
 #include "command_gateway.h"
 #include "telemetry_json.h"
+#include "calibration_model.h"
 
 namespace bot {
 namespace {
@@ -248,7 +249,13 @@ void sendTelemetry() {
   if(tm.resultReady && tm.resultId!=lastResult){
     lastResult=tm.resultId;JsonDocument done;
     done["t"]="done";done["type"]=tm.resultType;done["target"]=tm.target;done["actual"]=tm.actual;
-    done["err"]=tm.error;done["id"]=tm.resultId;done["calibrationPulses"]=tm.calibrationPulses;
+    done["err"]=tm.error;done["id"]=tm.resultId;done["configRevision"]=tm.resultConfigRevision;
+    done["sessionId"]=tm.calibrationSessionId;
+    done["calibrationPulses"]=tm.calibrationPulses;
+    done["calibrationTurnFactor"]=tm.calibrationTurnFactor;
+    done["calibrationMaxTiltDeg"]=tm.calibrationMaxTiltDeg;
+    done["calibrationDurationMs"]=tm.calibrationDurationMs;
+    done["calibrationSupportChanges"]=tm.calibrationSupportChanges;
     String result;serializeJson(done,result);socket.textAll(result);
   }
 }
@@ -308,18 +315,15 @@ void webBegin() {
     updateConfig(req,[body](String& error){
       const char* mode=body["mode"] | "";
       const auto tm=controllerSnapshot();float measured;
+      const Config current=configSnapshot();
+      Config cfg;
       // 检查与消费在同一保存仲裁范围内完成，避免并发应用同一结果。
-      if(!tm.resultReady || tm.resultId==appliedCalibration ||
-         (strcmp(mode,"odo") && strcmp(mode,"turn")) ||
-         strcmp(tm.resultType,!strcmp(mode,"odo")?"odo_cal":"turn_cal") ||
-         !number(body["measured"],measured,!strcmp(mode,"odo")?1:10,!strcmp(mode,"odo")?1500:1800)){
+      if(!body["id"].is<uint32_t>() || !body["sessionId"].is<uint32_t>() || !body["configRevision"].is<uint32_t>() ||
+         !number(body["measured"],measured,1,1800) ||
+         !prepareCalibration(current,tm,mode,body["id"].as<uint32_t>(),body["sessionId"].as<uint32_t>(),
+           body["configRevision"].as<uint32_t>(),appliedCalibration,measured,cfg)){
         error="需先完成对应标定动作，再填写有效实测值；每次结果只能应用一次";return false;
       }
-      Config cfg=configSnapshot();
-      if(!strcmp(mode,"odo")){
-        cfg.pulsesPerCm=tm.calibrationPulses/measured;
-        cfg.ppr=cfg.pulsesPerCm*3.14159265358979323846f*cfg.wheelMm/10.0f;
-      }else cfg.turnFactor=tm.calibrationTurnFactor*fabsf(tm.target)/measured;
       if(!configSave(cfg,error))return false;
       appliedCalibration=tm.resultId;return true;
     });
